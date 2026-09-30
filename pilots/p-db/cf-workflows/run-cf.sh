@@ -67,7 +67,7 @@ B=$(brief ut-r1); LAT=$(( $(hist_at ut-r1 step_done apply) - $(hist_at ut-r1 sig
 fx_is "$B" && res R1 PASS "$B wall=$(( $(date +%s%3N)-t0 ))ms signal->apply=${LAT}ms" || res R1 FAIL "$B"
 
 # ---- long-running ones start now, checked later without any external trigger (no /recover!)
-start ut-r2 '{"pauseAfterRunSec":90}'                    # durable sleep
+for id in r2 r2b r2c; do start ut-$id '{"pauseAfterRunSec":90}'; done  # durable sleep x3 (run 2: one sleeper never took its signal)
 start ut-r3 '{"failOnce":"throw","retryDelaySec":30}'    # failed attempt -> platform retry timer
 start ut-r4 '{"failOnce":"oom","retryDelaySec":10}'      # isolate killed mid-step
 start ut-r5; start ut-r6 '{"pauseAfterRunSec":120}'     # deploy during wait / during sleep
@@ -96,8 +96,8 @@ SIG=$(signal ut-r10 | jq -c .); sleep 10; B=$(brief ut-r10)
   && res R10 PASS "cancel=$CAN signal-after=$SIG; $B" || res R10 FAIL "$B"
 
 # ---- R2/R3/R4: must reach awaiting_input on their own
-for id in r2 r3 r4; do wait_until ut-$id "$AWAIT" 300; done
-for id in r2 r3 r4; do log "$id before signal: $(brief ut-$id)"; done
+for id in r2 r2b r2c r3 r4; do wait_until ut-$id "$AWAIT" 300; done
+for id in r2 r2b r2c r3 r4; do log "$id before signal: $(brief ut-$id)"; done
 
 # ---- R5/R6: deploy a new version while one instance waits for input and one sleeps
 wait_until ut-r5 "$AWAIT" 60
@@ -106,9 +106,11 @@ log "before deploy: r5=$(brief ut-r5) r6=$(brief ut-r6)"
 NB=$(deploy v2); log "deployed v2 ($NB) version endpoint: $(api GET /version | jq -c .)"
 wait_until ut-r6 "$AWAIT" 300; log "r6 after sleep on v2: $(brief ut-r6)"
 
-for id in r2 r3 r4 r5 r6; do signal ut-$id >/dev/null; done
-for id in r2 r3 r4 r5 r6; do wait_until ut-$id "$DONE" 120; done
-B=$(brief ut-r2); fx_is "$B" && res R2 PASS "resumed after 90s sleep without trigger; $B" || res R2 FAIL "$B"
+for id in r2 r2b r2c r3 r4 r5 r6; do log "signal $id -> $(signal ut-$id | jq -c .)"; done
+for id in r2 r2b r2c r3 r4 r5 r6; do wait_until ut-$id "$DONE" 120; done
+OK2=0; B2=""; for id in r2 r2b r2c; do B=$(brief ut-$id); B2="$B2 $id=$B"; fx_is "$B" && OK2=$((OK2+1)) \
+  || log "$id stuck, full status: $(st ut-$id | jq -c '{engine, history:(.taskStore.history|fromjson? // [])}')"; done
+[ $OK2 = 3 ] && res R2 PASS "3/3 resumed after 90s sleep without trigger;$B2" || res R2 FAIL "$OK2/3 done;$B2"
 B=$(brief ut-r3); fx_is "$B" && [ "$(jq .attempts <<<"$B")" -ge 2 ] && res R3 PASS "retried by platform; $B" || res R3 FAIL "$B"
 B=$(brief ut-r4); fx_is "$B" && [ "$(jq .attempts <<<"$B")" -ge 2 ] && res R4 PASS "resumed after isolate OOM; $B err=$(st ut-r4 | jq -c .engine.error)" || res R4 FAIL "$B"
 # Pass = a deploy does not break an in-flight instance (finishes once, exactly-once effects).
