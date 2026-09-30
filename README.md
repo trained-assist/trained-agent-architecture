@@ -4,7 +4,9 @@
 
 ## Разделы
 
-- [Brainstorm: core и границы репозиториев](BRAINSTORM-CORE-AND-REPOSITORIES.md) — обсуждаем Conversation Service, Task Router, Task Queue, Execution Controller, MCP и распределение state; предложения не утверждены.
+- [Linearization Step — текущая итерация brainstorm](LINEARIZATION-STEP.md) — Input → Router → три типа executor → Output → Report to User → Gateway → пользователь; одна обратная связь для follow-up.
+
+- [Brainstorm: core и границы репозиториев](BRAINSTORM-CORE-AND-REPOSITORIES.md) — предыдущая итерация: Conversation Service, controller и распределение state. Текущий фокус центрального потока перенесён в Linearization Step; варианты не утверждены.
 
 - [Терминология и OpenLineage](TERMINOLOGY.md) — Job, Run, Dataset, Facets и границы нашей инфраструктуры.
 
