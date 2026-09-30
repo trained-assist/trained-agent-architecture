@@ -1,0 +1,26 @@
+# Pilot config: non-default ports, small memory footprint, telemetry off
+cluster-name = "pdb-pilot"
+node-name = "pdb-node"
+disable-telemetry = true
+rocksdb-total-memory-size = "256 MiB"
+default-num-partitions = 4
+bind-address = "127.0.0.1:15122"
+advertised-address = "http://127.0.0.1:15122/"
+
+[admin]
+bind-address = "127.0.0.1:19070"
+disable-web-ui = true
+
+[admin.query-engine]
+memory-size = "64 MiB"
+
+[ingress]
+bind-address = "127.0.0.1:18080"
+
+# Faster retries so a restarted executor is picked up within ~1s (default max-interval 1m).
+[default-retry-policy]
+initial-interval = "200ms"
+exponentiation-factor = 2.0
+max-interval = "1s"
+max-attempts = 1000
+on-max-attempts = "pause"

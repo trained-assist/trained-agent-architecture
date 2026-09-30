@@ -1,0 +1,7 @@
+vendor/
+sandbox/
+node_modules/
+*.db
+*.db-wal
+*.db-shm
+*.log
