@@ -39,10 +39,6 @@ External Integration Gate — адаптер к HH/CRM/provider APIs и callback
 
 ## Выделение
 
-- [ ] Зафиксировать C10, normalized outcome и adapter versioning.
-- [ ] Inventory существующих integrations: какие transport parts где находятся.
-- [ ] Извлечь один adapter с прежним facade; одинаковые fixtures на старом и новом пути.
-- [ ] Проверить auth expiry, webhook duplicates, provider timeout и outcome unknown.
-- [ ] Подключить общие task/error events, затем удалить старую transport реализацию.
+Порядок выделения: сначала C10, normalized outcome и adapter versioning; затем inventory существующих transport parts; один adapter извлекается с прежним facade и одинаковыми fixtures на старом и новом пути; auth expiry, webhook duplicates, provider timeout и outcome unknown проверяются до переключения; старая transport реализация удаляется только после подключения общих task/error events. Чек-лист этих работ — в issue [P25 #64](https://github.com/trained-assist/trained-agent-architecture/issues/64).
 
 Инфраструктурные package/HTTP transport и hosting выбираются позже. Отдельный repo не требует немедленно отдельной VM. Не подтверждено наличие webhook для HH: capabilities объявляют только реально поддержанные provider operations.

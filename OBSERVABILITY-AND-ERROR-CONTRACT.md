@@ -105,16 +105,16 @@ TTL отсчитывается по выбранному class timestamp; active
 
 ## Sandbox Driven Development: observable acceptance
 
-Каждый новый модуль/adapter/agent contract в sandbox должен показать не только successful output, но и диагностику намеренно вызванных failures:
+Каждый новый модуль/adapter/agent contract в sandbox показывает не только successful output, но и диагностику намеренно вызванных failures. Обязательные свойства (в приёмке — AC-230…AC-235 [общего гейта](ACCEPTANCE-CHECKLIST.md#5-сквозные-инварианты-и-контракты)):
 
-- [ ] Зарегистрирован источник и определены error/lifecycle schemas + TTL.
-- [ ] Ошибка user path содержит правильный profile и известный replyContext, сквозные Task/Run IDs.
-- [ ] Прогон timeout/invalid output/auth missing создаёт readable structured event.
-- [ ] Callback/async Run сохраняют profile/channel context; ранняя ошибка до task acceptance имеет request correlation.
-- [ ] Watcher fixture получает event через reader/replay; storm создаёт один incident.
-- [ ] Suppression expiry, unknown profile, delivery failure и watcher self-error наблюдаемы.
-- [ ] Native logs/export доступны по scoped refs; secrets/PII не оказываются в safe summary.
-- [ ] Ускоренный clock проверяет cleanup; TTL не стирает active checkpoint/outbox.
-- [ ] Telemetry backend outage не блокирует пользовательский путь бесконечно; виден dropped-count.
+- Зарегистрирован источник и определены error/lifecycle schemas + TTL.
+- Ошибка user path содержит правильный profile и известный replyContext, сквозные Task/Run IDs.
+- Прогон timeout/invalid output/auth missing создаёт readable structured event.
+- Callback/async Run сохраняют profile/channel context; ранняя ошибка до task acceptance имеет request correlation.
+- Watcher fixture получает event через reader/replay; storm создаёт один incident.
+- Suppression expiry, unknown profile, delivery failure и watcher self-error наблюдаемы.
+- Native logs/export доступны по scoped refs; secrets/PII не оказываются в safe summary.
+- Ускоренный clock проверяет cleanup; TTL не стирает active checkpoint/outbox.
+- Telemetry backend outage не блокирует пользовательский путь бесконечно; виден dropped-count.
 
-Это requirements для будущих эпиков и sandbox проверок. В этой задаче production instrumentation и проверки не запускались.
+Это requirements для sandbox-проверок каждого модуля; их выполнение отмечается в issue соответствующей карточки.

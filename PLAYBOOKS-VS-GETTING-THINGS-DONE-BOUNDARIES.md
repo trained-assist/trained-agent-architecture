@@ -284,16 +284,6 @@ GTD record сохраняет ожидаемый accepted Run/deadline. Если
 
 Сначала выделяем interfaces/modules; новые repos этим draft не создаются. GTD compiler/runtime может быть общим reusable package: portable playbook не означает обязательную привязку к нашей платформе.
 
-Проверки перед переносом:
-- [ ] Public методика применяется к двум профилям без утечки bindings.
-- [ ] Изменён template, активный plan продолжает pinned revision.
-- [ ] Gate, порядок, schedule и visibility независимо включаются/выключаются.
-- [ ] Disable Schedule не путается с cancel текущего Run.
-- [ ] Task без Telegram/chat binding видна и исполняется через Web/Reporting.
-- [ ] Awaiting user input переживает restart; во время ожидания engine не жжёт токены.
-- [ ] Дубликат/поздний ответ не возобновляет работу дважды.
-- [ ] Родительский engine умер, accepted independent child завершается и публикует результат.
-- [ ] Handoff Claude → OpenCode сохраняет userTaskId, создаёт новый Run и проверяет permissions.
-- [ ] Output и GTD не создают два continuation на один outcome.
+Перенос выполняется только после проверок: переносимость методики между профилями без утечки bindings, pinned revision активного плана, независимое включение gate/порядка/schedule/visibility, disable Schedule ≠ cancel Run, работа без chat binding через Web/Reporting, durable ожидание без расхода токенов, однократное возобновление, завершение независимого child после смерти parent, handoff Claude → OpenCode с тем же userTaskId и одним continuation. Чек-лист — в issues [P24 #63](https://github.com/trained-assist/trained-agent-architecture/issues/63) и [P22 #61](https://github.com/trained-assist/trained-agent-architecture/issues/61).
 
 Предпочтение draft: **Playbook — переносимая методика; Execution Plan — экземпляр; Checklist — view; GTD — progression; Schedule — trigger; Awaiting user input — durable ожидание; delegation — обычная разрешённая Task, независимая от живого parent process.**

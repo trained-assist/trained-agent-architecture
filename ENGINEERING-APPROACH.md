@@ -14,7 +14,7 @@ Sandbox — среда разработки. Agent clean room — граница
 
 1. Каждый work item имеет воспроизводимый setup/run/evidence/teardown с pinned source/software/config versions и isolated resource namespace. Test fixture означает подготовленный сценарий, а не обязательный mock.
 2. Приёмка включает положительный путь и релевантный controlled failure. Затронутый клиентский контракт проверяется снаружи; внутренний вызов не выдаётся за внешний API workflow.
-3. Общая схема логов и retention — [Observability](OBSERVABILITY-AND-ERROR-CONTRACT.md); обязательные проверки конкретного этапа — [Sandbox Plan](SANDBOX-PLAN.md). Evidence содержит sanitized transcript, IDs, версии, manifest/hash и исход recovery/cleanup.
+3. Общая схема логов и retention — [Observability](OBSERVABILITY-AND-ERROR-CONTRACT.md); обязательные проверки конкретного этапа — [Sandbox](SANDBOX.md). Evidence содержит sanitized transcript, IDs, версии, manifest/hash и исход recovery/cleanup.
 4. Реальные вызовы ограничены по времени, concurrency, диску и бюджету; free-only профиль не означает unlimited runs. Негативные сценарии не зависят от случайной ошибки бесплатной модели.
 5. Секреты передаются bindings/refs и не входят в исходники, manifests для публикации или журналы. Недоступная необязательная capability объявляется явно; отсутствие обязательной — даёт диагностируемый readiness outcome.
 6. Автономная среда включает bootstrap без ручных исправлений. Config конкретного хоста отделён от общего release; безопасные defaults не включают боевые расписания и доставку на новой VM.
@@ -43,9 +43,9 @@ README и AGENTS.md указывают краткую карту, способ �
 
 ## Где практика и план
 
-- [Sandbox Plan](SANDBOX-PLAN.md) — методы, controlled failures, stage-specific logs checks и уроки VM2.
+- [Sandbox](SANDBOX.md) — методы, bindings/credentials, controlled failures, stage-specific logs checks и уроки VM2.
 - [Implementation and Integration Plan](IMPLEMENTATION-AND-INTEGRATION-PLAN.md) — зависимости и порядок работ; этот документ не содержит второй календарь реализации.
 - [ARCHITECTURE](ARCHITECTURE.md) — ownership, связь Workflow/Runner/диска и критерии перехода.
 - Runnable setup/teardown и fixtures — в соответствующем implementation repo.
 
-GitHub Project/issue-план не является runtime Task Store или GTD. Общие правила находятся здесь; карточки содержат специфическую приёмку и ссылки, а не копии этих правил.
+Статус карточек и их чек-листы — в issues и [Project «Trained Assist — Migration»](https://github.com/orgs/trained-assist/projects/1); общий гейт Done и типы доказательств — [Acceptance](ACCEPTANCE-CHECKLIST.md). GitHub Project/issues не являются runtime Task Store или GTD. Общие правила находятся здесь; issues карточек содержат специфическую приёмку и ссылки, а не копии этих правил.
