@@ -4,6 +4,8 @@
 
 ## Разделы
 
+- [Review with real playbooks](REVIEW-WITH-REAL-PLAYBOOKS.md) — виртуальный прогон 11 JSON artifacts / 132 steps из engineering, sales, documents, HH и marketing; gtdId, waits, effects и acceptance gaps.
+
 - [Playbooks vs Getting Things Done Boundaries](PLAYBOOKS-VS-GETTING-THINGS-DONE-BOUNDARIES.md) — отдельный brainstorm: методика/plan/checklist, расписание, web view, ожидание пользователя и durable agent delegation.
 
 - [User Task: ID и Reporting](USER-TASK-IDS-AND-REPORTING.md) — один сквозной userTaskId, внутренние IDs, история эскалации и справочная по состоянию; пока без playbooks и групп задач.
