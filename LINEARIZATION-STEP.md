@@ -6,6 +6,8 @@
 
 **Отдельный слой над этим потоком:** [Playbooks / GTD boundaries](PLAYBOOKS-VS-GETTING-THINGS-DONE-BOUNDARIES.md). Playbook plans, schedules и agent-created tasks используют Input/Output contract. Для plan-owned работы continuation выбирает GTD, для простой — Output; два владельца одного продолжения недопустимы. Web task view — основной; chat notifications задаются отдельно.
 
+**Managed work:** gtdId связывает одну userTaskId с записью GTD-контроля, необязательно с playbook или schedule. Input → executor → Output сохраняют gtdId; Output передаёт outcome в durable GTD inbox. Для таких работ только GTD выбирает continuation. [Review реальных playbooks](REVIEW-WITH-REAL-PLAYBOOKS.md).
+
 ## 1. Основная идея
 
 Строим сквозной поток: **принять и собрать ввод → направить работу → выполнить → разобрать результат → сообщить пользователю**.
