@@ -1,6 +1,6 @@
 # User Task: идентификаторы и Reporting
 
-Статус: **draft / продолжение Linearization Step · 30.09.2026**. Прорабатываем **одну пользовательскую задачу**. Playbooks, групповые задачи и batch API здесь не проектируем.
+Статус: актуальная спецификация Task IDs и Reporting · 30.09.2026.
 
 **Следующий отдельный слой:** [Playbooks / GTD boundaries](PLAYBOOKS-VS-GETTING-THINGS-DONE-BOUNDARIES.md) добавляет planId/stepId, schedule occurrence и awaitingInputId; прежняя модель одной User Task сохраняется. Каждая Task имеет основной web view; чат — notification subscription. Awaiting-user отображается как state=blocked, stage=waiting_input, reason=awaiting_user, со ссылкой на активный Awaiting user input; после ответа разрешённое продолжение возвращает active.
 
