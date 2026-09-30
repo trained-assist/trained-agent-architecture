@@ -12,6 +12,12 @@
 
 [Контракты](../contracts/README.md) · [Целевая архитектура](../ARCHITECTURE.md) · [Execution runtime](../runtime/EXECUTION-RUNTIME.md) · [Manifest импорта](IMPORT-MANIFEST.json)
 
+## Новые общие сценарии (не копии)
+
+Пиши сюда по области продукта, в поддиректорию домена, по «Минимальному формату» ниже; дубли из sources сначала сверяй, потом заменяй ссылкой.
+
+- [interaction/run-conflict-explicit-choice.md](interaction/run-conflict-explicit-choice.md) — RC-01…RC-08: явный выбор при новой задаче во время работающего рана (TG/Web/API), решения владельца 30.09.2026; закрывает/уточняет US-QUEUE-01, US-MISC-01, US-BUF-02, CH-01, SS-06/07.
+
 ## Каталог
 
 Связи с Cxx ниже — предварительная классификация для навигации, не результат детального ревью каждого сценария.
