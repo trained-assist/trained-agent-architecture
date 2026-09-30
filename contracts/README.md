@@ -2,6 +2,29 @@
 
 Статус: предложение для согласования · 30.09.2026. Это логические границы; пути API ниже иллюстративны и ещё не утверждены. Раздел не объявляет текущий wire protocol заменённым.
 
+## Уточнение владельцев v0.3
+
+Слово **Orchestrator** ниже — историческое общее обозначение. Оно не означает новый монолитный сервис. Текущая схема — [ARCHITECTURE v0.3](../ARCHITECTURE.md); API остаются предложениями.
+
+| Контракт | Целевой владелец |
+|---|---|
+| C01 | Input Task Queue Manager + Task Journal |
+| C02 | Output → Report to User → Gateway delivery; Web Reporting читает общий task state |
+| C03 | Input/GTD для команд и контроля; Reporting для чтения; Runner для остановки конкретного Run |
+| C04 | Task Router выбирает executor; dispatch обеспечивает durable handoff; Agent Runner исполняет только ai-agent-job |
+| C05–C08 | Storage, domain tools, Credential Broker, Model Gateway/Ledger по своим границам |
+| C09 | GTD Manager интерпретирует pinned playbook/plan и evidence |
+
+Общий envelope несёт userTaskId, gtdId при наличии, jobId/runId для исполнения, tenant/profile context, causation/eventId и version. Стабильный userTaskId не заменяется sessionId или traceId. Awaiting user input адресуется awaitingInputId; доступ проверяется отдельно от знания ID. Pending queue удаляется только после durable ACK следующего владельца. Выполнение и доставка имеют разные статусы.
+
+### C10 — External Integration Gate ↔ provider / Task System
+
+Предлагаемый контракт. Исходящий вызов получает integrationBindingId, разрешённый scope, operationId и correlation задачи; Gate возвращает accepted/result/failed/outcome-unknown с externalOperationRef. Входящие webhook проходят provider-specific auth, binding resolution и durable inbox dedup по providerEventId. Сначала durable receipt, затем передача события в Input. Регистрация подписки — явное действие с webhookSubscriptionId; поддержка webhook не предполагается для каждого провайдера. При отсутствии webhook используется polling. Timeout мутации требует reconciliation, а не слепого повторного вызова.
+
+### C11 — Output ↔ GTD / Input continuation
+
+Предлагаемый контракт. Managed outcome с userTaskId/gtdId/resultId сохраняется в GTD inbox; повтор возвращает тот же ACK. GTD принимает transition один раз и передаёт continuation через outbox в Input. Для неуправляемой задачи continuation owner — Output/Router policy. Два владельца не могут независимо эскалировать один outcome. needs_executor — допустимый результат reply-or-route, а не техническая ошибка; бюджетный отказ не разрешает автоматически более дорогого агента.
+
 ## Что называем контрактом
 
 Контракт описывает обещания на границе крупных сервисов: кто вызывает кого, какой смысл имеют вход/выход и статусы, кто владеет состоянием, какие ошибки и повторы разрешены. JSON schema или HTTP endpoint — только часть контракта. Сценарий пользователя может пересекать несколько контрактов и репозиториев.
