@@ -1,6 +1,8 @@
 # Linearization Step
 
-Статус: **brainstorm v0.1 · 30.09.2026**. Новая итерация по предложению владельца. Заменяет предыдущую схему центрального узла **для текущего обсуждения**, но не утверждает изменение production architecture. Предыдущий [brainstorm](BRAINSTORM-CORE-AND-REPOSITORIES.md) остаётся историей вариантов.
+Статус: **brainstorm v0.2 · 30.09.2026**. Новая итерация по предложению владельца. Заменяет предыдущую схему центрального узла **для текущего обсуждения**, но не утверждает изменение production architecture. Предыдущий [brainstorm](BRAINSTORM-CORE-AND-REPOSITORIES.md) остаётся историей вариантов.
+
+**Продолжение для одной задачи:** [User Task — ID и Reporting](USER-TASK-IDS-AND-REPORTING.md). Главный сквозной ID — userTaskId; Task Reporting служит справочной по состоянию, Report to User отправляет сообщение. Playbook/group/batch здесь не проектируем.
 
 ## 1. Основная идея
 
@@ -43,6 +45,7 @@ flowchart TD
 | **LLM Recipe executor** | Выполнить фиксированный LLM recipe на подготовленном input без автономных tools |
 | **Agent Runner** | Исполнить агентский Run в Agent clean room |
 | **Output Task Queue Manager** | Проверить ResultEnvelope, применить заданную outcome policy, надёжно передать report либо новую работу в Input |
+| **Task Reporting** | По userTaskId предоставить состояние и историю всех стадий из durable journal; чтение без запуска LLM/агента |
 | **Report to User** | Преобразовать результат в пользовательское сообщение/артефакты и передать channel gateway |
 | **Gateway** | Channel protocol, rendering, send/edit/delivery receipts и показ пользователю |
 
@@ -52,7 +55,7 @@ Manager — роль обработчика очереди, а не обязат
 
 ## 4. Что хранит Input и когда забывает
 
-Состояния активного item: **assembling → preparing → ready → handing-off**. После подтверждённого приёма executor item удаляется из активной входной очереди. Короткий dedup receipt и ссылки в журнале могут сохраняться.
+Состояния активного item: **assembling → preparing → ready → handing-off**. После подтверждённого приёма executor item удаляется из активной входной очереди. Короткий dedup receipt и ссылки в журнале сохраняются по retention policy. User Task record с userTaskId и история стадий остаются доступны через Task Reporting после удаления активного queue item.
 
 - Router не принимает на себя пользовательскую задачу навсегда: он передаёт dispatch и возвращает receipt executor.
 - ACK Router «запрос получил» не достаточно для удаления Input item.
@@ -60,7 +63,7 @@ Manager — роль обработчика очереди, а не обязат
 - Потерян ACK — Input повторяет передачу с тем же operationId/runId; executor возвращает прежний receipt.
 - Новый Run для retry/escalation имеет новый runId; повтор доставки существующего Run не создаёт новую попытку.
 
-**Очередь освобождена, история не потеряна.** Минимальные task/job/run records, ownership, deadline, correlation и cancellation generation нужны вне активных queue items. В первом варианте это общий operational journal модулей, не ещё один controller-сервис.
+**Очередь освобождена, история не потеряна.** Минимальные task/job/run records, ownership, deadline, userTaskId, correlation и cancellation generation нужны вне активных queue items. В первом варианте это общий operational journal модулей, не ещё один controller-сервис.
 
 Executor владеет принятой работой и durable result outbox до ACK Output. При падении исполнитель восстанавливается либо технический watchdog формирует failed/unknown outcome в Output. Без такого механизма принятый Run может исчезнуть навсегда, хотя обе очереди пусты. Watchdog не выбирает бизнес-продолжение и не запускает GTD; он сообщает факт остановки/неизвестного состояния.
 
@@ -72,7 +75,7 @@ Input Manager управляет сборкой task, но тяжёлую обр
 2. Download/upload worker потоково пишет оригинал в object storage; очередь содержит artifact ref, owner, size/hash и stage.
 3. Media worker создаёт transcript/preview/compressed derivative, сохраняя связь с оригиналом.
 4. Input item готов после явного завершения ввода либо quiet window и готовности необходимых вложений.
-5. Новое сообщение после dispatch — отдельный supplement с targetTaskId; старую переданную задачу не открываем незаметно заново.
+5. Новое сообщение после dispatch — отдельный supplement с targetUserTaskId; старую переданную задачу не открываем незаметно заново.
 
 Object storage выбираем отдельно: R2 либо другой подходящий bucket. Низкая стоимость хранения не отменяет limits, retention и cleanup. Оригинал не заменяем необратимо пережатым файлом.
 
@@ -103,7 +106,7 @@ Output Manager — небольшой **детерминированный об�
 
 После enqueue/ACK новой работы Output не ждёт её исполнения. Так реализуется «передал и забыл», без потери между записью результата и следующей отправкой. При разных хранилищах нужен durable outbox плюс idempotent receiver; простой fire-and-forget HTTP не даёт этой гарантии.
 
-Минимальный ResultEnvelope: resultId, taskId, jobId, runId, outcome, outputRef, errorCode/detailsRef, outputSchemaVersion, effectStatus, usageRef и destinationRef. `effectStatus=unknown` запрещает слепой повтор внешней мутации. Секреты и лишние пользовательские данные в diagnostic payload не включаются.
+Минимальный ResultEnvelope: resultId, userTaskId, jobId, runId, outcome, outputRef, errorCode/detailsRef, outputSchemaVersion, effectStatus, usageRef и destinationRef. `effectStatus=unknown` запрещает слепой повтор внешней мутации. Секреты и лишние пользовательские данные в diagnostic payload не включаются.
 
 ## 8. Ошибки и одна обратная связь
 
@@ -125,7 +128,11 @@ Follow-up содержит parentRunId, reason, purpose, escalationDepth, attemp
 
 Original jobType не меняем задним числом: escalation создаёт новую Job с lineage к исходной Task. Ошибка не является разрешением на новые побочные эффекты.
 
-## 9. Report to User и доставка
+## 9. Reporting и доставка
+
+**Task Reporting — справочная:** Web/TG запрашивают состояние по userTaskId напрямую, без нового Job. Input, Router, executors, Output и delivery записывают durable события с этим ID; Reporting читает journal/projection, включая pending/stale/failures/escalation. Успешная диагностика ещё не означает успех пользовательской задачи. Snapshot содержит version/updatedAt/freshness, а deliveryState учитывается отдельно. Подробные ID и переходы: [USER-TASK-IDS-AND-REPORTING.md](USER-TASK-IDS-AND-REPORTING.md).
+
+**Report to User — исходящее сообщение:**
 
 Report to User получает уже принятый output, destinationRef, logicalMessageId и вариант report. Он формирует canonical message, refs/attachments и доступные actions. По умолчанию это лёгкий deterministic handler.
 
@@ -144,7 +151,7 @@ Report handler хранит outgoing delivery до durable gateway ACK. Gateway 
 | Репозиторий | Что живёт |
 |---|---|
 | trained-agent-architecture | Эта схема, термины, cross-repo scenarios/contracts |
-| **trained-assist-task-queue — кандидат** | Input и Output managers отдельными modules, queue contracts, operational journal, outcome policy; Report handler как небольшой module |
+| **trained-assist-task-queue — кандидат** | Input и Output managers отдельными modules, queue contracts, operational journal, outcome policy; Report handler, Task Reporting и User Task journal как небольшие modules |
 | **Task Router package/repo — кандидат** | Job type policy, routing recipes и executor dispatch adapters |
 | ai-agent-runner | Agent Runner / clean room / engine adapters |
 | Deterministic / LLM executor modules | Могут сначала жить рядом с Router или в существующих workers; отдельные repos не обязательны |
