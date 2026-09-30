@@ -61,3 +61,11 @@ Agent Runner lifecycle — [ai-agent-runner](https://github.com/trained-assist/a
 ## Acceptance
 
 No-profile run, two tenants isolation, duplicate submit, worker loss, cancel, late result, export failure, callback retries, missing credentials, region refusal и resource exhaustion. Standalone fixture запускается без GTD/domain/frontend modules. Полный production clean room не подтверждён текущими draft.
+
+## Implementation refinement: direct artifact transfer
+
+Control API остаётся небольшим: artifactId/manifest, version/hash/size/MIME, scoped upload/download session, status и commit receipt. Клиент передаёт/получает bytes напрямую через короткоживущие signed object URLs; большой upload — multipart/resume с abort/expiry cleanup. FTP, mount пользовательского host directory и большие bodies через Worker не нужны.
+
+Manifest публикуется после export commit; partial/failed exports явны. No-profile request всё равно имеет tenant/principal ownership. Auth проверяется при выдаче session; signed URL чувствителен и не пишется в общие logs. Test fixtures проверяют browser CORS, expiry, interrupted transfers, digest mismatch, wrong scope и folder version conflict. Source HTML можно доставить как файл; publishing/serving untrusted page — отдельная capability.
+
+[Cloudflare direct signed URLs](https://developers.cloudflare.com/r2/api/s3/presigned-urls/), [large object upload](https://developers.cloudflare.com/r2/objects/upload-objects/), [browser CORS](https://developers.cloudflare.com/r2/buckets/cors/) — primary sources для выбранного adapter. [Sandbox approach](ENGINEERING-APPROACH.md) включает local storage fixture и separate cloud smoke.
