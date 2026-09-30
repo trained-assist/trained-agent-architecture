@@ -109,7 +109,9 @@ Runner/API/artifact adapters — ai-agent-runner; reusable storage contract по
 Web/TG — новые sandbox adapters с существующими gateways как reference. Router — модуль нового общего control-plane repo по ARCHITECTURE §9.
 MCP/domain methods — domain repos, тонкие platform facade/adapters.
 Input, Output, GTD, Journal, Reporting и Workflow Port — модули того же control plane над единым Task Store; отдельные repos не prerequisite P12/P23.
-Integration Gate и Error Watcher — самостоятельные repos после создания владельцем либо отдельно авторизованной provisioning задачи.
+Integration Gate и Error Watcher — самостоятельные repos.
+
+Созданные новые repos (30.09.2026, публичные, пока только README/AGENTS и CI Repository context по Z03): [trained-assist-control-plane](https://github.com/trained-assist/trained-assist-control-plane) — control plane; [trained-assist-integration-gate](https://github.com/trained-assist/trained-assist-integration-gate) — I08; [trained-assist-error-watcher](https://github.com/trained-assist/trained-assist-error-watcher) — I09. Runner — уже существующий ai-agent-runner. Остальной I00 onboarding (AutoFix, staging) — по Z01/Z02.
 Ни одна карточка не требует предварительно создать repo для каждого логического прямоугольника.
 
 ## Implementation work items

@@ -341,14 +341,14 @@ userTaskId, gtdId, tenant/profile/audience и причинная связь пе
 | Репозиторий | Ответственность |
 |---|---|
 | trained-agent-architecture | Эта архитектура, контракты, сценарии, аудит |
-| **Control plane — один новый репозиторий** (имя предложено: trained-assist-control-plane) | Input, Router, Output, GTD, Journal, Reporting API — модули над одним Task Store; Workflow Port и его адаптеры. Router выделяется отдельно, только если у него появится свой жизненный цикл |
+| **Control plane — один новый репозиторий** [trained-assist-control-plane](https://github.com/trained-assist/trained-assist-control-plane) (создан 30.09.2026) | Input, Router, Output, GTD, Journal, Reporting API — модули над одним Task Store; Workflow Port и его адаптеры. Router выделяется отдельно, только если у него появится свой жизненный цикл |
 | trained-assist-tg-bot | Telegram: приём, доставка, ID сообщений, UX канала; буфер и outbox приёма **В проде ✅**; выбор исполнителя отсюда уходит |
 | trained-assist-web | Web UI и просмотр задач через общий API |
 | ai-agent-runner | Clean room, адаптеры движков, размещение по регионам, жизненный цикл Run; изоляция слотами переносится из ядра |
 | trained-assist-agent | Текущее ядро; источник переносимых модулей (раздел 6) |
 | trained-assist-llm-ladder | Выбор модели и провайдера **В проде ✅**; не выбор типа Job |
-| trained-assist-integration-gate (имя предложено) | Provider API/webhook adapters, bindings, inbox, квитанции |
-| trained-assist-error-watcher (имя предложено) | Ошибки → инциденты → диагностика → обход/issue/отчёт |
+| [trained-assist-integration-gate](https://github.com/trained-assist/trained-assist-integration-gate) (создан 30.09.2026) | Provider API/webhook adapters, bindings, inbox, квитанции |
+| [trained-assist-error-watcher](https://github.com/trained-assist/trained-assist-error-watcher) (создан 30.09.2026) | Ошибки → инциденты → диагностика → обход/issue/отчёт |
 | Credential Broker / Storage (размещение открыто) | Scoped credentials, snapshots, artifacts |
 | Общие contracts/schema | Версионированные envelopes, без бизнес-логики |
 
