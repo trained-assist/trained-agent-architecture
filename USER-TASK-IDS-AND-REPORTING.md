@@ -228,6 +228,6 @@ Journal — небольшой shared operational module, не новый биз
 
 ## Уточнение 30.09.2026: opt-in контроль и error context
 
-GTD не добавляется ко всем задачам. Cron, delegation, длинный Run и эскалация ошибки сами по себе не создают gtdId; explicit next-step/acceptance control создаёт его. [Общая v0.4](ARCHITECTURE.md).
+GTD не добавляется ко всем задачам. Cron, delegation, длинный Run и эскалация ошибки сами по себе не создают gtdId; explicit next-step/acceptance control создаёт его. [Общая архитектура](ARCHITECTURE.md).
 
 [Error contract](OBSERVABILITY-AND-ERROR-CONTRACT.md) обязателен: profile scope, channel/destinationRef если известны, source/task/run IDs. [Watcher](SYSTEM-ERROR-WATCHER.md) создаёт отдельный diagnosticUserTaskId с incidentId/sourceUserTaskId; исходная ошибка не переименовывается в успешную диагностику. Serverless client receipt однозначно mapped к userTaskId, даже без Web UI.

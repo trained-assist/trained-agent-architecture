@@ -4,7 +4,7 @@
 
 ## Уточнение владельцев v0.3
 
-Слово **Orchestrator** ниже — историческое общее обозначение. Оно не означает новый монолитный сервис. Текущая схема — [ARCHITECTURE v0.4](../ARCHITECTURE.md); API остаются предложениями.
+Слово **Orchestrator** ниже — историческое общее обозначение. Оно не означает новый монолитный сервис. Текущая схема — [ARCHITECTURE v0.6](../ARCHITECTURE.md); API остаются предложениями.
 
 | Контракт | Целевой владелец |
 |---|---|
@@ -23,7 +23,7 @@
 
 ### C11 — Output ↔ GTD / Input continuation
 
-Предлагаемый контракт. Managed outcome с userTaskId/gtdId/resultId сохраняется в GTD inbox; повтор возвращает тот же ACK. GTD принимает transition один раз и передаёт continuation через outbox в Input. Для неуправляемой задачи continuation owner — Output/Router policy. Два владельца не могут независимо эскалировать один outcome. needs_executor — допустимый результат reply-or-route, а не техническая ошибка; бюджетный отказ не разрешает автоматически более дорогого агента.
+Предлагаемый контракт. Managed outcome с userTaskId/gtdId/resultId сохраняется в GTD inbox; повтор возвращает тот же ACK. GTD принимает transition один раз и передаёт continuation через outbox в Input. Для неуправляемой задачи continuation owner — Output, применяющий решение Router policy. Два владельца не могут независимо эскалировать один outcome. needs_executor — допустимый результат reply-or-route, а не техническая ошибка; бюджетный отказ не разрешает автоматически более дорогого агента.
 
 ### C12 — Все модули → registered Error/Lifecycle sources → readers
 
@@ -65,7 +65,7 @@ gtdId opt-in только при явном completion control/конкретн�
 
 Предлагаемый envelope: `contractVersion, requestId, principalId, conversationRef, sessionId?, projectId?, inputItems[], artifactRefs[], requestedExecutionPolicy?, replyToRef`. Principal, endpoint и доступ к project/session выводятся из проверенной аутентификации, а не принимаются на доверии от модели. Для headless API conversationRef отсутствует; replyToRef может означать polling/webhook/storage target.
 
-Receipt: `requestId, taskId, acceptedAt, durable=true`. ACK означает durable acceptance; не запуск, не завершение и не доставку ответа. Повтор того же requestId с тем же payload возвращает прежний receipt; другой payload с тем же ключом — conflict. Scope ключа включает проверенного вызывающего клиента/tenant, срок дедупликации объявлен. Потеря ACK допускает безопасную повторную доставку.
+Receipt: `requestId, userTaskId, acceptedAt, durable=true`. ACK означает durable acceptance; не запуск, не завершение и не доставку ответа. Повтор того же requestId с тем же payload возвращает прежний receipt; другой payload с тем же ключом — conflict. Scope ключа включает проверенного вызывающего клиента/tenant, срок дедупликации объявлен. Потеря ACK допускает безопасную повторную доставку.
 
 **Сейчас:** TG RunOutbox хранит FIFO и повторяет /run до matching durable ACK. Web имеет собственную делегацию в core. Это разные реализации, которые требуется сопоставить с общим контрактом, а не механически заменить одним transport.
 
@@ -73,7 +73,7 @@ Receipt: `requestId, taskId, acceptedAt, durable=true`. ACK означает dur
 
 ## C02 — события и доставка результата
 
-Envelope: `eventId, taskId, runId?, sessionId?, sequence, type, occurredAt, replyToRef, payload, artifactRefs?`. События: accepted, queued, started, progress, attempt_failed, waiting, stopped, result_ready, task_failed, delivery_failed. Ошибка попытки не обязана быть ошибкой task; отсутствие прогресса не доказательство зависания.
+Envelope: `eventId, userTaskId, runId?, sessionId?, sequence, type, occurredAt, replyToRef, payload, artifactRefs?`. События: accepted, queued, started, progress, attempt_failed, waiting, stopped, result_ready, task_failed, delivery_failed. Ошибка попытки не обязана быть ошибкой task; отсутствие прогресса не доказательство зависания.
 
 Внутренний event store сохраняет порядок по task/session stream и поддерживает cursor/replay. Gateway рендерит события в Telegram, Web читает stream/polling; будущий канал не требует добавлять прямой sender в core runner. Delivery adapter подтверждает принятие события. Это не гарантия того, что человек прочитал сообщение. При отсутствии provider idempotency повтор внешней доставки может породить дубль; хранить provider message IDs и заявлять at-least-once честно.
 
@@ -83,7 +83,7 @@ Envelope: `eventId, taskId, runId?, sessionId?, sequence, type, occurredAt, repl
 
 ## C03 — stop/supplement/status
 
-Command: `commandId, principalId, targetTaskId/sessionId, conversationRef?, action, payload?, expectedGeneration?`. На уровне UX Telegram может выбирать текущую задачу lane, но control plane сохраняет resolved target. Stop никогда не означает «убить все задачи профиля». Supplement явно определяет: добавить в текущую попытку, сохранить для следующей или создать follow-up; receipt сообщает принятый вариант.
+Command: `commandId, principalId, targetUserTaskId/sessionId, conversationRef?, action, payload?, expectedGeneration?`. На уровне UX Telegram может выбирать текущую задачу lane, но control plane сохраняет resolved target. Stop никогда не означает «убить все задачи профиля». Supplement явно определяет: добавить в текущую попытку, сохранить для следующей или создать follow-up; receipt сообщает принятый вариант.
 
 Развести `stop requested` и `stopped`: второй статус подтверждается остановкой процесса/дочерних работ либо известным terminal outcome. Stop suppresses technical retries и GTD continuation той же работы. Фоновая задача другого проекта остаётся независимой. Mutations, уже завершённые снаружи, stop не откатывает автоматически.
 
@@ -93,7 +93,7 @@ Command: `commandId, principalId, targetTaskId/sessionId, conversationRef?, acti
 
 Runner — исполнитель attempt, а не самостоятельный планировщик задач. Команды условно `startAttempt / cancelAttempt / getAttempt / reconcile`; events — claimed, materialized, started, heartbeat, exited, export_ready, cleanup_done.
 
-RunSpec: `taskId, runId, attemptId, ownerGeneration, lease, principalRef, inputSnapshotRef, engine, resolvedExecutionPolicy, regionConstraints, resourceLimits, artifactPolicy, credentialRefs, toolCapabilities, deadline, traceContext`. CLI binary/config/provider release и разрешённые tools фиксируются доверенным host resolution; агент не выбирает host roots и не подделывает binding.
+RunSpec: `userTaskId, runId, attemptId, ownerGeneration, lease, principalRef, inputSnapshotRef, engine, resolvedExecutionPolicy, regionConstraints, resourceLimits, artifactPolicy, credentialRefs, toolCapabilities, deadline, traceContext`. CLI binary/config/provider release и разрешённые tools фиксируются доверенным host resolution; агент не выбирает host roots и не подделывает binding.
 
 Router сначала исключает недопустимые зоны, затем проверяет capability/health/capacity. Claude/Codex — вне RU; OpenCode проверяется ещё по модели и tool requirements. Каждый fallback повторно проходит policy. Требование RU-only tool + EU-only engine решается отдельным tool worker, только если data policy допускает такой обмен; иначе placement conflict.
 
@@ -113,7 +113,7 @@ Cleanup следует после подтверждённого persist/export 
 
 ## C06/C07 — tools и credentials
 
-ToolCall: `operationId, taskId, runId, principalRef, toolId, resolvedProviderVersion, input, credentialBindingRef, ownerGeneration, timeout`. ToolResult: success/error + failureClass + effect status (none/applied/unknown) + evidence/artifacts. read-only retry и mutation retry имеют разные правила. При unknown effect сперва reconciliation; при невозможности доказать outcome — needs_review.
+ToolCall: `operationId, userTaskId, runId, principalRef, toolId, resolvedProviderVersion, input, credentialBindingRef, ownerGeneration, timeout`. ToolResult: success/error + failureClass + effect status (none/applied/unknown) + evidence/artifacts. read-only retry и mutation retry имеют разные правила. При unknown effect сперва reconciliation; при невозможности доказать outcome — needs_review.
 
 Domain service отвечает за свои вакансии/кандидатов/спеки/инженерные workspace. Core хранит generic task/execution references, а не переносит domain handlers внутрь себя ради orchestration. Broker проверяет identity, scope, доступ к paths/network и объявленные возможности. MCP — transport adapter, не автоматическое название бизнес-сервиса.
 
@@ -125,7 +125,7 @@ Credential resolution — по consumer: personal/shared/playground/platform, з
 
 LLM gateway управляет provider/model ladder, health, key rotation, protocol errors. Orchestrator разрешает cost class/paid fallback и резервирует task budget; ledger записывает расходы. Это три обязанности даже при совместном deployment.
 
-Call context: `callId, taskId?, runId?, stepId?, principalId, purpose, budgetRef, permittedCostClass, traceId`. Сервисные вызовы без task имеют явный system source. Каждый provider attempt получает запись outcome/usage/cost basis; stream usage может быть unknown, но не zero. Subscription usage, estimate и invoice amount различаются. Цены привязаны к timestamp/version. При исчерпании бюджета возвращается typed failure; технический retry не сбрасывает budget, каналы показывают одинаковую причину и допустимое продолжение.
+Call context: `providerCallId, userTaskId?, runId?, stepId?, principalId, purpose, budgetRef, permittedCostClass, traceId`. Сервисные вызовы без task имеют явный system source. Каждый provider attempt получает запись outcome/usage/cost basis; stream usage может быть unknown, но не zero. Subscription usage, estimate и invoice amount различаются. Цены привязаны к timestamp/version. При исчерпании бюджета возвращается typed failure; технический retry не сбрасывает budget, каналы показывают одинаковую причину и допустимое продолжение.
 
 Streaming failover после начала ответа — отдельный сценарий: нельзя прозрачно приклеить второй независимый ответ. Ошибки ledger delivery не теряются: durable accounting outbox/reconciliation; режим fail-open/fail-closed при недоступном budget authority требует решения владельца.
 

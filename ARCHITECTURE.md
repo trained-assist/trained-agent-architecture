@@ -64,11 +64,11 @@ Input хранит ещё не переданные задания: загруз
 
 Крупные файлы идут в Artifact Storage; в очередь попадают ссылки и метаданные. Загрузка, проверка, транскрипция и сжатие имеют состояния, лимиты, deadlines и backpressure. Не нужно держать тяжёлый файл в webhook/API-запросе на протяжении всего расчёта.
 
-Output принимает результаты и события состояния, проверяет контракт и сохраняет их. Затем он передаёт delivery или follow-up и удаляет pending item после подтверждённой передачи. У **одного перехода ровно один владелец**: для управляемой задачи решение о следующем шаге принимает GTD; для неуправляемой — политика Output/Router. GTD и Output не должны одновременно повторять одну ошибку.
+Output принимает результаты и события состояния, проверяет контракт и сохраняет их. Затем он передаёт delivery или follow-up и удаляет pending item после подтверждённой передачи. У **одного перехода ровно один владелец**: для управляемой задачи решение о следующем шаге принимает GTD; для неуправляемой — Output, применяющий решение Router policy (Router сам состояние не меняет). GTD и Output не должны одновременно повторять одну ошибку.
 
 Разговорный запрос по умолчанию получает один полезный bounded LLM recipe «ответь или определи следующий executor». Готовый ответ идёт в Output. Если нужны инструменты и адаптивные действия — Output создаёт typed continuation той же задачи к агенту. Это не новый userTaskId и не ошибка LLM Run. Типизированные команды stop/status, известные доменные задания и callbacks не требуют обязательной LLM-классификации. Подробнее — [Task Router и MCP](TASK-ROUTER-AND-MCP.md).
 
-Автоматическая эскалация deterministic → LLM → **OpenCode agent** — текущая целевая policy, с bounded attempts/deadline/capacity. Лестница OpenCode → Claude Code/Codex не рассматривается. Низкая ожидаемая стоимость OpenCode не означает unlimited расход или отмену budget/auth checks. Отсутствие бюджета, доступа или неопределённый исход внешнего действия требуют соответствующего blocked/reconciliation состояния. «Задача принята» и «агент запущен» — разные события.
+Автоматическая эскалация deterministic → LLM → **OpenCode agent** — текущая целевая policy, с bounded attempts/deadline/capacity. Лестница OpenCode → Claude Code/Codex не рассматривается; Claude Code/Codex запускаются только по явному выбору пользователя/профиля (отдельная allowed policy, не rung эскалации — см. [Task Router](TASK-ROUTER-AND-MCP.md)). Низкая ожидаемая стоимость OpenCode не означает unlimited расход или отмену budget/auth checks. Отсутствие бюджета, доступа или неопределённый исход внешнего действия требуют соответствующего blocked/reconciliation состояния. «Задача принята» и «агент запущен» — разные события.
 
 Reporting — read model по userTaskId: очередь, подготовка, запуск, ошибка, следующий executor, уровень эскалации, ожидание пользователя и итог. Статус вычисляется из durable событий, а не из наличия процесса или сообщения в чате. Доставка пользователю имеет отдельный статус от исполнения.
 
@@ -251,6 +251,8 @@ Credentials имеют shared/platform, private/user и replaceable-default scop
 - Где хранятся профили, artifacts и journal для RU/EU и допустимы ли трансграничные snapshots?
 - Достаточен ли приватный Web task view всем пользователям API, и как выдаётся доступ?
 - Какие фактические gaps Ledger и latency baseline подтвердит следующий runtime audit?
+- Какое authoritative durable storage держит Task Journal, Input/Output outbox и lease/fencing generation? От него зависят INV-02, INV-14 и Reporting; общий object bucket не подходит ([Code baseline](audits/CODE-BASELINE.md)).
+- Fail-open или fail-closed, когда budget authority/Ledger недоступен ([C08](contracts/README.md#c08--llm-calls-budgets-и-ledger))?
 
 Решения 30.09.2026: GTD selective opt-in; Integration Gate и Error Watcher — самостоятельные repos; автоматический конечный агент эскалации — OpenCode. Имена новых repos ещё предложения. TTL в observability и конкретные budget limits ещё draft.
 
