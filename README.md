@@ -36,7 +36,8 @@ python3 tools/repo-context/map.py
 | [ARCHITECTURE](ARCHITECTURE.md) | Целевая модель, принятые границы, IDs и инварианты |
 | [Implementation and Integration Plan](IMPLEMENTATION-AND-INTEGRATION-PLAN.md) | Порядок, зависимости, scope и специфическая приёмка карточек |
 | [Engineering Approach](ENGINEERING-APPROACH.md) | Концепция Sandbox Driven Development и общие правила разработки |
-| [Sandbox Plan](SANDBOX-PLAN.md) | Практические среды, сценарии сбоев, пробелы и logs checks по этапам |
+| [Sandbox Plan](SANDBOX-PLAN.md) | Практические среды, сценарии сбоев, пробелы и logs checks по этапам; «Блокеры полного прохода» I00–I10 |
+| [Sandbox Bindings и Credentials](SANDBOX-BINDINGS-AND-CREDENTIALS.md) | Где лежит каждый ключ/токен/binding, владелец и процедура получения; чего не хватает. Значений секретов нет |
 | [Contracts](contracts/README.md) | Межкомпонентные обязательства; wire API имеет собственный статус согласования |
 | [Observability](OBSERVABILITY-AND-ERROR-CONTRACT.md) | Общая схема ошибок/событий, scope и retention |
 | [DECISIONS](DECISIONS.md) | История решений; действующая формулировка сверяется с архитектурой |
