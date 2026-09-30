@@ -1,0 +1,49 @@
+# Execution runtime: граница для выделения из core
+
+Статус: предложение для согласования · 30.09.2026.
+
+## Названия
+
+**Agent engine** — Claude Code, Codex или OpenCode, то есть программа, исполняющая агентский цикл. **Run/attempt** — один её запуск. **Execution sandbox** — изолированная среда доступа. **Execution slot** — арендуемая ёмкость хоста; сейчас непривилегированный Unix-пользователь ta-agent-N. **Execution runner** или **execution runtime service** — инфраструктурный компонент, который создаёт среду, запускает engine, наблюдает его и очищает ресурсы.
+
+Это разные сущности. Отдельного уникального инфраструктурного термина «агент внутри среды» не требуется: это agent process в execution sandbox. Sandbox может быть реализован без контейнера; свойства границы должны быть проверены для каждого движка и tool.
+
+## Что реально есть сейчас
+
+В core: src/agent-isolation.js (slot leases, ACL gates, env allowlist), src/runner/engine-isolation.js (spawn glue), run tokens/MCP bridge, локальные task queue и runners. Изоляция T0 опциональна; Codex и cwd вне профиля оставляют только allowlist/bridge, без run-as. Профиль/.agent-home постоянный. MCP servers работают как service user. Это не полный ephemeral sandbox lifecycle и не самостоятельный межмашинный runtime API.
+
+Git worktree из software-engineering-playbooks — изоляция изменений кода. Его lifecycle не заменяет OS boundary агента. Текущие исходники и ограничения закреплены ссылками в [ARCHITECTURE.md](../ARCHITECTURE.md).
+
+## Рекомендация по репозиторию
+
+**Да, выделение runner оправдано**, но сначала фиксируем [C04/C05](../contracts/README.md), затем извлекаем компонент постепенно. Предлагаемое имя: trained-assist-execution-runtime. Это предложение имени; новый репозиторий в этой задаче не создаётся. Если serverless-ai-agent-run предполагается использовать как тот же runtime, выбрать одно место реализации и избежать дублирования.
+
+| Остаётся в core/control plane | Выходит в execution runtime | Живёт отдельно |
+|---|---|---|
+| Task/session/project IDs, durable plan и acceptance | Sandbox/slot lifecycle, engine adapters и process supervision | Gateways и channel renderers |
+| Admission, logical leases и task budgets | Resource limits, local capacity и heartbeat | Profile/artifact storage |
+| GTD, scheduler и delivery coordination | Materialize/export/cleanup исполнение по storage contract | Domain tools, playbook registry |
+| Выбор разрешённой policy/region/engine | Проверка host capability и исполнение resolved RunSpec | Credential broker и LLM gateway/ledger |
+
+Runner не решает, какой бизнес-результат нужен, не создаёт GTD продолжения и не владеет Telegram messages. Profile storage владеет permanent data, runtime лишь материализует их локально. Credential broker владеет secrets; runtime получает минимальные bindings.
+
+## Минимальный логический API
+
+- startAttempt(RunSpec, operationId) → accepted attempt receipt. Повтор совместимого operationId возвращает ту же attempt; несовместимый payload — conflict.
+- cancelAttempt(attemptId, ownerGeneration) → cancel requested; stopped приходит отдельно.
+- getAttempt(attemptId) → current state + last heartbeat + persisted result refs.
+- event stream/replay → sequence, attempt state, exit reason, export/cleanup status.
+- capabilities/health → supported engines, isolation modes, region, capacity, readiness.
+- reconcile → перечень фактических процессов/attempts и состояния восстановления для control plane.
+
+Transport выбирается позднее: сначала host-owned library/adapter в одном процессе, потом локальный IPC или authenticated HTTP для workers. Не обязательно вводить remote network API до появления второго worker.
+
+## Этапы выделения
+
+1. Зафиксировать RunSpec/events, границы ownership и совместимость без переноса кода.
+2. Выделить library + fake runner adapter и прогнать одинаковые lifecycle сценарии на legacy и новом adapter. Core остаётся владельцем durable task state.
+3. Извлечь реальные engine/process/sandbox компоненты. Проверить stop, child cleanup, краш при export, отсутствующие creds и каждый движок. Не сохранять незаявленный privileged fallback.
+4. Подключить worker API/leases, если требуется remote execution. Проверить потерю worker, повтор start, поздние events и fencing; не запускать один task двум независимым schedulers.
+5. Добавить snapshot/commit/cleanup и remove legacy path после rollout evidence.
+
+Граница репозитория уменьшает связанность только если runtime не импортирует внутренние модули core напрямую. Связь через versioned contract/adapter. Выделение не должно превращаться в копирование существующего runner с собственной второй БД задач.

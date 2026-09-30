@@ -1,0 +1,319 @@
+{
+  "importedAt": "2026-09-30",
+  "mode": "copy-snapshot",
+  "contentModified": false,
+  "files": [
+    {
+      "repo": "trained-assist-agent",
+      "path": "docs/user-scenarios/GOALS.md",
+      "sha": "b4d99720fcde573141017b76e6ad0468d716ba9c",
+      "revision": "c83e6931d61ddb205779ee670e4c4c59b26580eb",
+      "destination": "scenarios/sources/trained-assist-agent/docs/user-scenarios/GOALS.md",
+      "sourceUrl": "https://github.com/trained-assist/trained-assist-agent/blob/c83e6931d61ddb205779ee670e4c4c59b26580eb/docs/user-scenarios/GOALS.md"
+    },
+    {
+      "repo": "trained-assist-agent",
+      "path": "docs/user-scenarios/README.md",
+      "sha": "178bb8d43baa4d037f51425e6f1ee92b33cc6f7e",
+      "revision": "c83e6931d61ddb205779ee670e4c4c59b26580eb",
+      "destination": "scenarios/sources/trained-assist-agent/docs/user-scenarios/README.md",
+      "sourceUrl": "https://github.com/trained-assist/trained-assist-agent/blob/c83e6931d61ddb205779ee670e4c4c59b26580eb/docs/user-scenarios/README.md"
+    },
+    {
+      "repo": "trained-assist-agent",
+      "path": "docs/user-scenarios/core/01-channel-concurrency.md",
+      "sha": "af75a199da5d1c1ba671147847924ca2e7ef2c79",
+      "revision": "c83e6931d61ddb205779ee670e4c4c59b26580eb",
+      "destination": "scenarios/sources/trained-assist-agent/docs/user-scenarios/core/01-channel-concurrency.md",
+      "sourceUrl": "https://github.com/trained-assist/trained-assist-agent/blob/c83e6931d61ddb205779ee670e4c4c59b26580eb/docs/user-scenarios/core/01-channel-concurrency.md"
+    },
+    {
+      "repo": "trained-assist-agent",
+      "path": "docs/user-scenarios/core/02-background-run-visibility.md",
+      "sha": "e552affa116f76cbc64bcfe078c764ae9b40789f",
+      "revision": "c83e6931d61ddb205779ee670e4c4c59b26580eb",
+      "destination": "scenarios/sources/trained-assist-agent/docs/user-scenarios/core/02-background-run-visibility.md",
+      "sourceUrl": "https://github.com/trained-assist/trained-assist-agent/blob/c83e6931d61ddb205779ee670e4c4c59b26580eb/docs/user-scenarios/core/02-background-run-visibility.md"
+    },
+    {
+      "repo": "trained-assist-agent",
+      "path": "docs/user-scenarios/core/02-stop-and-supplement.md",
+      "sha": "f1f35ece71112354a0bf91b54408224170b7722a",
+      "revision": "c83e6931d61ddb205779ee670e4c4c59b26580eb",
+      "destination": "scenarios/sources/trained-assist-agent/docs/user-scenarios/core/02-stop-and-supplement.md",
+      "sourceUrl": "https://github.com/trained-assist/trained-assist-agent/blob/c83e6931d61ddb205779ee670e4c4c59b26580eb/docs/user-scenarios/core/02-stop-and-supplement.md"
+    },
+    {
+      "repo": "trained-assist-agent",
+      "path": "docs/user-scenarios/core/03-web-session-log-views.md",
+      "sha": "49f999aad4d79f5774d2850e0111ee0de1114115",
+      "revision": "c83e6931d61ddb205779ee670e4c4c59b26580eb",
+      "destination": "scenarios/sources/trained-assist-agent/docs/user-scenarios/core/03-web-session-log-views.md",
+      "sourceUrl": "https://github.com/trained-assist/trained-assist-agent/blob/c83e6931d61ddb205779ee670e4c4c59b26580eb/docs/user-scenarios/core/03-web-session-log-views.md"
+    },
+    {
+      "repo": "trained-assist-agent",
+      "path": "docs/user-scenarios/core/04-durable-plan-artifacts.md",
+      "sha": "5389a8c7168aef46145f1d7eaf9a8092d31354b7",
+      "revision": "c83e6931d61ddb205779ee670e4c4c59b26580eb",
+      "destination": "scenarios/sources/trained-assist-agent/docs/user-scenarios/core/04-durable-plan-artifacts.md",
+      "sourceUrl": "https://github.com/trained-assist/trained-assist-agent/blob/c83e6931d61ddb205779ee670e4c4c59b26580eb/docs/user-scenarios/core/04-durable-plan-artifacts.md"
+    },
+    {
+      "repo": "trained-assist-agent",
+      "path": "docs/user-scenarios/core/04-durable-wait-latency.md",
+      "sha": "8a5601618358e1fdd75d415a579ee01fc648a4be",
+      "revision": "c83e6931d61ddb205779ee670e4c4c59b26580eb",
+      "destination": "scenarios/sources/trained-assist-agent/docs/user-scenarios/core/04-durable-wait-latency.md",
+      "sourceUrl": "https://github.com/trained-assist/trained-assist-agent/blob/c83e6931d61ddb205779ee670e4c4c59b26580eb/docs/user-scenarios/core/04-durable-wait-latency.md"
+    },
+    {
+      "repo": "trained-assist-agent",
+      "path": "docs/user-scenarios/core/05-web-session-durability.md",
+      "sha": "c9a2bd72d60157f99239e392321245e0cca21d45",
+      "revision": "c83e6931d61ddb205779ee670e4c4c59b26580eb",
+      "destination": "scenarios/sources/trained-assist-agent/docs/user-scenarios/core/05-web-session-durability.md",
+      "sourceUrl": "https://github.com/trained-assist/trained-assist-agent/blob/c83e6931d61ddb205779ee670e4c4c59b26580eb/docs/user-scenarios/core/05-web-session-durability.md"
+    },
+    {
+      "repo": "trained-assist-agent",
+      "path": "docs/user-scenarios/core/06-tool-platform-keys.md",
+      "sha": "69100acb35993669bae84c98fb8209a1e3d7aecb",
+      "revision": "c83e6931d61ddb205779ee670e4c4c59b26580eb",
+      "destination": "scenarios/sources/trained-assist-agent/docs/user-scenarios/core/06-tool-platform-keys.md",
+      "sourceUrl": "https://github.com/trained-assist/trained-assist-agent/blob/c83e6931d61ddb205779ee670e4c4c59b26580eb/docs/user-scenarios/core/06-tool-platform-keys.md"
+    },
+    {
+      "repo": "trained-assist-agent",
+      "path": "docs/user-scenarios/engineering/01-development-playbook.md",
+      "sha": "45f97b409d714e786c5adcd1e99b71d67da8a3e4",
+      "revision": "c83e6931d61ddb205779ee670e4c4c59b26580eb",
+      "destination": "scenarios/sources/trained-assist-agent/docs/user-scenarios/engineering/01-development-playbook.md",
+      "sourceUrl": "https://github.com/trained-assist/trained-assist-agent/blob/c83e6931d61ddb205779ee670e4c4c59b26580eb/docs/user-scenarios/engineering/01-development-playbook.md"
+    },
+    {
+      "repo": "trained-assist-agent",
+      "path": "docs/user-scenarios/engineering/02-custom-playbook-authoring.md",
+      "sha": "cac7970b3dc18cad636d1ff72a001a41fc5a3f42",
+      "revision": "c83e6931d61ddb205779ee670e4c4c59b26580eb",
+      "destination": "scenarios/sources/trained-assist-agent/docs/user-scenarios/engineering/02-custom-playbook-authoring.md",
+      "sourceUrl": "https://github.com/trained-assist/trained-assist-agent/blob/c83e6931d61ddb205779ee670e4c4c59b26580eb/docs/user-scenarios/engineering/02-custom-playbook-authoring.md"
+    },
+    {
+      "repo": "trained-assist-agent",
+      "path": "docs/user-scenarios/engineering/03-credential-reachability.md",
+      "sha": "0d3496a49c3d3edca2342e05567255a71ff8706f",
+      "revision": "c83e6931d61ddb205779ee670e4c4c59b26580eb",
+      "destination": "scenarios/sources/trained-assist-agent/docs/user-scenarios/engineering/03-credential-reachability.md",
+      "sourceUrl": "https://github.com/trained-assist/trained-assist-agent/blob/c83e6931d61ddb205779ee670e4c4c59b26580eb/docs/user-scenarios/engineering/03-credential-reachability.md"
+    },
+    {
+      "repo": "trained-assist-agent",
+      "path": "docs/user-scenarios/engineering/03-playbook-guide-mode.md",
+      "sha": "719f8d1d473adc3c96ceebec4fed5931d1cba810",
+      "revision": "c83e6931d61ddb205779ee670e4c4c59b26580eb",
+      "destination": "scenarios/sources/trained-assist-agent/docs/user-scenarios/engineering/03-playbook-guide-mode.md",
+      "sourceUrl": "https://github.com/trained-assist/trained-assist-agent/blob/c83e6931d61ddb205779ee670e4c4c59b26580eb/docs/user-scenarios/engineering/03-playbook-guide-mode.md"
+    },
+    {
+      "repo": "trained-assist-agent",
+      "path": "docs/user-scenarios/exhibition/01-exhibition-catalog-to-sales-site.md",
+      "sha": "1cb7cec09e27dabb98079d5ab9cb9dab3f9a8f8a",
+      "revision": "c83e6931d61ddb205779ee670e4c4c59b26580eb",
+      "destination": "scenarios/sources/trained-assist-agent/docs/user-scenarios/exhibition/01-exhibition-catalog-to-sales-site.md",
+      "sourceUrl": "https://github.com/trained-assist/trained-assist-agent/blob/c83e6931d61ddb205779ee670e4c4c59b26580eb/docs/user-scenarios/exhibition/01-exhibition-catalog-to-sales-site.md"
+    },
+    {
+      "repo": "trained-assist-agent",
+      "path": "docs/user-scenarios/freelance/01-freelance-project-spec.md",
+      "sha": "658a74308e40ad5fe9d08a57096ebb0518c5281f",
+      "revision": "c83e6931d61ddb205779ee670e4c4c59b26580eb",
+      "destination": "scenarios/sources/trained-assist-agent/docs/user-scenarios/freelance/01-freelance-project-spec.md",
+      "sourceUrl": "https://github.com/trained-assist/trained-assist-agent/blob/c83e6931d61ddb205779ee670e4c4c59b26580eb/docs/user-scenarios/freelance/01-freelance-project-spec.md"
+    },
+    {
+      "repo": "trained-assist-agent",
+      "path": "docs/user-scenarios/recruiter/01-full-end-to-end.md",
+      "sha": "d90bcfb10db341df1b94b761318d74a5f2d1680b",
+      "revision": "c83e6931d61ddb205779ee670e4c4c59b26580eb",
+      "destination": "scenarios/sources/trained-assist-agent/docs/user-scenarios/recruiter/01-full-end-to-end.md",
+      "sourceUrl": "https://github.com/trained-assist/trained-assist-agent/blob/c83e6931d61ddb205779ee670e4c4c59b26580eb/docs/user-scenarios/recruiter/01-full-end-to-end.md"
+    },
+    {
+      "repo": "trained-assist-agent",
+      "path": "docs/user-scenarios/recruiter/02-ats-setup-and-scoring.md",
+      "sha": "c843d8e549a7dd2f262175753f3fd0123b0c2469",
+      "revision": "c83e6931d61ddb205779ee670e4c4c59b26580eb",
+      "destination": "scenarios/sources/trained-assist-agent/docs/user-scenarios/recruiter/02-ats-setup-and-scoring.md",
+      "sourceUrl": "https://github.com/trained-assist/trained-assist-agent/blob/c83e6931d61ddb205779ee670e4c4c59b26580eb/docs/user-scenarios/recruiter/02-ats-setup-and-scoring.md"
+    },
+    {
+      "repo": "trained-assist-agent",
+      "path": "docs/user-scenarios/recruiter/03-response-regen.md",
+      "sha": "f15a68f0e1da16eee96bf74434b8c9d020006507",
+      "revision": "c83e6931d61ddb205779ee670e4c4c59b26580eb",
+      "destination": "scenarios/sources/trained-assist-agent/docs/user-scenarios/recruiter/03-response-regen.md",
+      "sourceUrl": "https://github.com/trained-assist/trained-assist-agent/blob/c83e6931d61ddb205779ee670e4c4c59b26580eb/docs/user-scenarios/recruiter/03-response-regen.md"
+    },
+    {
+      "repo": "trained-assist-agent",
+      "path": "docs/user-scenarios/recruiter/04-cold-search.md",
+      "sha": "50d58d4b9802d38af5f36d3ae130cc8e5d455eb0",
+      "revision": "c83e6931d61ddb205779ee670e4c4c59b26580eb",
+      "destination": "scenarios/sources/trained-assist-agent/docs/user-scenarios/recruiter/04-cold-search.md",
+      "sourceUrl": "https://github.com/trained-assist/trained-assist-agent/blob/c83e6931d61ddb205779ee670e4c4c59b26580eb/docs/user-scenarios/recruiter/04-cold-search.md"
+    },
+    {
+      "repo": "trained-assist-agent",
+      "path": "docs/user-scenarios/recruiter/05-vacancy-switch.md",
+      "sha": "731bdfb9828302a8b8219ad37446e0a1d9f65140",
+      "revision": "c83e6931d61ddb205779ee670e4c4c59b26580eb",
+      "destination": "scenarios/sources/trained-assist-agent/docs/user-scenarios/recruiter/05-vacancy-switch.md",
+      "sourceUrl": "https://github.com/trained-assist/trained-assist-agent/blob/c83e6931d61ddb205779ee670e4c4c59b26580eb/docs/user-scenarios/recruiter/05-vacancy-switch.md"
+    },
+    {
+      "repo": "trained-assist-agent",
+      "path": "docs/user-scenarios/recruiter/06-hh-reconnect.md",
+      "sha": "043fe81e46de62980e7b73ce7f1c42b8762a131c",
+      "revision": "c83e6931d61ddb205779ee670e4c4c59b26580eb",
+      "destination": "scenarios/sources/trained-assist-agent/docs/user-scenarios/recruiter/06-hh-reconnect.md",
+      "sourceUrl": "https://github.com/trained-assist/trained-assist-agent/blob/c83e6931d61ddb205779ee670e4c4c59b26580eb/docs/user-scenarios/recruiter/06-hh-reconnect.md"
+    },
+    {
+      "repo": "trained-assist-agent",
+      "path": "docs/user-scenarios/speech/01-speech-transcribe.md",
+      "sha": "53f918ba147fb473bf2801e3caf0b06b8f18b8d9",
+      "revision": "c83e6931d61ddb205779ee670e4c4c59b26580eb",
+      "destination": "scenarios/sources/trained-assist-agent/docs/user-scenarios/speech/01-speech-transcribe.md",
+      "sourceUrl": "https://github.com/trained-assist/trained-assist-agent/blob/c83e6931d61ddb205779ee670e4c4c59b26580eb/docs/user-scenarios/speech/01-speech-transcribe.md"
+    },
+    {
+      "repo": "trained-assist-agent",
+      "path": "docs/user-scenarios/speech/02-requirements-flags.md",
+      "sha": "b79476ac26bf65ce228a3f5c294095c367a11163",
+      "revision": "c83e6931d61ddb205779ee670e4c4c59b26580eb",
+      "destination": "scenarios/sources/trained-assist-agent/docs/user-scenarios/speech/02-requirements-flags.md",
+      "sourceUrl": "https://github.com/trained-assist/trained-assist-agent/blob/c83e6931d61ddb205779ee670e4c4c59b26580eb/docs/user-scenarios/speech/02-requirements-flags.md"
+    },
+    {
+      "repo": "trained-assist-agent",
+      "path": "docs/user-scenarios/speech/03-proposal-design.md",
+      "sha": "a502a3c555e1500232b57f02b61bb0f94eee7d6e",
+      "revision": "c83e6931d61ddb205779ee670e4c4c59b26580eb",
+      "destination": "scenarios/sources/trained-assist-agent/docs/user-scenarios/speech/03-proposal-design.md",
+      "sourceUrl": "https://github.com/trained-assist/trained-assist-agent/blob/c83e6931d61ddb205779ee670e4c4c59b26580eb/docs/user-scenarios/speech/03-proposal-design.md"
+    },
+    {
+      "repo": "trained-assist-tg-bot",
+      "path": "docs/user-stories/CURRENT-STATE.md",
+      "sha": "c961bd33e5c0b2d845eff4e149f7ee1de73a3c75",
+      "revision": "b3b703fa3271a3b739bcf315ebf7d247a33c7dc7",
+      "destination": "scenarios/sources/trained-assist-tg-bot/docs/user-stories/CURRENT-STATE.md",
+      "sourceUrl": "https://github.com/trained-assist/trained-assist-tg-bot/blob/b3b703fa3271a3b739bcf315ebf7d247a33c7dc7/docs/user-stories/CURRENT-STATE.md"
+    },
+    {
+      "repo": "trained-assist-tg-bot",
+      "path": "docs/user-stories/KNOWN-BUGS-2026-09-22.md",
+      "sha": "241f5a739ff881b48b000b07eec94cded25b5eb5",
+      "revision": "b3b703fa3271a3b739bcf315ebf7d247a33c7dc7",
+      "destination": "scenarios/sources/trained-assist-tg-bot/docs/user-stories/KNOWN-BUGS-2026-09-22.md",
+      "sourceUrl": "https://github.com/trained-assist/trained-assist-tg-bot/blob/b3b703fa3271a3b739bcf315ebf7d247a33c7dc7/docs/user-stories/KNOWN-BUGS-2026-09-22.md"
+    },
+    {
+      "repo": "trained-assist-tg-bot",
+      "path": "docs/user-stories/README.md",
+      "sha": "350ea56657edc187fb69d0fd8d5d6f846c7a9914",
+      "revision": "b3b703fa3271a3b739bcf315ebf7d247a33c7dc7",
+      "destination": "scenarios/sources/trained-assist-tg-bot/docs/user-stories/README.md",
+      "sourceUrl": "https://github.com/trained-assist/trained-assist-tg-bot/blob/b3b703fa3271a3b739bcf315ebf7d247a33c7dc7/docs/user-stories/README.md"
+    },
+    {
+      "repo": "trained-assist-llm-ladder",
+      "path": "docs/user-scenarios/ladder/sticky-rung-per-conversation.md",
+      "sha": "987178da414e12dc7601882e86ee44a32417cfc0",
+      "revision": "9907dcb6b27307450bdfc826f67dd5490283d2c8",
+      "destination": "scenarios/sources/trained-assist-llm-ladder/docs/user-scenarios/ladder/sticky-rung-per-conversation.md",
+      "sourceUrl": "https://github.com/trained-assist/trained-assist-llm-ladder/blob/9907dcb6b27307450bdfc826f67dd5490283d2c8/docs/user-scenarios/ladder/sticky-rung-per-conversation.md"
+    },
+    {
+      "repo": "software-engineering-playbooks",
+      "path": "docs/user-scenarios/ci/cloud-test-run.md",
+      "sha": "40c5bed8268d8f434bcbe3a603cfca1d2193458e",
+      "revision": "bf9fd8845d9bea8938dc1b6e5f0f99a5e462243e",
+      "destination": "scenarios/sources/software-engineering-playbooks/docs/user-scenarios/ci/cloud-test-run.md",
+      "sourceUrl": "https://github.com/trained-assist/software-engineering-playbooks/blob/bf9fd8845d9bea8938dc1b6e5f0f99a5e462243e/docs/user-scenarios/ci/cloud-test-run.md"
+    },
+    {
+      "repo": "software-engineering-playbooks",
+      "path": "docs/user-scenarios/playbooks/skill-tool.context.md",
+      "sha": "fabb1a34670c4b7028e564201a817afe7c0e3e70",
+      "revision": "bf9fd8845d9bea8938dc1b6e5f0f99a5e462243e",
+      "destination": "scenarios/sources/software-engineering-playbooks/docs/user-scenarios/playbooks/skill-tool.context.md",
+      "sourceUrl": "https://github.com/trained-assist/software-engineering-playbooks/blob/bf9fd8845d9bea8938dc1b6e5f0f99a5e462243e/docs/user-scenarios/playbooks/skill-tool.context.md"
+    },
+    {
+      "repo": "software-engineering-playbooks",
+      "path": "docs/user-scenarios/playbooks/skill-tool.md",
+      "sha": "8c5aaef07e7f22913de6fa87cae8ec2ad2ec4cce",
+      "revision": "bf9fd8845d9bea8938dc1b6e5f0f99a5e462243e",
+      "destination": "scenarios/sources/software-engineering-playbooks/docs/user-scenarios/playbooks/skill-tool.md",
+      "sourceUrl": "https://github.com/trained-assist/software-engineering-playbooks/blob/bf9fd8845d9bea8938dc1b6e5f0f99a5e462243e/docs/user-scenarios/playbooks/skill-tool.md"
+    },
+    {
+      "repo": "software-engineering-playbooks",
+      "path": "docs/user-scenarios/playbooks/skill-tool.proposal.md",
+      "sha": "ccc716cdd01b97a6ef460fc077470708c6d60a09",
+      "revision": "bf9fd8845d9bea8938dc1b6e5f0f99a5e462243e",
+      "destination": "scenarios/sources/software-engineering-playbooks/docs/user-scenarios/playbooks/skill-tool.proposal.md",
+      "sourceUrl": "https://github.com/trained-assist/software-engineering-playbooks/blob/bf9fd8845d9bea8938dc1b6e5f0f99a5e462243e/docs/user-scenarios/playbooks/skill-tool.proposal.md"
+    },
+    {
+      "repo": "software-engineering-playbooks",
+      "path": "docs/user-scenarios/playbooks/skill-tool.requirements.md",
+      "sha": "1a1d2471206ac3a30c1fd957e65b44e97fea7596",
+      "revision": "bf9fd8845d9bea8938dc1b6e5f0f99a5e462243e",
+      "destination": "scenarios/sources/software-engineering-playbooks/docs/user-scenarios/playbooks/skill-tool.requirements.md",
+      "sourceUrl": "https://github.com/trained-assist/software-engineering-playbooks/blob/bf9fd8845d9bea8938dc1b6e5f0f99a5e462243e/docs/user-scenarios/playbooks/skill-tool.requirements.md"
+    },
+    {
+      "repo": "trained-assist-hh-skill",
+      "path": "docs/user-scenarios/README.md",
+      "sha": "cb1f80a63a924cb9b46856b67ad079426ac9ac46",
+      "revision": "0a45af2e1173e3d2172f0d025fdd3f7fc100c2f4",
+      "destination": "scenarios/sources/trained-assist-hh-skill/docs/user-scenarios/README.md",
+      "sourceUrl": "https://github.com/trained-assist/trained-assist-hh-skill/blob/0a45af2e1173e3d2172f0d025fdd3f7fc100c2f4/docs/user-scenarios/README.md"
+    },
+    {
+      "repo": "trained-assist-hh-skill",
+      "path": "docs/user-scenarios/recruiting/01-cold-search-to-review-page.md",
+      "sha": "6d1fb71ebc672471dcda630d00b0edcaa5c8a5d9",
+      "revision": "0a45af2e1173e3d2172f0d025fdd3f7fc100c2f4",
+      "destination": "scenarios/sources/trained-assist-hh-skill/docs/user-scenarios/recruiting/01-cold-search-to-review-page.md",
+      "sourceUrl": "https://github.com/trained-assist/trained-assist-hh-skill/blob/0a45af2e1173e3d2172f0d025fdd3f7fc100c2f4/docs/user-scenarios/recruiting/01-cold-search-to-review-page.md"
+    },
+    {
+      "repo": "trained-assist-hh-skill",
+      "path": "docs/user-scenarios/recruiting/02-ats-config-to-scored-responses.md",
+      "sha": "9825ab4169930b1094357b8e1efa0a12447b6466",
+      "revision": "0a45af2e1173e3d2172f0d025fdd3f7fc100c2f4",
+      "destination": "scenarios/sources/trained-assist-hh-skill/docs/user-scenarios/recruiting/02-ats-config-to-scored-responses.md",
+      "sourceUrl": "https://github.com/trained-assist/trained-assist-hh-skill/blob/0a45af2e1173e3d2172f0d025fdd3f7fc100c2f4/docs/user-scenarios/recruiting/02-ats-config-to-scored-responses.md"
+    },
+    {
+      "repo": "trained-assist-web",
+      "path": "docs/ACCEPTANCE-TESTS.md",
+      "revision": "be33bc0bce082693eaadc5b70e8ee78562d2dd8c",
+      "sha": "5fcd03cf465cee611981de12f4870bf601447a83",
+      "destination": "scenarios/sources/trained-assist-web/docs/ACCEPTANCE-TESTS.md",
+      "sourceUrl": "https://github.com/trained-assist/trained-assist-web/blob/be33bc0bce082693eaadc5b70e8ee78562d2dd8c/docs/ACCEPTANCE-TESTS.md"
+    },
+    {
+      "repo": "trained-assist-web",
+      "path": "test/ui-reconnect-integrity.md",
+      "revision": "be33bc0bce082693eaadc5b70e8ee78562d2dd8c",
+      "sha": "6fb49b6d37a1f9e1e5b108c603dcbaf4d173e922",
+      "destination": "scenarios/sources/trained-assist-web/test/ui-reconnect-integrity.md",
+      "sourceUrl": "https://github.com/trained-assist/trained-assist-web/blob/be33bc0bce082693eaadc5b70e8ee78562d2dd8c/test/ui-reconnect-integrity.md"
+    }
+  ]
+}
