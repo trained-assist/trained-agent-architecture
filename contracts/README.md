@@ -15,7 +15,7 @@
 | C01 | Gateway/API → Orchestrator | Надёжно принять нормализованный input один раз по requestId; выдать receipt | Orchestrator после durable ACK; gateway до него | A01/A02 |
 | C02 | Orchestrator → Gateway/Web/API | Доставлять progress/result/error с адресом и порядком; replay после переподключения | Result/event store и delivery outbox | A01/A05/A11 |
 | C03 | Gateway/Web/API → Orchestrator | Stop, supplement и status адресуют конкретную работу; не затрагивают соседние задачи | Orchestrator | A01/A02/A08 |
-| C04 | Scheduler/Router → Execution runner | Разместить и выполнить одну attempt под проверенным lease и sandbox policy | Control plane владеет task/lease; runner локальным процессом | A02/A03/A06/A13 |
+| C04 | Scheduler/Router → Execution runner | Разместить и выполнить одну attempt под проверенным lease и clean room policy | Control plane владеет task/lease; runner локальным процессом | A02/A03/A06/A13 |
 | C05 | Runner ↔ Profile/Artifact store | Загрузить snapshot; безопасно commit/export результат; очистить после подтверждения | Storage владеет версиями; run владеет временными данными | A04/A05 |
 | C06 | Runner → Tool broker/domain service | Выполнить разрешённое действие с правильным principal; сохранить outcome мутации | Domain service владеет предметным состоянием | A03/A07/A12 |
 | C07 | Tool/Runner → Credential broker | Разрешить credential по consumer/scope/региону без скрытого выбора аккаунта | Broker владеет secrets/refresh/rotation | A12 |
@@ -60,9 +60,9 @@ RunSpec: `taskId, runId, attemptId, ownerGeneration, lease, principalRef, inputS
 
 Router сначала исключает недопустимые зоны, затем проверяет capability/health/capacity. Claude/Codex — вне RU; OpenCode проверяется ещё по модели и tool requirements. Каждый fallback повторно проходит policy. Требование RU-only tool + EU-only engine решается отдельным tool worker, только если data policy допускает такой обмен; иначе placement conflict.
 
-Control plane владеет task, budget, lease и acceptance. Runner владеет sandbox/process tree, heartbeat, локальной областью и cleanup. После lease expiry новый owner получает generation; старые callback/result commits отвергаются. Сам fencing не предотвращает уже выполняемый сторонний эффект: tools дополнительно используют idempotency/reconciliation.
+Control plane владеет task, budget, lease и acceptance. Runner владеет clean room/process tree, heartbeat, локальной областью и cleanup. После lease expiry новый owner получает generation; старые callback/result commits отвергаются. Сам fencing не предотвращает уже выполняемый сторонний эффект: tools дополнительно используют idempotency/reconciliation.
 
-**Сейчас:** локальный runner, T0 slots, engine glue и process-owner lock есть. Межмашинный scheduler/lease contract и полная sandbox граница не подтверждены. Подробнее: [Execution runtime](../runtime/EXECUTION-RUNTIME.md).
+**Сейчас:** локальный runner, T0 slots, engine glue и process-owner lock есть. Межмашинный scheduler/lease contract и полная clean room граница не подтверждены. Подробнее: [Execution runtime](../runtime/EXECUTION-RUNTIME.md).
 
 ## C05 — данные и артефакты
 
