@@ -1,6 +1,6 @@
 # План реализации и интеграции Trained Assist
 
-Draft v0.3 · 30.09.2026. Это рабочий документ implementation/integration; GitHub Project отложен по решению владельца. Это не runtime GTD/checklist. Сейчас планирование; VM, агенты, миграции и production переключения не запускаются.
+Draft v0.3 · 30.09.2026. Это рабочий документ implementation/integration; GitHub Project отложен по решению владельца. Это не runtime GTD/checklist. Документ задаёт план, а не запускает инфраструктуру. Уже выполненные прогоны учитываются по ссылкам и границам evidence; migrations и production переключения требуют отдельной приёмки.
 
 ## Решение владельца: новая реализация параллельно живому сервису
 
@@ -27,7 +27,7 @@ IDs и credentials старой/новой системы связываются
 
 ## Review исходного предложения
 
-Стадия 0: AutoFix + сжатие context всех репозиториев + обязательный observability baseline. Далее порядок владельца сохранён: existing VM → external Agent API → folder/artifacts → Web/TG → MCP → fast replies → compact capability brief → optional GTD/playbooks. Добавлены Gate/Watcher и promotion как последующие самостоятельные этапы.
+Стадия 0: AutoFix + сжатие context всех репозиториев + обязательный observability baseline. Карточки исходного плана сохранены с прежними IDs. Актуальная последовательность ниже согласована с ARCHITECTURE §11: первый интеграционный сценарий control plane — разговорная сессия; самостоятельный Runner/API развивается параллельно. Номер Stage не задаёт жёсткую очередь. Добавлены Gate/Watcher и promotion как последующие самостоятельные этапы.
 
 Уточнения:
 - I02 разделена на I02A API lifecycle и I02B artifact transfer; это две приёмки одной второй итерации.
@@ -61,6 +61,19 @@ IDs и credentials старой/новой системы связываются
 
 Draft items могут иметь title/body/custom fields; Project API и draft items описаны в [GitHub Projects documentation](https://docs.github.com/en/issues/planning-and-tracking-with-projects/automating-your-project/using-the-api-to-manage-projects). GitHub Project отложен: текущий рабочий план — этот документ и Sandbox Plan. Draft IDs Z01–Z03/P01–P30 сохраняются, чтобы позже перенести план без перенумерации.
 
+## Актуальный порядок старта
+
+Источник целевых границ — [ARCHITECTURE §9/§11](ARCHITECTURE.md). Ниже единственный рабочий порядок плана; старые номера I/P сохраняются для ссылок.
+
+1. I00: общий development baseline. Учесть уроки VM2 в P01/P03; прошлый bootstrap существующего агента не закрывает карточки нового Runner.
+2. До реализации control plane: закончить P-DB (локальное сравнение выполнено; cloud recovery/timers/deploy smoke остаётся), определить схему Task Store и контракт conversation/project/audience.
+3. Первый интеграционный slice: новый control plane + Web, пять уточнений с рестартом и сохранением контекста (P10/P12 плюс нужные части P02/P05/P06). Для него достаточно bounded default route; полный MCP/fast path не prerequisite.
+4. Параллельно готовить standalone Runner → API → artifacts (P01–P09). Standalone API не зависит от platform GTD/Telegram и не заменяет разговорную приёмку.
+5. Расписание — ранний отдельный пилот после Workflow Port/Task Store (P22), без обязательного GTD. MCP/catalog, fast replies и GTD/playbooks развиваются по своим контрактам после базового slice.
+6. Gate/Watcher — независимые последующие интеграции. Promotion — по проверенным сценариям, а не только по номеру последней итерации.
+
+Это уточнение зависимостей, не переименование 33 карточек и не объявление их выполненными. Для первой интеграции части карточек можно выделять в малые PR; полная карточка Done только после всей её приёмки.
+
 ## Итерации и зависимости
 
 | Stage | Результат | Зависимости |
@@ -69,11 +82,11 @@ Draft items могут иметь title/body/custom fields; Project API и draft
 | I01 | Agent Runner на существующей sandbox VM | I00 accepted; VM существует по сообщению владельца |
 | I02A | Внешний Serverless Agent API | I01 accepted |
 | I02B | Артефакты и пользовательский workspace через API | I02A; object-store sandbox |
-| I03 | Web и Telegram на том же API | I02B; sandbox Workers/bindings и channel fixtures |
+| I03 | Web conversation slice, затем Telegram на том же API | Task Store/Workflow Port и conversation contract; basic Runner/status. I02B нужен для сценариев файлов, не для первого текстового диалога |
 | I04 | MCP и доменные capabilities | I03; первые fake domain adapters |
 | I05 | Первый надёжный fast path | I04; старт corpus collection с I01 |
 | I06 | Компактный capability catalog и глубокая проверка быстрых ответов | I05; P18 baseline |
-| I07 | Расписание, планы и выборочный GTD | I06; durable task state и MCP artifact bindings |
+| I07 | Расписание, планы и выборочный GTD | P22 после Workflow Port/Task Store; P23/P24 после нужных plan/MCP contracts; полный I06 не блокирует простой schedule pilot |
 | I08 | External Integration Gate | I04 базовый handler; MVP может идти параллельно I05–I07 |
 | I09 | Error Watcher | I01 error contract, I05/I06 diagnosis routing; не блокирует первые API Runs |
 | I10 | Promotion, совместимость и RU/EU | Accepted core path I01–I07; подключённые Gate/Watcher пилоты когда готовы |
@@ -82,13 +95,9 @@ Card-level зависимости имеют приоритет над milestone
 
 ## Общая приёмка каждой карточки
 
-- Positive и controlled failure sandbox сценарий, no unbounded retries.
-- Trusted profile/Task/Run correlation, channel/destinationRef когда известны; platform errors явно scoped.
-- Structured errors + главные lifecycle events + TTL policy.
-- Test fixture воспроизводима из setup manifest, доступные live smokes отмечены отдельно.
-- PR/commit version, test transcript, result/artifact IDs и release/config refs доступны review.
-- Обратная доставка результата и restart/replay проверены, когда затронуты.
-- Точный scope changes; rollback/compatibility при замене старого пути.
+Общие правила — [Engineering Approach](ENGINEERING-APPROACH.md); envelope/retention — [Observability](OBSERVABILITY-AND-ERROR-CONTRACT.md); environments, controlled failures и stage-specific logs checks — [Sandbox Plan](SANDBOX-PLAN.md).
+
+Карточка добавляет только специфический outcome, зависимости и evidence. Done требует positive/controlled failure, читаемые scoped logs, pinned versions и воспроизводимый transcript; affected API/recovery/cleanup/compatibility проверяются согласно её scope.
 
 ## Sandbox и требования к логам
 
@@ -97,9 +106,9 @@ Card-level зависимости имеют приоритет над milestone
 ## Scope границ репозиториев
 
 Runner/API/artifact adapters — ai-agent-runner; reusable storage contract по общей архитектуре.
-Web/TG — существующие gateways. Task Router — выбранный отдельный repo, имя пока предложение.
+Web/TG — новые sandbox adapters с существующими gateways как reference. Router — модуль нового общего control-plane repo по ARCHITECTURE §9.
 MCP/domain methods — domain repos, тонкие platform facade/adapters.
-GTD/task queues — границы выбраны, конкретные repos/package extraction требуют решения при P12/P23.
+Input, Output, GTD, Journal, Reporting и Workflow Port — модули того же control plane над единым Task Store; отдельные repos не prerequisite P12/P23.
 Integration Gate и Error Watcher — самостоятельные repos после создания владельцем либо отдельно авторизованной provisioning задачи.
 Ни одна карточка не требует предварительно создать repo для каждого логического прямоугольника.
 
@@ -110,7 +119,7 @@ Integration Gate и Error Watcher — самостоятельные repos по�
 Цель: одинаковый быстрый вход агента в каждый implementation repo, короткая диагностика и воспроизводимые проверки до начала Runner.
 Зависимости: нет. Применение ко всем текущим участвующим repo и шаблон для новых; тяжёлая инфраструктура не требуется repo с одними docs.
 
-**Logs acceptance (I00):** AutoFix: check/fix before-after, rule ID, tool/version, attempt count, patch/PR refs и residual failure. Context compression: source commit/catalog version, included/omitted paths, byte/token budget и build errors; secrets excluded. Проверить no-change повтор и synthetic failed check. Общий обязательный baseline: trusted profile/tenant, Task/Run IDs когда есть, известный replyContext, source/environment/version, registered errors/main events и retention class/TTL; positive и controlled failure evidence.
+**Logs acceptance (I00):** [Sandbox Plan — проверки по Stage](SANDBOX-PLAN.md#логи-обязательны-для-каждой-итерации); схема/TTL — Observability.
 
 Трактовка «сжатия»: compact repository map + task-relevant context bundle/brief с refs; исходный код не удаляется. Название/продукт автофиксера пока не задан, используем configurable AutoFix contract.
 
@@ -158,7 +167,7 @@ Acceptance: map не теряет критичные constraints, fixture пок
 Цель: Запустить OpenCode без старого core/frontend/GTD и получить полный наблюдаемый lifecycle.
 Зависимости: I00 accepted; VM существует по сообщению владельца.
 
-**Logs acceptance (I01):** Run start/exit/cancel/process-tree/heartbeat/recovery, profile/task/run/engine/provider refs, structured errors и cleanup. Intentional failed startup/timeout обязаны оставлять диагностируемую запись. Общий обязательный baseline: trusted profile/tenant, Task/Run IDs когда есть, известный replyContext, source/environment/version, registered errors/main events и retention class/TTL; positive и controlled failure evidence.
+**Logs acceptance (I01):** [Sandbox Plan — проверки по Stage](SANDBOX-PLAN.md#логи-обязательны-для-каждой-итерации); схема/TTL — Observability.
 
 #### P01 — Воспроизводимый sandbox Runner
 
@@ -169,11 +178,13 @@ Sandbox: воспроизводимый сценарий соответству�
 
 Работа: Зафиксировать setup/config manifest, отдельные workspace/credentials/log roots и teardown. VM сейчас sandbox; reuse как production только после clean reprovision и smoke, с новым отдельным sandbox.
 
-Acceptance: Повторный setup не ломает окружение; teardown удаляет только experiment namespace; сохранены release/config refs.
+Acceptance: Чистая VM поднимается без ручного симлинка/клонирования/правки unit; второй setup идемпотентен. Node/runtime path разрешён и проверен, нужные repos/components pinned, host/env manifest валидируется до старта. Host ID уникален; schedules/delivery off по умолчанию. Отсутствие необязательного bot token не мешает standalone Runner; отсутствующий обязательный binding даёт диагностируемую readiness ошибку без бесконечного crash-loop. Teardown затрагивает только experiment namespace; release/config refs сохранены.
 
-Logs acceptance: пройти stage-specific checks выше и общий Observability contract; ссылка на sanitized log transcript обязательна в evidence.
+Основание: VM2 wave 0 — [Sandbox Plan, уроки bootstrap](SANDBOX-PLAN.md#уроки-пробного-запуска-vm2).
 
-Evidence: pinned PR/commit, setup/config refs, sandbox transcript и IDs. Применяются общие observability/retention требования.
+Logs acceptance: соответствующий Stage в [Sandbox Plan](SANDBOX-PLAN.md); приложить sanitized transcript.
+
+Evidence: по общим правилам приёмки, с результатом этой карточки.
 
 #### P02 — OpenCode Run и structured logs
 
@@ -186,9 +197,9 @@ Sandbox: воспроизводимый сценарий соответству�
 
 Acceptance: Успех, nonzero exit, startup/auth failure, timeout, cancel и child cleanup имеют typed outcome и логи. Два test principals не читают чужие workspace.
 
-Logs acceptance: пройти stage-specific checks выше и общий Observability contract; ссылка на sanitized log transcript обязательна в evidence.
+Logs acceptance: соответствующий Stage в [Sandbox Plan](SANDBOX-PLAN.md); приложить sanitized transcript.
 
-Evidence: pinned PR/commit, setup/config refs, sandbox transcript и IDs. Применяются общие observability/retention требования.
+Evidence: по общим правилам приёмки, с результатом этой карточки.
 
 #### P03 — Fault injection и error source registry
 
@@ -199,20 +210,20 @@ Sandbox: воспроизводимый сценарий соответству�
 
 Работа: Контролируемые rate limit, invalid output, provider unavailable, kill/restart, log sink outage. Live free-provider smoke отдельно от детерминированных проверок.
 
-Acceptance: Каждый failure воспроизводим; logging failure bounded; scope/replyContext и TTL cleanup проверяются. Автоматический paid fallback выключен.
+Acceptance: Каждый failure воспроизводим; logging failure bounded; scope/replyContext и TTL cleanup проверяются. Проверить missing runtime/dependency/required secret, недоступный secret backend и ошибочную identity/scheduler role до старта; readiness отделена от liveness. Проверить firewall снаружи и service reachability изнутри, timestamps UTC. Автоматический paid fallback выключен.
 
 Уточнение владельца 30.09.2026: Сетевой partition при продолжающем работать engine: connection_lost/report, отсутствие автоматического нового Run; выход процесса не удаляет volume. Отдельно моделировать потерю самого диска.
 
-Logs acceptance: пройти stage-specific checks выше и общий Observability contract; ссылка на sanitized log transcript обязательна в evidence.
+Logs acceptance: соответствующий Stage в [Sandbox Plan](SANDBOX-PLAN.md); приложить sanitized transcript.
 
-Evidence: pinned PR/commit, setup/config refs, sandbox transcript и IDs. Применяются общие observability/retention требования.
+Evidence: по общим правилам приёмки, с результатом этой карточки.
 
 ### I02A — Внешний Serverless Agent API
 
 Цель: Тестовый внешний клиент запускает, наблюдает и останавливает агента по API.
 Зависимости: I01 accepted.
 
-**Logs acceptance (I02A):** Request receipt/idempotency/auth scope, dispatch/run state, event sequence/replay, reconnect/cancel и client-visible outcome. Profile/principal сохраняется и без folder; secret/API key не логируется. Общий обязательный baseline: trusted profile/tenant, Task/Run IDs когда есть, известный replyContext, source/environment/version, registered errors/main events и retention class/TTL; positive и controlled failure evidence.
+**Logs acceptance (I02A):** [Sandbox Plan — проверки по Stage](SANDBOX-PLAN.md#логи-обязательны-для-каждой-итерации); схема/TTL — Observability.
 
 #### P04 — Admission и durable receipt
 
@@ -225,9 +236,9 @@ Sandbox: воспроизводимый сценарий соответству�
 
 Acceptance: Duplicate submit возвращает тот же receipt; несовместимый payload conflict; unauthorized principal не запускает Run.
 
-Logs acceptance: пройти stage-specific checks выше и общий Observability contract; ссылка на sanitized log transcript обязательна в evidence.
+Logs acceptance: соответствующий Stage в [Sandbox Plan](SANDBOX-PLAN.md); приложить sanitized transcript.
 
-Evidence: pinned PR/commit, setup/config refs, sandbox transcript и IDs. Применяются общие observability/retention требования.
+Evidence: по общим правилам приёмки, с результатом этой карточки.
 
 #### P05 — Status и replayable streaming
 
@@ -240,9 +251,9 @@ Sandbox: воспроизводимый сценарий соответству�
 
 Acceptance: Разрыв stream не теряет итог; queued/starting/running/terminal различимы; export state отдельно; cancel requested не притворяется stopped.
 
-Logs acceptance: пройти stage-specific checks выше и общий Observability contract; ссылка на sanitized log transcript обязательна в evidence.
+Logs acceptance: соответствующий Stage в [Sandbox Plan](SANDBOX-PLAN.md); приложить sanitized transcript.
 
-Evidence: pinned PR/commit, setup/config refs, sandbox transcript и IDs. Применяются общие observability/retention требования.
+Evidence: по общим правилам приёмки, с результатом этой карточки.
 
 #### P06 — Recovery API-сессии
 
@@ -257,16 +268,16 @@ Acceptance: Принятый request не исчезает после restart; �
 
 Уточнение владельца 30.09.2026: Reconnect/replay без rerun; авторизованный сигнал на следующую попытку с дополнительными инструкциями; сверка и stop/отзыв прав прежнего процесса до нового запуска. Повтор сигнала дедуплицируется, userTaskId сохраняется, runId меняется.
 
-Logs acceptance: пройти stage-specific checks выше и общий Observability contract; ссылка на sanitized log transcript обязательна в evidence.
+Logs acceptance: соответствующий Stage в [Sandbox Plan](SANDBOX-PLAN.md); приложить sanitized transcript.
 
-Evidence: pinned PR/commit, setup/config refs, sandbox transcript и IDs. Применяются общие observability/retention требования.
+Evidence: по общим правилам приёмки, с результатом этой карточки.
 
 ### I02B — Артефакты и пользовательский workspace через API
 
 Цель: Клиент получает файлы агента и передаёт вход без тяжёлых payload в control API.
 Зависимости: I02A; object-store sandbox.
 
-**Logs acceptance (I02B):** artifactId/hash/size/version, upload multipart state/abort, export commit/fail, snapshot conflict и cleanup. Signed URL не пишется целиком; TTL не стирает единственную копию до export ACK. Общий обязательный baseline: trusted profile/tenant, Task/Run IDs когда есть, известный replyContext, source/environment/version, registered errors/main events и retention class/TTL; positive и controlled failure evidence.
+**Logs acceptance (I02B):** [Sandbox Plan — проверки по Stage](SANDBOX-PLAN.md#логи-обязательны-для-каждой-итерации); схема/TTL — Observability.
 
 #### P07 — Artifact manifest и export
 
@@ -281,9 +292,9 @@ Acceptance: Run создал HTML/source/files; no-profile client скачал �
 
 Уточнение владельца 30.09.2026: Execution/finalizing разделены; тяжёлый локальный файл, crash/restart export и повтор commit не запускают engine. Export progress/ошибка доступны клиенту; sole copy не удаляется до подтверждённого сохранения.
 
-Logs acceptance: пройти stage-specific checks выше и общий Observability contract; ссылка на sanitized log transcript обязательна в evidence.
+Logs acceptance: соответствующий Stage в [Sandbox Plan](SANDBOX-PLAN.md); приложить sanitized transcript.
 
-Evidence: pinned PR/commit, setup/config refs, sandbox transcript и IDs. Применяются общие observability/retention требования.
+Evidence: по общим правилам приёмки, с результатом этой карточки.
 
 #### P08 — Direct upload/download и большие файлы
 
@@ -296,9 +307,9 @@ Sandbox: воспроизводимый сценарий соответству�
 
 Acceptance: Expired URL, wrong principal, CORS browser path, size/hash mismatch, interrupted upload/resume и abort cleanup проверены. API передаёт IDs/метаданные, bytes идут напрямую.
 
-Logs acceptance: пройти stage-specific checks выше и общий Observability contract; ссылка на sanitized log transcript обязательна в evidence.
+Logs acceptance: соответствующий Stage в [Sandbox Plan](SANDBOX-PLAN.md); приложить sanitized transcript.
 
-Evidence: pinned PR/commit, setup/config refs, sandbox transcript и IDs. Применяются общие observability/retention требования.
+Evidence: по общим правилам приёмки, с результатом этой карточки.
 
 #### P09 — Workspace snapshots и конфликты
 
@@ -313,31 +324,31 @@ Acceptance: Два writers не перезаписывают молча одну
 
 Уточнение владельца 30.09.2026: Workspace/volume task-scoped и переживает процесс; следующая разрешённая попытка видит прежние файлы/checkpoints через новую clean room. Старые процессы/секреты не наследуются. Cleanup отдельно, retention/квоты явны.
 
-Logs acceptance: пройти stage-specific checks выше и общий Observability contract; ссылка на sanitized log transcript обязательна в evidence.
+Logs acceptance: соответствующий Stage в [Sandbox Plan](SANDBOX-PLAN.md); приложить sanitized transcript.
 
-Evidence: pinned PR/commit, setup/config refs, sandbox transcript и IDs. Применяются общие observability/retention требования.
+Evidence: по общим правилам приёмки, с результатом этой карточки.
 
 ### I03 — Web и Telegram на том же API
 
 Цель: Сквозной пользовательский workflow и обратная доставка результата, без дубля orchestration в каналах.
-Зависимости: I02B; sandbox Workers/bindings и channel fixtures.
+Зависимости: Task Store/Workflow Port + conversation contract + базовый Runner/status/recovery; sandbox Workers/bindings. I02B нужен для файлов; Telegram fixture подключается после текстового Web slice.
 
-**Logs acceptance (I03):** Ingress request/native message ref, profile/channel/destination, Task correlation, dedup/media preparation, delivery attempts/ACK и Web reconnect. Ошибка в TG/Web fixture прослеживается до scoped result/report. Общий обязательный baseline: trusted profile/tenant, Task/Run IDs когда есть, известный replyContext, source/environment/version, registered errors/main events и retention class/TTL; positive и controlled failure evidence.
+**Logs acceptance (I03):** [Sandbox Plan — проверки по Stage](SANDBOX-PLAN.md#логи-обязательны-для-каждой-итерации); схема/TTL — Observability.
 
 #### P10 — Тонкий Web client и task view
 
 Planning readiness: Draft · Stage: I03
 Component/target repo: trained-assist-web
-Depends on: P09
+Depends on: P12 и базовый Run/status/recovery (P02/P05/P06). Artifact-сценарии дополнительно ждут P07–P09; первый текстовый диалог не ждёт файлов.
 Sandbox: воспроизводимый сценарий соответствующей итерации из [Sandbox Plan](SANDBOX-PLAN.md); он может включать настоящий сервис.
 
 Работа: Сначала Web: test profile, submit/status/events/artifacts/cancel; отдельный Worker/API origin и test storage. Thin task facade отображает public receipt/userTaskId.
 
-Acceptance: После reconnect видно существующую Task; состояние и файлы через общий API; private scopes проверены. Run из Web совпадает с наблюдаемым API Run.
+Acceptance: Пять последовательных уточнений с restart между 3-м и 4-м без потери контекста, measured latency/cost относительно старого пути. После reconnect видно существующую Task; состояние и файлы через общий API; private scopes проверены. Run из Web совпадает с наблюдаемым API Run.
 
-Logs acceptance: пройти stage-specific checks выше и общий Observability contract; ссылка на sanitized log transcript обязательна в evidence.
+Logs acceptance: соответствующий Stage в [Sandbox Plan](SANDBOX-PLAN.md); приложить sanitized transcript.
 
-Evidence: pinned PR/commit, setup/config refs, sandbox transcript и IDs. Применяются общие observability/retention требования.
+Evidence: по общим правилам приёмки, с результатом этой карточки.
 
 #### P11 — Telegram-equivalent fixture и sandbox bot
 
@@ -350,31 +361,31 @@ Sandbox: воспроизводимый сценарий соответству�
 
 Acceptance: Batch updates/dedup, user profile mapping, return report, file refs и delivery retry работают; production bot/webhook не переключён sandbox setup.
 
-Logs acceptance: пройти stage-specific checks выше и общий Observability contract; ссылка на sanitized log transcript обязательна в evidence.
+Logs acceptance: соответствующий Stage в [Sandbox Plan](SANDBOX-PLAN.md); приложить sanitized transcript.
 
-Evidence: pinned PR/commit, setup/config refs, sandbox transcript и IDs. Применяются общие observability/retention требования.
+Evidence: по общим правилам приёмки, с результатом этой карточки.
 
 #### P12 — Primitive Input/Output и routing
 
 Planning readiness: Draft · Stage: I03
-Component/target repo: Input/Output + Task Router
-Depends on: P10, P11
+Component/target repo: новый control plane — Input/Output/Router/Reporting
+Depends on: P-DB + схема Task Store + conversation/project/audience contract; базовый Runner/status/recovery (P02/P05/P06). P10/P11 — потребители API, не prerequisite этой карточки.
 Sandbox: воспроизводимый сценарий соответствующей итерации из [Sandbox Plan](SANDBOX-PLAN.md); он может включать настоящий сервис.
 
 Работа: Извлечь минимум queue/handoff/result/delivery contract; default route OpenCode, typed deterministic commands; LLM executor только для известного фиксированного recipe. Бесплатный allowlist.
 
-Acceptance: Один userTaskId виден от ingress до результата; durable ACK и replays; /stop/status не проходят LLM; delivery fail не меняет execution success.
+Acceptance: Проекция conversation и task различается, scoped project/audience и контекст сохраняются через restart; один userTaskId виден от ingress до результата; durable ACK и replays; /stop/status не проходят LLM; delivery fail не меняет execution success.
 
-Logs acceptance: пройти stage-specific checks выше и общий Observability contract; ссылка на sanitized log transcript обязательна в evidence.
+Logs acceptance: соответствующий Stage в [Sandbox Plan](SANDBOX-PLAN.md); приложить sanitized transcript.
 
-Evidence: pinned PR/commit, setup/config refs, sandbox transcript и IDs. Применяются общие observability/retention требования.
+Evidence: по общим правилам приёмки, с результатом этой карточки.
 
 ### I04 — MCP и доменные capabilities
 
 Цель: Агент и host могут вызвать разрешённые методы с одинаковым contract; GTD пока отсутствует.
 Зависимости: I03; первые fake domain adapters.
 
-**Logs acceptance (I04):** MCP readiness/handshake/invocation/timeout/cleanup, capability/version/scoped binding и effect receipt. Credential values не логируются; stdio/native details доступны приватным diagnostic ref. Общий обязательный baseline: trusted profile/tenant, Task/Run IDs когда есть, известный replyContext, source/environment/version, registered errors/main events и retention class/TTL; positive и controlled failure evidence.
+**Logs acceptance (I04):** [Sandbox Plan — проверки по Stage](SANDBOX-PLAN.md#логи-обязательны-для-каждой-итерации); схема/TTL — Observability.
 
 #### P13 — MCP lifecycle и scoped bindings
 
@@ -387,9 +398,9 @@ Sandbox: воспроизводимый сценарий соответству�
 
 Acceptance: Tool вызван реально, а не только виден в list; чужой binding недоступен; failed startup отражён в logs. MCP service UID не заявлен доказанной OS isolation.
 
-Logs acceptance: пройти stage-specific checks выше и общий Observability contract; ссылка на sanitized log transcript обязательна в evidence.
+Logs acceptance: соответствующий Stage в [Sandbox Plan](SANDBOX-PLAN.md); приложить sanitized transcript.
 
-Evidence: pinned PR/commit, setup/config refs, sandbox transcript и IDs. Применяются общие observability/retention требования.
+Evidence: по общим правилам приёмки, с результатом этой карточки.
 
 #### P14 — Доменные tools и playbook artifact retrieval
 
@@ -402,9 +413,9 @@ Sandbox: воспроизводимый сценарий соответству�
 
 Acceptance: Версия/bindings/permissions явны; read не запускает plan; fake provider mutation подтверждена receipt. Advisory playbook возможен без gtdId.
 
-Logs acceptance: пройти stage-specific checks выше и общий Observability contract; ссылка на sanitized log transcript обязательна в evidence.
+Logs acceptance: соответствующий Stage в [Sandbox Plan](SANDBOX-PLAN.md); приложить sanitized transcript.
 
-Evidence: pinned PR/commit, setup/config refs, sandbox transcript и IDs. Применяются общие observability/retention требования.
+Evidence: по общим правилам приёмки, с результатом этой карточки.
 
 #### P15 — MCP integration sandbox
 
@@ -417,16 +428,16 @@ Sandbox: воспроизводимый сценарий соответству�
 
 Acceptance: Одинаковый action outcome по transport facades; event IDs/profile/reply context не потеряны. Для unsupported external sandbox строится emulator, не ждать production testing.
 
-Logs acceptance: пройти stage-specific checks выше и общий Observability contract; ссылка на sanitized log transcript обязательна в evidence.
+Logs acceptance: соответствующий Stage в [Sandbox Plan](SANDBOX-PLAN.md); приложить sanitized transcript.
 
-Evidence: pinned PR/commit, setup/config refs, sandbox transcript и IDs. Применяются общие observability/retention требования.
+Evidence: по общим правилам приёмки, с результатом этой карточки.
 
 ### I05 — Первый надёжный fast path
 
 Цель: FAQ/clarify/known action дают быстрый результат без лишнего agent Run.
 Зависимости: I04; старт corpus collection с I01.
 
-**Logs acceptance (I05):** Routing reason/policy/context refs, template/recipe/agent mode, schema outcome/needs_executor, escalation attempt и first useful reply timing. Incorrect fast answer/error проходит scoped error contract. Общий обязательный baseline: trusted profile/tenant, Task/Run IDs когда есть, известный replyContext, source/environment/version, registered errors/main events и retention class/TTL; positive и controlled failure evidence.
+**Logs acceptance (I05):** [Sandbox Plan — проверки по Stage](SANDBOX-PLAN.md#логи-обязательны-для-каждой-итерации); схема/TTL — Observability.
 
 #### P16 — Route policy и high-precision rules
 
@@ -439,9 +450,9 @@ Sandbox: воспроизводимый сценарий соответству�
 
 Acceptance: Текст с цитированной ссылкой не запускает agent без нужды; задача чтения live data не выдаёт выдуманный fast answer; permissions не выводятся regex.
 
-Logs acceptance: пройти stage-specific checks выше и общий Observability contract; ссылка на sanitized log transcript обязательна в evidence.
+Logs acceptance: соответствующий Stage в [Sandbox Plan](SANDBOX-PLAN.md); приложить sanitized transcript.
 
-Evidence: pinned PR/commit, setup/config refs, sandbox transcript и IDs. Применяются общие observability/retention требования.
+Evidence: по общим правилам приёмки, с результатом этой карточки.
 
 #### P17 — Bounded reply-or-route recipe
 
@@ -454,9 +465,9 @@ Sandbox: воспроизводимый сценарий соответству�
 
 Acceptance: Schema invalid, model timeout, budget/provider failure, awaiting input и insufficient context имеют корректные outcomes; one continuation owner; OpenCode конечный auto executor.
 
-Logs acceptance: пройти stage-specific checks выше и общий Observability contract; ссылка на sanitized log transcript обязательна в evidence.
+Logs acceptance: соответствующий Stage в [Sandbox Plan](SANDBOX-PLAN.md); приложить sanitized transcript.
 
-Evidence: pinned PR/commit, setup/config refs, sandbox transcript и IDs. Применяются общие observability/retention требования.
+Evidence: по общим правилам приёмки, с результатом этой карточки.
 
 #### P18 — Corpus и baseline eval
 
@@ -469,16 +480,16 @@ Sandbox: воспроизводимый сценарий соответству�
 
 Acceptance: Corpus versioned, profile data не публикуются; tests воспроизводимы, live free smoke отдельно; collected logs не считаются истинной разметкой без review.
 
-Logs acceptance: пройти stage-specific checks выше и общий Observability contract; ссылка на sanitized log transcript обязательна в evidence.
+Logs acceptance: соответствующий Stage в [Sandbox Plan](SANDBOX-PLAN.md); приложить sanitized transcript.
 
-Evidence: pinned PR/commit, setup/config refs, sandbox transcript и IDs. Применяются общие observability/retention требования.
+Evidence: по общим правилам приёмки, с результатом этой карточки.
 
 ### I06 — Компактный capability catalog и глубокая проверка быстрых ответов
 
 Цель: Небольшой scoped brief объясняет, что умеет система и как исполнять каждый метод.
 Зависимости: I05; P18 baseline.
 
-**Logs acceptance (I06):** Catalog/brief version, selected capability/readiness, included schema refs/input insufficiency, eval case ID, one-/two-stage calls, latency и usage. Не сохранять user raw prompt в общий corpus. Общий обязательный baseline: trusted profile/tenant, Task/Run IDs когда есть, известный replyContext, source/environment/version, registered errors/main events и retention class/TTL; positive и controlled failure evidence.
+**Logs acceptance (I06):** [Sandbox Plan — проверки по Stage](SANDBOX-PLAN.md#логи-обязательны-для-каждой-итерации); схема/TTL — Observability.
 
 #### P19 — Четыре режима capability
 
@@ -491,9 +502,9 @@ Sandbox: воспроизводимый сценарий соответству�
 
 Acceptance: Template — deterministic-job response handler, не четвёртый Job type. Описание возможности отдельно от user enabled/ready; неподдержанное не рекламируется доступным.
 
-Logs acceptance: пройти stage-specific checks выше и общий Observability contract; ссылка на sanitized log transcript обязательна в evidence.
+Logs acceptance: соответствующий Stage в [Sandbox Plan](SANDBOX-PLAN.md); приложить sanitized transcript.
 
-Evidence: pinned PR/commit, setup/config refs, sandbox transcript и IDs. Применяются общие observability/retention требования.
+Evidence: по общим правилам приёмки, с результатом этой карточки.
 
 #### P20 — Brief builder и retrieval
 
@@ -506,9 +517,9 @@ Sandbox: воспроизводимый сценарий соответству�
 
 Acceptance: Brief содержит data/task ограничения и ссылки на оригинал; summary не придумывает права; cache keyed profile/context/catalog/policy; output size budget measured.
 
-Logs acceptance: пройти stage-specific checks выше и общий Observability contract; ссылка на sanitized log transcript обязательна в evidence.
+Logs acceptance: соответствующий Stage в [Sandbox Plan](SANDBOX-PLAN.md); приложить sanitized transcript.
 
-Evidence: pinned PR/commit, setup/config refs, sandbox transcript и IDs. Применяются общие observability/retention требования.
+Evidence: по общим правилам приёмки, с результатом этой карточки.
 
 #### P21 — One-call vs two-call и required-input UX
 
@@ -521,36 +532,36 @@ Sandbox: воспроизводимый сценарий соответству�
 
 Acceptance: Фиксируются correctness/latency/provider calls/cost; выбран путь по evidence. Web Awaiting user input идемпотентен; не теряет userTaskId; сложное reasoning без tools остаётся LLM.
 
-Logs acceptance: пройти stage-specific checks выше и общий Observability contract; ссылка на sanitized log transcript обязательна в evidence.
+Logs acceptance: соответствующий Stage в [Sandbox Plan](SANDBOX-PLAN.md); приложить sanitized transcript.
 
-Evidence: pinned PR/commit, setup/config refs, sandbox transcript и IDs. Применяются общие observability/retention требования.
+Evidence: по общим правилам приёмки, с результатом этой карточки.
 
 ### I07 — Расписание, планы и выборочный GTD
 
 Цель: Проверять именно следующий шаг там, где он действительно нужен.
-Зависимости: I06; durable task state и MCP artifact bindings.
+Зависимости: для P22 — Task Store/Workflow Port и typed dispatch; для P23/P24 — plan contracts и нужные MCP bindings. I06 не блокирует ранний schedule pilot.
 
-**Logs acceptance (I07):** Schedule/occurrence dedup, gtdId только opt-in, plan/step/version/control registration reason, wait/deadline/next-step/outcome ACK. Проверить, что simple scheduled success не создаёт GTD events. Общий обязательный baseline: trusted profile/tenant, Task/Run IDs когда есть, известный replyContext, source/environment/version, registered errors/main events и retention class/TTL; positive и controlled failure evidence.
+**Logs acceptance (I07):** [Sandbox Plan — проверки по Stage](SANDBOX-PLAN.md#логи-обязательны-для-каждой-итерации); схема/TTL — Observability.
 
 #### P22 — Schedule без обязательного GTD
 
 Planning readiness: Draft · Stage: I07
-Component/target repo: Schedule module (repo decision)
-Depends on: P12, P21
+Component/target repo: Schedule module нового control plane
+Depends on: P-DB, Task Store/Workflow Port и минимальный typed dispatch/result из P12. P21 и полный fast path не обязательны; простой schedule pilot можно начать раньше.
 Sandbox: воспроизводимый сценарий соответствующей итерации из [Sandbox Plan](SANDBOX-PLAN.md); он может включать настоящий сервис.
 
 Работа: Virtual clock occurrences/timezone/dedup/overlap/catch-up; обычный hourly task → Output. gtdId отсутствует при terminal result.
 
 Acceptance: Disable schedule не равен cancel accepted task; crash replay не создаёт второй occurrence; простой cron не начинает control loop.
 
-Logs acceptance: пройти stage-specific checks выше и общий Observability contract; ссылка на sanitized log transcript обязательна в evidence.
+Logs acceptance: соответствующий Stage в [Sandbox Plan](SANDBOX-PLAN.md); приложить sanitized transcript.
 
-Evidence: pinned PR/commit, setup/config refs, sandbox transcript и IDs. Применяются общие observability/retention требования.
+Evidence: по общим правилам приёмки, с результатом этой карточки.
 
 #### P23 — GTD opt-in и bounded control
 
 Planning readiness: Draft · Stage: I07
-Component/target repo: GTD Manager (repo decision)
+Component/target repo: GTD module нового control plane
 Depends on: P22
 Sandbox: воспроизводимый сценарий соответствующей итерации из [Sandbox Plan](SANDBOX-PLAN.md); он может включать настоящий сервис.
 
@@ -558,9 +569,9 @@ Sandbox: воспроизводимый сценарий соответству�
 
 Acceptance: Одна явная managed task получает G; остальные нет. Wait не держит agent токены, self-GTD не создаётся; caps завершают progression, не обходятся новым control record.
 
-Logs acceptance: пройти stage-specific checks выше и общий Observability contract; ссылка на sanitized log transcript обязательна в evidence.
+Logs acceptance: соответствующий Stage в [Sandbox Plan](SANDBOX-PLAN.md); приложить sanitized transcript.
 
-Evidence: pinned PR/commit, setup/config refs, sandbox transcript и IDs. Применяются общие observability/retention требования.
+Evidence: по общим правилам приёмки, с результатом этой карточки.
 
 #### P24 — Реальные playbooks и адаптация плана
 
@@ -573,16 +584,16 @@ Sandbox: воспроизводимый сценарий соответству�
 
 Acceptance: PR→CI→verify gates имеют evidence; native playbook retrieval не подменяет execution plan; edit не меняет running step IDs. HH simple schedule по-прежнему без GTD.
 
-Logs acceptance: пройти stage-specific checks выше и общий Observability contract; ссылка на sanitized log transcript обязательна в evidence.
+Logs acceptance: соответствующий Stage в [Sandbox Plan](SANDBOX-PLAN.md); приложить sanitized transcript.
 
-Evidence: pinned PR/commit, setup/config refs, sandbox transcript и IDs. Применяются общие observability/retention требования.
+Evidence: по общим правилам приёмки, с результатом этой карточки.
 
 ### I08 — External Integration Gate
 
 Цель: Выделить provider transport и webhook lifecycle в самостоятельный repo.
 Зависимости: I04 базовый handler; MVP может идти параллельно I05–I07.
 
-**Logs acceptance (I08):** Provider operationId/external refs, auth/readiness, callback signature/dedup, normalization/cursor и unknown→reconciled. Profile/task/channel correlation из binding; raw provider payload приватный. Общий обязательный baseline: trusted profile/tenant, Task/Run IDs когда есть, известный replyContext, source/environment/version, registered errors/main events и retention class/TTL; positive и controlled failure evidence.
+**Logs acceptance (I08):** [Sandbox Plan — проверки по Stage](SANDBOX-PLAN.md#логи-обязательны-для-каждой-итерации); схема/TTL — Observability.
 
 #### P25 — Gate extraction и provider sandbox
 
@@ -595,9 +606,9 @@ Sandbox: воспроизводимый сценарий соответству�
 
 Acceptance: Бизнес-плейбуки остаются в доменах; read/poll/webhook маршруты сохраняют scope; timeout mutation = unknown до reconcile; нет двух adapter implementations после переключения.
 
-Logs acceptance: пройти stage-specific checks выше и общий Observability contract; ссылка на sanitized log transcript обязательна в evidence.
+Logs acceptance: соответствующий Stage в [Sandbox Plan](SANDBOX-PLAN.md); приложить sanitized transcript.
 
-Evidence: pinned PR/commit, setup/config refs, sandbox transcript и IDs. Применяются общие observability/retention требования.
+Evidence: по общим правилам приёмки, с результатом этой карточки.
 
 #### P26 — HH/домен pilot
 
@@ -610,16 +621,16 @@ Sandbox: воспроизводимый сценарий соответству�
 
 Acceptance: Hourly поддержка не выдаётся за production enabled; unsupported provider webhook не обещан; integration data/results возвращаются через общий task flow.
 
-Logs acceptance: пройти stage-specific checks выше и общий Observability contract; ссылка на sanitized log transcript обязательна в evidence.
+Logs acceptance: соответствующий Stage в [Sandbox Plan](SANDBOX-PLAN.md); приложить sanitized transcript.
 
-Evidence: pinned PR/commit, setup/config refs, sandbox transcript и IDs. Применяются общие observability/retention требования.
+Evidence: по общим правилам приёмки, с результатом этой карточки.
 
 ### I09 — Error Watcher
 
 Цель: Ошибки сами порождают ограниченную диагностику и полезный report.
 Зависимости: I01 error contract, I05/I06 diagnosis routing; не блокирует первые API Runs.
 
-**Logs acceptance (I09):** errorEvent/incident/sourceTask/diagnosticTask, fingerprint/count, mute/reopen/expiry, diagnosis attempts/report/issue receipts и self-loop guard. Suppressed events агрегируются с TTL, не исчезают без trace. Общий обязательный baseline: trusted profile/tenant, Task/Run IDs когда есть, известный replyContext, source/environment/version, registered errors/main events и retention class/TTL; positive и controlled failure evidence.
+**Logs acceptance (I09):** [Sandbox Plan — проверки по Stage](SANDBOX-PLAN.md#логи-обязательны-для-каждой-итерации); схема/TTL — Observability.
 
 #### P27 — Incident aggregation и suppression
 
@@ -632,9 +643,9 @@ Sandbox: воспроизводимый сценарий соответству�
 
 Acceptance: Шторм 1000 events не создаёт 1000 LLM calls; исходные task errors не исчезают; unknown profile ops reconciliation, не случайная user delivery.
 
-Logs acceptance: пройти stage-specific checks выше и общий Observability contract; ссылка на sanitized log transcript обязательна в evidence.
+Logs acceptance: соответствующий Stage в [Sandbox Plan](SANDBOX-PLAN.md); приложить sanitized transcript.
 
-Evidence: pinned PR/commit, setup/config refs, sandbox transcript и IDs. Применяются общие observability/retention требования.
+Evidence: по общим правилам приёмки, с результатом этой карточки.
 
 #### P28 — Diagnosis LLM→OpenCode и report
 
@@ -647,16 +658,16 @@ Sandbox: воспроизводимый сценарий соответству�
 
 Acceptance: Profile/channel correlation до ответа; issue создан только после receipt; diagnostic failure не расследует себя рекурсивно; delivery outage видна в Web/API.
 
-Logs acceptance: пройти stage-specific checks выше и общий Observability contract; ссылка на sanitized log transcript обязательна в evidence.
+Logs acceptance: соответствующий Stage в [Sandbox Plan](SANDBOX-PLAN.md); приложить sanitized transcript.
 
-Evidence: pinned PR/commit, setup/config refs, sandbox transcript и IDs. Применяются общие observability/retention требования.
+Evidence: по общим правилам приёмки, с результатом этой карточки.
 
 ### I10 — Promotion, совместимость и RU/EU
 
 Цель: Сохранить working old clients, перенести sandbox VM в production воспроизводимо и иметь отдельный sandbox.
 Зависимости: Accepted core path I01–I07; подключённые Gate/Watcher пилоты когда готовы.
 
-**Logs acceptance (I10):** Release/config/worker/region/ownerGeneration, promotion/cohort/rollback, fencing/drain/failover и retention health. Smoke evidence коррелирует API/Web/TG task/run IDs; prod/sandbox различимы. Общий обязательный baseline: trusted profile/tenant, Task/Run IDs когда есть, известный replyContext, source/environment/version, registered errors/main events и retention class/TTL; positive и controlled failure evidence.
+**Logs acceptance (I10):** [Sandbox Plan — проверки по Stage](SANDBOX-PLAN.md#логи-обязательны-для-каждой-итерации); схема/TTL — Observability.
 
 #### P29 — Promotion и fleet acceptance
 
@@ -669,9 +680,9 @@ Sandbox: воспроизводимый сценарий соответству�
 
 Acceptance: Pinned release/config, smoke through API/Web/TG, logs retention и rollback evidence; paid profiles default off; ownership/replay не расходятся.
 
-Logs acceptance: пройти stage-specific checks выше и общий Observability contract; ссылка на sanitized log transcript обязательна в evidence.
+Logs acceptance: соответствующий Stage в [Sandbox Plan](SANDBOX-PLAN.md); приложить sanitized transcript.
 
-Evidence: pinned PR/commit, setup/config refs, sandbox transcript и IDs. Применяются общие observability/retention требования.
+Evidence: по общим правилам приёмки, с результатом этой карточки.
 
 #### P30 — Multi-worker/region contract
 
@@ -686,9 +697,9 @@ Acceptance: Нет double execution после failover; OpenCode region по pr
 
 Уточнение владельца 30.09.2026: Partition не означает failover/rerun: ждать восстановления либо явного сигнала. До перехода на другой worker исключить записи прежнего владельца; проверить доступность сохранённых данных с нового worker и отдельно потерю volume.
 
-Logs acceptance: пройти stage-specific checks выше и общий Observability contract; ссылка на sanitized log transcript обязательна в evidence.
+Logs acceptance: соответствующий Stage в [Sandbox Plan](SANDBOX-PLAN.md); приложить sanitized transcript.
 
-Evidence: pinned PR/commit, setup/config refs, sandbox transcript и IDs. Применяются общие observability/retention требования.
+Evidence: по общим правилам приёмки, с результатом этой карточки.
 
 ## Review рисков и решения
 
@@ -706,7 +717,7 @@ Evidence: pinned PR/commit, setup/config refs, sandbox transcript и IDs. При
 
 Не блокирующие вопросы для refinement: место хранения workspace/artifacts в RU/EU; стартовые quotas/concurrency/TTL; ID выбранной VM и sandbox base URL в config registry; первое реальное доменное capability для P14. До получения ответов используются local fixtures и существующая заявленная VM. Точные credentials в Project не размещаются.
 
-Архитектурные refinements опубликованы: [Engineering Approach](https://github.com/trained-assist/trained-agent-architecture/blob/main/ENGINEERING-APPROACH.md), [Capability Catalog](https://github.com/trained-assist/trained-agent-architecture/blob/main/CAPABILITY-CATALOG-AND-FAST-REPLIES.md). Все карточки являются planning items, никакие implementation Runs не запускались.
+Архитектурные refinements опубликованы: [Engineering Approach](https://github.com/trained-assist/trained-agent-architecture/blob/main/ENGINEERING-APPROACH.md), [Capability Catalog](https://github.com/trained-assist/trained-agent-architecture/blob/main/CAPABILITY-CATALOG-AND-FAST-REPLIES.md). Карточки — planning items; выполнение отмечается только по их evidence. Уже есть отдельные прогоны P-DB и bootstrap существующего агента на VM2; они не объявляют карточки нового Runner закрытыми.
 
 ## Дополнение 30.09.2026
 
