@@ -1,6 +1,6 @@
 # Playbooks vs Getting Things Done Boundaries
 
-Статус: **brainstorm / draft v0.3 · 30.09.2026**. Продолжение [Linearization Step](LINEARIZATION-STEP.md) и [User Task / Reporting](USER-TASK-IDS-AND-REPORTING.md). Здесь рассматриваем только слой над Input → … → Output: методики, конкретный план, расписание, ожидание пользователя и работы, созданные агентом.
+Статус: актуальная спецификация границ Playbooks/GTD · 30.09.2026.
 
 ## Решение владельца: GTD только там, где нужен следующий контроль
 
@@ -110,7 +110,7 @@ Schedule module может жить внутри GTD repo отдельным mod
 
 ### Один владелец продолжения
 
-Для простой User Task Output применяет outcome/recovery policy как в Linearization Step. Для plan-owned работы Output фиксирует результат и передаёт событие GTD; **GTD выбирает следующий шаг и разрешённую escalation**.
+Для простой User Task Output применяет outcome/recovery policy как в общей архитектуре. Для plan-owned работы Output фиксирует результат и передаёт событие GTD; **GTD выбирает следующий шаг и разрешённую escalation**.
 
 Используем явное `continuationOwner = output | gtd`. Один failed Run не должен одновременно породить follow-up в Output и ещё один в GTD. Технические redelivery того же Run остаются transport-level; GTD управляет новыми попытками и progression своего плана.
 
@@ -148,7 +148,7 @@ flowchart TD
 ```
 
 Task Submission API принадлежит Input/admission. Он проверяет и сохраняет agent-created работу без обязательного GTD. Только explicit managed work регистрируется в GTD и возвращает ему outcome по gtdId.
-Полный response/delivery flow остаётся в Linearization Step. Здесь intentionally скрыт executor internals, а не изменён протокол вывода.
+Полный response/delivery flow остаётся в общей архитектуре. Здесь intentionally скрыт executor internals, а не изменён протокол вывода.
 
 ## 7. Расписание: включить, выключить, остановить — разные команды
 
