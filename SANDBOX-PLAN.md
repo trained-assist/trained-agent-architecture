@@ -64,7 +64,7 @@ Sandbox имеет свои users/keys, endpoints, data roots, storage bindings 
 | Error Watcher | Registered event stream + storm fixtures | Reader replay, fingerprint/mute/reopen, self-loop guard, fake issue receipt |
 | Regions/workers | Two-worker simulation, затем existing RU/EU readiness | Region constraints/fencing; data residency policy отдельно |
 
-Если способ технически реализуем, ставим construction work item, а не ждём магически готовой инфраструктуры. Fake provider позволяет автономный progress, но не заменяет live proof свойств провайдера. Credentials/test accounts и выбранный VM ID привязываются при implementation; значений в docs нет.
+Если способ технически реализуем, ставим construction work item, а не ждём магически готовой инфраструктуры. Fake provider позволяет автономный progress, но не заменяет live proof свойств провайдера. Credentials/test accounts и выбранный VM ID привязываются при implementation; значений в docs нет. Инвентарь того, что уже привязано (имена секретов, пути к ключам, механизмы чтения, открытые блокеры) — [SANDBOX-CREDENTIALS-AND-ACCESS.md](SANDBOX-CREDENTIALS-AND-ACCESS.md).
 
 ## Логи обязательны для каждой итерации
 
