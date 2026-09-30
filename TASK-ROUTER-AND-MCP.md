@@ -30,7 +30,7 @@ Router определяет разрешённый способ работы: de
 4. Outcome идёт через общий Output. Готовый reply → Report/Gateway. needs_executor → владелец continuation создаёт следующую работу через Input.
 5. Router получает typed continuation и передаёт выбранному executor; повторять initial classifier не нужно.
 
-Таким образом **не** выполняем сначала LLM «да/нет», затем вторую LLM для того же ответа. Router policy может быть чистым кодом; initial reasoning выполняет LLM Recipe executor.
+В базовом пути избегаем пустого LLM «да/нет» перед второй генерацией. В implementation iteration сравниваем с двухэтапным selection → template/handler/LLM reply; второй этап не обязательно модель. Выбор фиксируется по correctness/latency/calls eval, а не объявляется заранее. Router policy может быть чистым кодом; initial reasoning выполняет LLM Recipe executor.
 
 Для уже известных /stop, status lookup, buttons, typed domain operation и GTD step действуют deterministic paths. Их не отдаём LLM только ради единого входа. Запрет бюджета/прав также проверяется до платного вызова.
 
@@ -161,3 +161,9 @@ Evals: common FAQ/Tilda, сложное tool-free reasoning, fresh/private data,
 Минимальная структура: contracts/, policy/, recipes/reply-or-route/, context/, capability-adapters/, evals/, integration fixtures. Router не импортирует внутренние core modules и не хранит credstore.
 
 API: route(preparedInput, resolvedPolicy) → decision/dispatch spec; typed continuation сохраняет U/G refs. Transport выбирается отдельно, package adapter допустим между repositories. Весь durable task state остаётся за boundary.
+
+## Implementation refinement: compact capabilities
+
+[Capability Catalog and Fast Replies](CAPABILITY-CATALOG-AND-FAST-REPLIES.md) задаёт supportedModes template/deterministic/llm/agent, explicit labels/aliases, required input/readiness, tier-1 brief + retrieved schemas. Это platform metadata, не новый Job type и не переименование всех native MCP tools. Regex внешних URL/keywords высокоточные intent features; простое присутствие ссылки не доказывает необходимость tools. Fixed LLM получает данные от host handler; browsing/fs автономия остаются Agent Job.
+
+[Engineering Approach](ENGINEERING-APPROACH.md) определяет sandbox и evidence. Corpus готовим из sanitized current fast-path logs плюс labelled fixtures до выбора окончательного recipe. Missing email/login — required input outcome, не запуск агента ради отсутствующего параметра.
