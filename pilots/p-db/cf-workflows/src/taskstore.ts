@@ -55,6 +55,12 @@ export class TaskStore {
       .run();
   }
 
+  async countEvents(taskId: string, kind: string, step: string) {
+    const r = await this.db.prepare(`SELECT COUNT(*) AS n FROM task_events WHERE task_id=? AND kind=? AND step=?`)
+      .bind(taskId, kind, step).first<{ n: number }>();
+    return r?.n ?? 0;
+  }
+
   /** Fenced step commit: status change + history event + side-effect counter + result, atomically. */
   async commitStep(
     taskId: string,
