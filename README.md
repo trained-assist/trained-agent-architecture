@@ -1,44 +1,59 @@
 # Trained Agent Architecture
 
-Общая архитектура Trained Assist, границы репозиториев и сквозные контракты. Статус: актуальная целевая модель · 30.09.2026. Целевая схема отделена от подтверждённого текущего кода.
+Архитектура Trained Assist и подготовка реализации. Принятые решения, предложения и подтверждённые прогоны различаются; наличие документа не означает готовность компонента.
 
-## Текущая архитектура
+## Начать разработку
 
-- [ARCHITECTURE v0.7](ARCHITECTURE.md) — ключевые решения на первом экране; база состояния задач и движок исполнения за Workflow Port; разговорная сессия; что берём из текущего прода (с вердиктами); IDs, ownership, переход и открытые решения.
-- [DECISIONS](DECISIONS.md) — журнал решений владельца по датам.
-- Ревью v0.6: [MiMo](ARCHITECTURE_mimo_review_2026-09-30.md), [Claude](ARCHITECTURE_claude_2026-09-30_1926.md).
-- [Task Router and MCP](TASK-ROUTER-AND-MCP.md) — архитектура отдельного Router, быстрый reply-or-route, эскалация, context policy, роли MCP и сверка текущего pipeline.
-- [Model Gateway and Costs](MODEL-GATEWAY-AND-COSTS.md) — model ladder, бюджет, Ledger и correlation расходов; цены отдельно от общей схемы.
-- [External Integration Gate](EXTERNAL-INTEGRATION-GATE.md) — отдельный repo, provider APIs/webhooks, transport adapters и extraction boundary.
-- [System Error Watcher](SYSTEM-ERROR-WATCHER.md) — подключаемый repo, incidents, suppression, LLM/OpenCode diagnosis и report.
-- [Serverless Agent API](SERVERLESS-AGENT-API.md) — isolated runs по ключам/scopes без обязательных GTD/frontend/playbooks.
-- [Observability и error contract](OBSERVABILITY-AND-ERROR-CONTRACT.md) — обязательные profile/correlation/reply context, registered sources, lifecycle events, TTL и sandbox acceptance.
-- [User Task: ID и Reporting](USER-TASK-IDS-AND-REPORTING.md) — сквозной userTaskId и справочная по статусу.
-- [Playbooks vs Getting Things Done Boundaries](PLAYBOOKS-VS-GETTING-THINGS-DONE-BOUNDARIES.md) — методика, plan, контроль, расписание, Awaiting user input и delegation.
-- [Review with real playbooks](REVIEW-WITH-REAL-PLAYBOOKS.md) — виртуальный прогон 11 артефактов / 132 шагов, IDs, waits, effects и gaps.
-- [Контракты](contracts/README.md) — C01–C13; распределение прежнего Orchestrator по новым владельцам.
-- [Agent Runner](runtime/EXECUTION-RUNTIME.md) — clean room lifecycle и граница [ai-agent-runner](https://github.com/trained-assist/ai-agent-runner).
-- [Терминология и OpenLineage](TERMINOLOGY.md) — Job/Run/Dataset и наши типы Job.
-- [Пользовательские сценарии](scenarios/README.md) — исходные копии с provenance; копирование не меняет runtime readers.
-- [Run conflict — явный выбор](scenarios/interaction/run-conflict-explicit-choice.md) — новая задача во время работающего рана: меню «в очередь / параллельно / стоп с добавкой / стоп → новая» вместо скрытого запрета (ждущее состояние — бездействие, без отдельной кнопки); кнопочная гигиена (RC-01…RC-08).
+1. Прочитать [ARCHITECTURE](ARCHITECTURE.md): границы, ownership, инварианты и условия перехода с живого сервиса.
+2. Выбрать карточку в [плане реализации и интеграции](IMPLEMENTATION-AND-INTEGRATION-PLAN.md), проверить зависимости и текущий порядок работ. Номера I/P — идентификаторы, не требование выполнять всё последовательно.
+3. Прочитать [Engineering Approach](ENGINEERING-APPROACH.md) и нужный рецепт из [Sandbox Plan](SANDBOX-PLAN.md). Подготовка отсутствующего sandbox входит в работу.
+4. Открыть только относящиеся к карточке контракты и локальные спецификации ниже.
+5. Создать issue/PR в implementation repo; приложить воспроизводимый запуск, controlled failure, scoped logs и evidence приёмки.
 
-- [Engineering Approach — Sandbox Driven Development](ENGINEERING-APPROACH.md) — воспроизводимая среда, fault fixtures, free-only smoke и acceptance.
-- [Capability Catalog and Fast Replies](CAPABILITY-CATALOG-AND-FAST-REPLIES.md) — четыре режима, scoped brief, required-input UX и сравнение одного/двух LLM этапов.
+Первый интеграционный сценарий нового control plane — диалог из пяти реплик с рестартом. Standalone Runner/API можно готовить параллельно; они не заменяют проверку диалога. Живой сервис продолжает работать.
 
-## Рабочий план
+## Основные документы и источники правил
 
-- [План реализации и интеграции](IMPLEMENTATION-AND-INTEGRATION-PLAN.md) — 33 work items, dependencies, новая параллельная реализация и отдельный pilot/cutover с rollback.
-- [Рефакторинг взаимодействия TG и связки с вебом](TG-AND-WEB-INTERACTION-REFACTORING-PLAN.md) — факты двух существующих блокировок, решения владельца 30.09 и фазы Ф0–Ф6 действующего сервиса (скрытый запрет → явный выбор).
-- [Sandbox Plan](SANDBOX-PLAN.md) — real-service scenarios, controlled provider failures, sandbox construction и обязательные logs checks каждого этапа.
+| Документ | За что отвечает |
+|---|---|
+| [ARCHITECTURE](ARCHITECTURE.md) | Целевая модель, принятые границы, IDs и инварианты |
+| [Implementation and Integration Plan](IMPLEMENTATION-AND-INTEGRATION-PLAN.md) | Порядок, зависимости, scope и специфическая приёмка карточек |
+| [Engineering Approach](ENGINEERING-APPROACH.md) | Концепция Sandbox Driven Development и общие правила разработки |
+| [Sandbox Plan](SANDBOX-PLAN.md) | Практические среды, сценарии сбоев, пробелы и logs checks по этапам |
+| [Contracts](contracts/README.md) | Межкомпонентные обязательства; wire API имеет собственный статус согласования |
+| [Observability](OBSERVABILITY-AND-ERROR-CONTRACT.md) | Общая схема ошибок/событий, scope и retention |
+| [DECISIONS](DECISIONS.md) | История решений; действующая формулировка сверяется с архитектурой |
 
-GitHub Project пока отложен. Production и старые репозитории сохраняются; runtime GTD не является development board.
+Локальная спецификация не переопределяет принятую архитектуру. Расхождение исправляется до реализации затронутого контракта. Порядок работ поддерживается в плане; общие правила не копируются в каждую карточку.
 
-## Проверка реализации
+## Спецификации по выбранной работе
 
-- [Code baseline](audits/CODE-BASELINE.md) — факты и ограничения существующего кода с pinned sources; без альтернативной архитектуры.
-- [Аудит юзер-стори 30.09](audits/USER-STORIES-CONSISTENCY-AUDIT-2026-09-30.md) — противоречия и устаревания существующих юзер-стори (A-1…A-10) и правила их ведения отныне.
-- [Review with real playbooks](REVIEW-WITH-REAL-PLAYBOOKS.md) — проверка выбранной модели реальными доменными артефактами.
+| Работа | Документы |
+|---|---|
+| Runner, API и файлы | [Runtime boundary](runtime/EXECUTION-RUNTIME.md), [Runner repo](https://github.com/trained-assist/ai-agent-runner), [Serverless API](SERVERLESS-AGENT-API.md); lifecycle данных — ARCHITECTURE §4.6 |
+| Router, MCP и быстрые ответы | [Router/MCP](TASK-ROUTER-AND-MCP.md), [Capability Catalog](CAPABILITY-CATALOG-AND-FAST-REPLIES.md). Router сначала модуль control plane |
+| Статусы, IDs и пользовательский ввод | [ID и Reporting](USER-TASK-IDS-AND-REPORTING.md), [Run conflict](scenarios/interaction/run-conflict-explicit-choice.md), [Scenarios](scenarios/README.md) |
+| Планы, расписание и GTD | [Boundaries](PLAYBOOKS-VS-GETTING-THINGS-DONE-BOUNDARIES.md). GTD opt-in |
+| Provider-интеграции | [External Integration Gate](EXTERNAL-INTEGRATION-GATE.md) |
+| Ошибки и диагностика | [System Error Watcher](SYSTEM-ERROR-WATCHER.md), общий Observability contract |
+| Модели, бюджет и учёт | [Model Gateway and Costs](MODEL-GATEWAY-AND-COSTS.md) |
+| Термины | [Terminology / OpenLineage](TERMINOLOGY.md) |
+
+Эти файлы раскрывают отдельные темы; читать весь список перед первой карточкой не требуется. Статус реализации определяется evidence, а не заголовком спецификации.
+
+## Доказательства и история
+
+- [P-DB comparison](pilots/p-db/COMPARISON.md) — выбор пары база/движок; локальный PASS не заменяет cloud smoke.
+- [Code baseline](audits/CODE-BASELINE.md) — pinned факты текущего кода.
+- [User stories audit](audits/USER-STORIES-CONSISTENCY-AUDIT-2026-09-30.md).
+- [Real playbooks review](REVIEW-WITH-REAL-PLAYBOOKS.md) — виртуальная проверка модели.
+- Ревью прежней архитектуры: [Claude](ARCHITECTURE_claude_2026-09-30_1926.md), [MiMo](ARCHITECTURE_mimo_review_2026-09-30.md). Это история обоснования, не альтернативные текущие архитектуры.
+- [VM2 wave 0](https://instant-publish.trainedassist.store/p/vm2-wave0-done) — отчёт о запуске существующего агента 29.09.2026; применённые уроки и ограничения доказательства — Sandbox Plan.
+
+## Отдельный поток: действующий сервис
+
+[План взаимодействия TG/Web](TG-AND-WEB-INTERACTION-REFACTORING-PLAN.md) относится к текущему продукту. Он не является очередной стадией greenfield-плана и не разрешает скрыто переключать production на новую систему.
 
 ## Как привязывать работу
 
-В эпиках указывать architecture_blocks (Axx), contracts (Cxx), invariants (INV-xx), scenario links, текущий пробел, целевой контракт и evidence приёмки. Архитектуру и межсервисные сценарии описывать здесь; код, локальные implementation docs и тесты — в репозитории соответствующего сервиса. Статусы выполнения — в issues/трекере.
+В issue указывать карточку плана, architecture_blocks (Axx), contracts (Cxx), invariants (INV-xx), нужные сценарии и evidence. Код, runnable recipes и локальные тесты живут в implementation repo; здесь — межкомпонентная модель и навигация. Статусы выполнения ведутся в issues/трекере. GitHub Project пока отложен.
