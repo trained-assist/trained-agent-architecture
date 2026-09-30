@@ -58,6 +58,34 @@ Task Router может быть stateless: `decide(inputSnapshot, policyVersion,
 
 Бот может стать тонким, но всему продукту требуется state. Telegram message IDs, незавершённые вложения и outbox не исчезают. Web также сохраняет UI/auth/transport state. Предлагаем **распределить владение**, а не запретить хранение данных каналам.
 
+## 4a. Вариант: Task Queue как отдельная граница
+
+Предложение владельца в этой итерации: **Task Queue**, возможное имя репозитория — **trained-assist-task-queue**. Репозиторий пока не создаём.
+
+Название хорошо описывает durable очередь **готовых к исполнению work items**. Каждый item ссылается на Job и конкретную попытку/Run; если интерфейс допускает более ранний enqueue, точную гранулярность фиксируем контрактом. Queue не интерпретирует пользовательское сообщение.
+
+| Компонент | Решение |
+|---|---|
+| Task Router | Какой путь нужен: reply, deterministic-job, llm-recipe-job или ai-agent-job |
+| Execution Controller | Какая работа принята, какие шаги готовы, достигнута ли цель, можно ли повторить |
+| Task Queue | Какой готовый item выдать, когда он доступен, кому и с какой lease/generation |
+| Executor / Agent Runner | Как выполнить выданный item и сообщить фактический outcome |
+| Conversation / Delivery | Как сохранить и показать пользователю результат |
+
+**Task Queue владеет:** enqueue/dedup receipts, ready/delayed/leased states, priority/fairness, attempts transport metadata, lease expiry, ack/nack и dead-letter/quarantine. Она исполняет заданную bounded retry policy для технических ошибок. Controller задаёт разрешённость повторов; новая агентская попытка получает новый runId, повтор транспортной доставки той же попытки — нет.
+
+**Controller владеет:** goal/acceptance, task cancellation, dependencies, GTD, расписанием и созданием новых логических попыток. Domain workflow state остаётся домену. Queue не становится вторым task planner.
+
+Логический путь: **Controller → Task Queue → выбранный executor**. Structured scheduled JobSpec проходит тот же controller/queue без LLM Task Router. Reply может использовать короткий synchronous путь; очередь для него не обязательна, durable message/outbox остаются обязательны.
+
+Первый этап: **модуль Task Queue внутри controller** с общей transactional storage, отдельным интерфейсом и tests. Отдельный repo/service оправдан несколькими consumers/workers и независимым lifecycle. Выделение требует durable outbox из controller и idempotent enqueue: запись Task в одной БД и enqueue в другой не являются одной транзакцией.
+
+Открытый контракт: enqueue(item, operationId), claim(workerCapabilities), heartbeat(lease), ack(outcomeRef), nack(reason), revoke/cancel(itemId, generation), inspect/reconcile. Это не выбранный framework.
+
+Lease expiry не означает остановку старого исполнителя. Нужны generation/fencing, stop/reconcile и idempotency внешних эффектов. Успех queue ACK означает учтённый outcome попытки, а не acceptance задачи или delivery пользователю.
+
+Если под именем **task-queue** хочется вынести весь нынешний core, имя окажется узким: там останутся orchestration, budgets, schedules и GTD. Предпочтение — использовать его для очереди, сохранив отдельную явную роль Execution Controller.
+
 ## 5. Быстрый путь: один вызов вместо «классификатор + повторный ответ»
 
 Не предлагаем обязательную LLM-классификацию каждого сообщения.
@@ -193,6 +221,7 @@ Run завершён — локальные MCP children остановлены,
 | trained-assist-tg-bot — существует | Telegram adapter, rendering, native transport, bot deployment | Domain decision logic, engine policy, global task scheduler |
 | trained-assist-web — существует | Web UI, auth adapter, web rendering/streaming и projections | Второй task/session/domain authority |
 | trained-assist-conversations — предлагается | Conversation intake/context, message-session links, delivery coordination; разделённые channel delivery modules | Domain entities, engine lifecycle |
+| trained-assist-task-queue — кандидат, предложен владельцем | Durable ready/delayed work items, dispatch leases, ACK/NACK и bounded retries | Intent recognition, task acceptance, GTD, channel delivery |
 | trained-assist-task-router — кандидат | RouteDecision schema, pure decision policy, bounded LLM recipe и eval fixtures | User DB, queues, execution, credentials |
 | trained-assist-agent — существующий core | На первом этапе: Execution Controller / dispatcher / GTD / admission | Engine implementation и канальные send/edit вызовы после извлечения |
 | ai-agent-runner — создан | ai-agent-job, Agent clean room, engine adapters, local run supervision | Conversation state, domain logic, GTD |
@@ -293,6 +322,7 @@ Web оставляет layout, navigation, composer, auth sessions и subscripti
 
 ## 15. Решения, которые стоит принять после чтения
 
+- [ ] Task Queue сначала модуль controller или отдельный repo; что является queue item и кто выдаёт новый runId?
 - [ ] Conversation Service + Delivery сначала один repo или два modules в существующем core?
 - [ ] Router: самостоятельный repo сразу или сначала изолированный package с evals?
 - [ ] Какие facts/snapshots доступны bounded reply recipe и сколько они живут?
