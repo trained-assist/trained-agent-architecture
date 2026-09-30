@@ -1,6 +1,6 @@
 # Model Gateway, Ladder и стоимость
 
-Статус: отдельный architecture draft · 30.09.2026. A10 / INV-10 / INV-11 общей архитектуры. Здесь model selection и accounting; выбор Job type описан в [Task Router](TASK-ROUTER-AND-MCP.md).
+Статус: актуальная локальная спецификация Model Gateway/accounting · 30.09.2026.
 
 ## Принятая граница эскалации
 
@@ -18,7 +18,7 @@ Budget policy проверяется до платного вызова. Общ�
 
 Владелец сообщил о существующем LLM Ledger. Его полный путь доставки всех engine calls пока не подтверждён. Изученный trained-assist-llm-ladder revision 9907dcb6b27307450bdfc826f67dd5490283d2c8 содержит model routing, health/key rotation и D1 traces; прежний аудит обнаружил неполное streaming usage и отсутствие денежной стоимости в найденной trace schema.
 
-Подробные факты и pinned links: [архив исходного code audit](audits/ARCHITECTURE-0.2-CODE-AUDIT.md). Это историческая проверка, не утверждение нынешнего production coverage.
+Подробные факты и pinned links: [Code baseline](audits/CODE-BASELINE.md). Это историческая проверка, не утверждение нынешнего production coverage.
 
 ## Цены и инфраструктура
 
