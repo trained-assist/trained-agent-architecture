@@ -28,8 +28,4 @@ VM/object storage/network/media costs учитываются отдельно о
 
 ## Открытые решения
 
-- [ ] Где полный Ledger находится и как все consumers доставляют в него usage?
-- [ ] Budget authority по profile/task/day/platform key и reservations/reconciliation.
-- [ ] Paid fallback/diagnosis: default запрещён или есть разрешённый резерв?
-- [ ] Attribution cache/subscription/streaming и retention.
-- [ ] Model quality policies и region/provider/tool restrictions.
+Открыты: место полного Ledger и доставка usage всеми consumers; budget authority (profile/task/day/platform key, reservations/reconciliation); политика paid fallback/diagnosis; attribution cache/subscription/streaming и retention; model quality policies и region/provider/tool restrictions. Статус решений ведётся в [#33](https://github.com/trained-assist/trained-agent-architecture/issues/33).

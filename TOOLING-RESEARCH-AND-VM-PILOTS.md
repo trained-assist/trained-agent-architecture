@@ -1,6 +1,6 @@
 # R00 — обзор инструментов и проверка на VM
 
-Статус: первичный обзор официальной документации, 30.09.2026. Это исследовательский backlog, а не принятый runtime stack. В этой сессии инструменты на VM не устанавливались и не измерялись. Порядок реализации — в [плане](IMPLEMENTATION-AND-INTEGRATION-PLAN.md); среды и bindings — в [Sandbox Plan](SANDBOX-PLAN.md) и [карте bindings](SANDBOX-BINDINGS-AND-CREDENTIALS.md).
+Статус: первичный обзор официальной документации, 30.09.2026. Это исследовательский backlog, а не принятый runtime stack. В этой сессии инструменты на VM не устанавливались и не измерялись. Порядок реализации — в [плане](IMPLEMENTATION-AND-INTEGRATION-PLAN.md); среды и bindings — в [Sandbox](SANDBOX.md). Статус карточек R01–R03 — в эпике [R00 #31](https://github.com/trained-assist/trained-agent-architecture/issues/31).
 
 ## Зачем этот этап
 
@@ -73,7 +73,7 @@ R00 охватывает все этапы и карточки. Первую п�
 
 ## Порядок VM-пилотов
 
-1. **Подготовка R01:** read-only host inventory, фиксируем текущие services/roots/ports, kernel capabilities и resource baseline. По [Sandbox Plan](SANDBOX-PLAN.md) VM2 уже содержит private profile/agent-data: создаём новый пустой experiment namespace. Ничего существующего не удаляем и не используем как fixture. SSH/bindings берём по карте доступа; адреса/значения ключей здесь не сохраняем.
+1. **Подготовка R01:** read-only host inventory, фиксируем текущие services/roots/ports, kernel capabilities и resource baseline. По [Sandbox](SANDBOX.md) VM2 уже содержит private profile/agent-data: создаём новый пустой experiment namespace. Ничего существующего не удаляем и не используем как fixture. SSH/bindings берём по карте доступа; адреса/значения ключей здесь не сохраняем.
 2. **Первая партия R02:** T02/T03/T04 для воспроизводимых ошибок; T06 с нашим log envelope; T01 отдельно против OS baseline. Минимальный synthetic job создаёт два файла, передаёт результат, переживает разрыв связи и завершение процесса. Toxiproxy нужен только для fault runs. До установки OpenShell проверяем его prerequisites; обновление kernel/host runtime существующего сервиса не является автоматическим шагом пилота.
 3. **Перед I02B/I03/I04:** T11 + реальный R2 smoke, T09; T12/T13 только для обнаруженного transfer/backup gap; T14/T18 по сценариям интерфейса и вложений. Ограничения на реальные R2/TG bindings остаются видимыми, их не подменяем PASS эмулятора.
 4. **Перед I05–I09:** T05/T15 для routing/recovery/schedule/watchers; T07/T08 по обнаруженным потерям корреляции/доставки. Cloudflare workflow recovery проверяем в Cloudflare, VM-пилот его не заменяет.
@@ -90,7 +90,7 @@ R00 охватывает все этапы и карточки. Первую п�
 - Проверяем positive path и relevant fault, затем service/process restart и повтор процедуры. Потеря связи не разрешает второй Agent Run: report + wait/reconnect; новый запуск только по разрешённому сигналу. Смерть процесса не означает удаление диска. Повтор finalization/export не запускает engine.
 - Сохраняем sanitized logs с profile/task/run refs, typed errors, event timestamps, tool version и pilot correlation. Список обязательных полей/TTL берём из [Observability](OBSERVABILITY-AND-ERROR-CONTRACT.md), не создаём вторую схему. Отдельно измеряем log sink outage/rotation и проверяем bounded retention.
 - Фиксируем supported extension points: HTTP/stdio/files/config/plugin; меняем test provider/binding без fork инструмента. Проверяем uninstall/rollback: сервис работает на baseline, данные и публичные contracts сохранены.
-- Сначала deterministic fixtures без LLM calls; live provider smoke использует разрешённый free-only профиль и cap. «Бесплатный тариф» не гарантирует доступность или отсутствие лимитов. Для OpenCode free smoke нужен реальный клиент согласно текущему Sandbox Plan.
+- Сначала deterministic fixtures без LLM calls; live provider smoke использует разрешённый free-only профиль и cap. «Бесплатный тариф» не гарантирует доступность или отсутствие лимитов. Для OpenCode free smoke нужен реальный клиент согласно [Sandbox](SANDBOX.md#llm-в-песочнице).
 
 Принятие требует одновременно: закрыт реальный вопрос, внешний контракт прошёл, overhead укладывается в записанные caps, зависимости/лицензия подходят, интеграция заменяема и rollback доказан. При равных результатах оставляем минимальный existing baseline. Dev-only overhead не переносим на production Run.
 
@@ -112,6 +112,6 @@ extension / uninstall / retained-data evidence:
 decision / reason / follow-up:
 ```
 
-До первых VM-прогонов остаются: actual host inventory и выделенный namespace, caps по RAM/CPU/disk, OpenShell kernel/runtime compatibility, наличие sandbox engine/provider и нужных bindings. У этих пунктов статус `pending`; наличие VM по сообщению владельца не является их проверкой. Детальные access gaps уже ведутся в Sandbox Plan/Bindings, сюда копируем только ссылку и outcome пилота.
+До первых VM-прогонов остаются: actual host inventory и выделенный namespace, caps по RAM/CPU/disk, OpenShell kernel/runtime compatibility, наличие sandbox engine/provider и нужных bindings. У этих пунктов статус `pending`; наличие VM по сообщению владельца не является их проверкой. Детальные access gaps ведутся в issues карточек и [Project](https://github.com/orgs/trained-assist/projects/1), сюда копируем только ссылку и outcome пилота.
 
 Не начинаем с установки Kubernetes, нового queue/workflow server, полного observability backend или нового agent framework: сейчас для них нет выявленного незакрытого контракта. Если исследование обнаружит такой вопрос, дописываем его, сравниваем альтернативы и измеряем отдельно. Цель R00 — найти полезные маленькие части, а не собрать максимальный стек.

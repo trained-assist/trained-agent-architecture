@@ -240,15 +240,6 @@ Output → GTD ACK означает: событие записано в durable 
 
 ## 11. Проверки, которые превращают desk review в executable evidence
 
-- [ ] Compile всех 11 artifacts в pinned plans с воспроизводимыми step mappings.
-- [ ] Fake executor выдаёт done/failed/awaiting_user_input/awaiting_condition/unknown_effect с неизменными U/G IDs.
-- [ ] Fake cloud CI: dispatch once → pending → red/green → resume без второго dispatch.
-- [ ] Presentation approval + restart: A2/A3 актуальны; duplicate answer не возобновляет дважды.
-- [ ] Sales test mutation + crash: effect recorded; cleanup выполняется без дубля создания.
-- [ ] GTD outcome потерял ACK: inbox dedup; ровно одно логическое continuation.
-- [ ] Parent engine закончился: accepted research outcome доступен в web и будит required next step.
-- [ ] HH occurrence новый U; G только при explicit control; launch artifact не falsely заявляет cold search.
-- [ ] CD пустой snapshot даёт domain blocked/empty, а не ошибочный green file check.
-- [ ] Private input/output не становятся публичными через default publish hook.
+Desk review становится executable evidence только через прогоны: compile всех 11 artifacts в pinned plans, fake executor со всеми outcome-типами при неизменных U/G IDs, fake cloud CI без второго dispatch, approval/mutation/ACK-loss/parent-death сценарии, HH occurrence и CD empty snapshot, приватность input/output при publish hook. Чек-лист этих проверок перенесён в issue [P24 #63](https://github.com/trained-assist/trained-agent-architecture/issues/63).
 
 **Заключение review:** линейная модель подходит этим artifacts, но обязана учитывать GTD control binding, structured waits/effects, persistent artifacts и явные acceptance contracts. Один gtdId облегчает маршрутизацию контроля; надёжность обеспечивает протокол передачи и восстановления, а не само наличие ID.

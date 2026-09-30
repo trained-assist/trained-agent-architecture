@@ -32,7 +32,7 @@ def build():
             "Generated structurally, without LLM. This index is incomplete by design; open source before changing behavior.",
             "Code details: `repo-compressed.xml` (Tree-sitter). Manifest: `manifest.json`.", "",
             "## Start here", ""]
-    for name in ("README.md", "ARCHITECTURE.md", "IMPLEMENTATION-AND-INTEGRATION-PLAN.md", "ENGINEERING-APPROACH.md", "SANDBOX-PLAN.md", "AGENTS.md"):
+    for name in ("README.md", "ARCHITECTURE.md", "IMPLEMENTATION-AND-INTEGRATION-PLAN.md", "ENGINEERING-APPROACH.md", "SANDBOX.md", "AGENTS.md"):
         if name in names:
             rows.append(f"- [{name}]({base}{name})")
     rows += ["", "## Tracked source index", "", "Paths and Markdown headings; generated data and sensitive paths excluded.", ""]

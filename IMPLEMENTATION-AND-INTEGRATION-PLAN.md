@@ -1,6 +1,6 @@
 # План реализации и интеграции Trained Assist
 
-Draft v0.4 · 30.09.2026. Это рабочий документ implementation/integration; GitHub Project отложен по решению владельца. Это не runtime GTD/checklist. Документ задаёт план, а не запускает инфраструктуру. Уже выполненные прогоны учитываются по ссылкам и границам evidence; migrations и production переключения требуют отдельной приёмки.
+Draft v0.5 · 01.10.2026. Это документ implementation/integration: долговечная структура плана — решения владельца, путь интеграции, этапы, зависимости, общие правила приёмки, scope репозиториев и риски. Статус карточек и чек-листы ведутся в [Project «Trained Assist — Migration»](https://github.com/orgs/trained-assist/projects/1) и issues. Это не runtime GTD/checklist. Документ задаёт план, а не запускает инфраструктуру. Уже выполненные прогоны учитываются по ссылкам и границам evidence; migrations и production переключения требуют отдельной приёмки.
 
 ## Решение владельца: новая реализация параллельно живому сервису
 
@@ -47,19 +47,16 @@ IDs и credentials старой/новой системы связываются
 
 Факт текущего inventory: ai-agent-runner содержит только README и draft ARCHITECTURE, отдельная реализация не готова. Plan не предполагает готовые API/clean room только потому, что они описаны.
 
-## Структура плана и будущего Project
+## Структура плана и Project
 
-Предлагаемый organization project: **Trained Assist — Implementation / Sandbox First**.
+Org Project: **[Trained Assist — Migration](https://github.com/orgs/trained-assist/projects/1)**. Он — источник статуса карточек и чек-листов приёмки; этот документ хранит только долговечную структуру: этапы, зависимости, IDs и общие правила.
 
-- Work items R01–R03, Z01–Z03 и P01–P30; будущий Project может представить их draft items. Issue в implementation repo создаётся/привязывается при выборе задачи в работу, без преждевременного потока issues. Старые 33 IDs сохранены; исследовательские карточки добавлены отдельно.
-- Status: Draft, Ready, In progress, Verification, Blocked, Done. Done требует acceptance evidence.
-- Поля: Stage (R00/Ixx), Component/target repo, Depends on, Sandbox, Acceptance evidence, Architecture links, Risk, Decision needed.
-- Views: Iteration board; dependency table; sandbox gaps; acceptance/review; later rollout.
-- Stage — milestone grouping. Календарные sprint dates/estimates не выдумываем до первого measured cycle.
-- Начальный Ready: R01 и Z01; остальные Draft. Первичный doc screening R01 подготовлен; host inventory/выбор партии ещё нужны. P02/P03 становятся Ready по готовности environment/setup contract. Это release readiness, не runtime gtdState.
+- Каждая карточка R01–R03, Z01–Z03, P-DB и P01–P30 — issue в этом репозитории, sub-issue своего этапного эпика (R00, E0–E7). В issue: работа, sandbox, specific acceptance, logs acceptance, зависимости и перенесённые чек-листы (AC-xx, блокеры, предусловия). Исходные IDs сохранены.
+- Перед работой над карточкой сначала открыть её issue: там актуальный статус, чек-лист и evidence. Implementation issue/PR в целевом repo ссылается на issue карточки.
+- Status: Draft, Ready, In progress, Verification, Blocked, Done. Done требует acceptance evidence в issue.
+- Поля Project: Stage (R00/Ixx/Ops), Card, Target repo, Depends on, Sandbox.
+- Stage — milestone grouping. Календарные sprint dates/estimates не выдумываем до первого measured cycle. Status — release readiness, не runtime gtdState.
 - GitHub Project не источник Run/task state; execution receipts/logs остаются в платформе.
-
-Draft items могут иметь title/body/custom fields; Project API и draft items описаны в [GitHub Projects documentation](https://docs.github.com/en/issues/planning-and-tracking-with-projects/automating-your-project/using-the-api-to-manage-projects). GitHub Project отложен: текущий рабочий план — этот документ и Sandbox Plan. Draft IDs Z01–Z03/P01–P30 сохраняются, чтобы позже перенести план без перенумерации.
 
 ## Актуальный порядок старта
 
@@ -97,15 +94,15 @@ Card-level зависимости имеют приоритет над milestone
 
 ## Общая приёмка каждой карточки
 
-Общие правила — [Engineering Approach](ENGINEERING-APPROACH.md); envelope/retention — [Observability](OBSERVABILITY-AND-ERROR-CONTRACT.md); environments, controlled failures и stage-specific logs checks — [Sandbox Plan](SANDBOX-PLAN.md).
+Общие правила — [Engineering Approach](ENGINEERING-APPROACH.md); envelope/retention — [Observability](OBSERVABILITY-AND-ERROR-CONTRACT.md); environments, bindings, controlled failures и stage-specific logs checks — [Sandbox](SANDBOX.md).
 
 Карточка добавляет только специфический outcome, зависимости и evidence. Done требует positive/controlled failure, читаемые scoped logs, pinned versions и воспроизводимый transcript; affected API/recovery/cleanup/compatibility проверяются согласно её scope.
 
-Перечень проверок и доказательств приёмки по карточкам, этапам, инвариантам и ловушкам — [Acceptance Checklist](ACCEPTANCE-CHECKLIST.md). Порядок работ остаётся только в этом плане.
+Общий гейт Done, типы доказательств и сквозные проверки инвариантов — [Acceptance](ACCEPTANCE-CHECKLIST.md). Чек-листы конкретной карточки и этапа — в issue карточки и эпике этапа. Порядок работ остаётся только в этом плане.
 
 ## Sandbox и требования к логам
 
-Конкретные окружения, значение test fixture, принудительные сбои и logging acceptance каждой итерации вынесены в [Sandbox Plan](SANDBOX-PLAN.md). Каждая карточка ниже сохраняет свой обязательный logging gate. Нельзя объявить её Done только по успешному ответу агента.
+Конкретные окружения, значение test fixture, bindings, принудительные сбои и logging acceptance каждого этапа — в [Sandbox](SANDBOX.md). Каждая карточка сохраняет свой обязательный logging gate в своём issue. Нельзя объявить её Done только по успешному ответу агента.
 
 ## Scope границ репозиториев
 
@@ -118,639 +115,53 @@ Integration Gate и Error Watcher — самостоятельные repos.
 Созданные новые repos (30.09.2026, публичные, пока только README/AGENTS и CI Repository context по Z03): [trained-assist-control-plane](https://github.com/trained-assist/trained-assist-control-plane) — control plane; [trained-assist-integration-gate](https://github.com/trained-assist/trained-assist-integration-gate) — I08; [trained-assist-error-watcher](https://github.com/trained-assist/trained-assist-error-watcher) — I09. Runner — уже существующий ai-agent-runner. Остальной I00 onboarding (AutoFix, staging) — по Z01/Z02.
 Ни одна карточка не требует предварительно создать repo для каждого логического прямоугольника.
 
-## Implementation work items
-
-### R00 — нулевой этап: исследование готовых инструментов
-
-Цель: найти лёгкие заменяемые решения до написания собственной инфраструктуры; проверить пользу, dependencies, license и overhead на VM. Полный вопросный обзор — сразу, VM-проверки — партиями перед затронутыми карточками. Backlog: [Tooling Research and VM Pilots](TOOLING-RESEARCH-AND-VM-PILOTS.md).
-
-**Logs acceptance (R00):** [Sandbox Plan — проверки по Stage](SANDBOX-PLAN.md#логи-обязательны-для-каждой-итерации); ошибки/события пилота проходят общий Observability contract. Список названий или успешная установка не закрывают исследование.
-
-#### R01 — Вопросы, coverage и отбор партии
-
-Planning readiness: Ready · Stage: R00
-Component/target repo: этот architecture repo; host inventory/recipe — implementation tooling/Runner repo
-Depends on: Нет; inventory Z01 можно делать параллельно
-Sandbox: read-only host preflight, synthetic data, новый experiment namespace.
-
-Работа: сопоставить вопросы всем Z01–Z03/P01–P30; изучить official docs, current implementation и альтернативу без нового tool. Первичный shortlist T01–T19 подготовлен; уточнить версии, license, prerequisites, bindings и resource caps. Отделить dev/CI-only tools, shared host services и per-Run dependencies. P-DB/Repomix evidence повторно использовать в его scope.
-
-Acceptance: coverage всех карточек, у кандидата test/reject criterion и evidence status; первая партия имеет baseline, scoped namespace и проверенные prerequisites. Private данные на VM не используются как fixtures и не удаляются ради clean setup.
-
-Logs acceptance: screening source/version refs, pilot correlation и sanitized preflight/errors; unknown prerequisites обозначены явно.
-
-#### R02 — Воспроизводимые VM-пилоты по партиям
-
-Planning readiness: Draft · Stage: R00
-Component/target repo: affected implementation repo; результаты связаны с research backlog
-Depends on: R01 по выбранной партии; доступ и bindings этой партии
-Sandbox: existing VM, synthetic principals, отдельные roots/ports/services/resource caps; live cloud smoke отдельно.
-
-Работа: baseline → candidate → fault/restart → measurements → uninstall/rollback. Первая партия — controlled faults/JSON/logs и отдельно OpenShell vs OS baseline. Последующие группы проверяют MCP, API/artifacts, интерфейсы, fast reply, timers/GTD, integrations/watchers и CI/promotion. Не устанавливать весь список одновременно; production units/keys не меняются. Неподдержанное решение можно отклонить до установки с документированной причиной.
-
-Acceptance: transcript VM-прогона каждого включённого кандидата, measured cold/warm start/CPU/RAM/disk, positive/fault/rollback outcomes и сохранные данные. Эмулятор не выдаётся за Cloudflare recovery, R2 auth/CORS или Telegram delivery. Непроверенное остаётся pending.
-
-Logs acceptance: tool/version/pilotId, profile/task/run refs при исполнении, resource observations и controlled failure; redaction/TTL, sink outage/rotation проверяются в соответствующем пилоте.
-
-#### R03 — Решение и привязка к реализации
-
-Planning readiness: Draft · Stage: R00
-Component/target repo: этот repo + target implementation repo
-Depends on: R02 по соответствующей партии; обоснованный screening rejection не требует установки
-Sandbox: evidence R02 и uninstall/замена на baseline.
-
-Работа: записать accepted/rejected/deferred/pending с причиной и scope; accepted версии закрепить в recipe/lockfile и affected card, существенное архитектурное решение — в DECISIONS. При равной пользе оставить минимальный baseline. Dev-only dependencies не переносить в Agent Clean Room.
-
-Acceptance: решение основано на внешнем контракте и измерениях, extension points и rollback известны; выбор не создаёт нового владельца Task state или mandatory GTD. До добавления зависимости её R03 закрыт; дальние pending пилоты не тормозят независимые карточки.
-
-Logs acceptance: decision/evidence/version refs без private logs/ключей; rejected/deferred/pending не обозначены VM PASS.
-
-### I00 — AutoFix, сжатие контекста и observability baseline для всех репозиториев
-
-Цель: одинаковый быстрый вход агента в каждый implementation repo, короткая диагностика и воспроизводимые проверки до начала Runner.
-Зависимости: нет. Применение ко всем текущим участвующим repo и шаблон для новых; тяжёлая инфраструктура не требуется repo с одними docs.
-
-**Logs acceptance (I00):** [Sandbox Plan — проверки по Stage](SANDBOX-PLAN.md#логи-обязательны-для-каждой-итерации); схема/TTL — Observability.
-
-Трактовка «сжатия»: compact repository map + task-relevant context bundle/brief с refs; исходный код не удаляется. Название/продукт автофиксера пока не задан, используем configurable AutoFix contract.
-
-#### Z01 — Inventory и общий development baseline
-
-Planning readiness: Ready · Stage: I00
-Component/target repo: все participating trained-assist repositories; reusable engineering tooling
-Depends on: Нет
-Sandbox: isolated checkout + fixture repo с намеренно внесёнными ошибками.
-
-Работа: inventory repo types/check entrypoints и current auto-fix tooling; для каждого профиля check/fix/verify, context-build и log contract. Docs-only profile не получает бессмысленный application build. Общая reusable конфигурация/скрипты живут в engineering tooling, repo хранит тонкий config.
-
-Acceptance: таблица coverage по всем участвующим repo, onboarding нового repo, воспроизводимый setup. Missing methods имеют construction tasks; значения credentials не попадают в inventory.
-
-Logs acceptance: I00 baseline; source/profile/request correlation, AutoFix check/attempt/patch refs либо context version/manifest/size; controlled failure, no-change repeat и retention evidence обязательны.
-
-#### Z02 — Bounded AutoFix workflow
-
-Planning readiness: Draft · Stage: I00
-Component/target repo: engineering tooling + тонкие CI/config adapters всех repo
-Depends on: Z01
-Sandbox: fixture repo + separate test branch/PR, fake CI failures.
-
-Работа: deterministic formatter/linter/schema corrections первыми; разрешённый LLM/OpenCode fix как bounded fallback там, где нужен. Small patch, repeat verify, отчёт unchanged/fixed/needs-human. Без самостоятельного merge/deploy и recursive GTD.
-
-Acceptance: намеренная ошибка исправлена, повторный fix не меняет чистый repo, неподдержанная ошибка останавливается по cap. Rule ID/check output и patch evidence видны; бесплатный profile fallback не снимает limits.
-
-Logs acceptance: I00 baseline; source/profile/request correlation, AutoFix check/attempt/patch refs либо context version/manifest/size; controlled failure, no-change repeat и retention evidence обязательны.
-
-#### Z03 — Repository context compression и logs baseline
-
-Planning readiness: Draft · Stage: I00
-Component/target repo: reusable context builder + все repo profiles
-Depends on: Z01, Z02
-Sandbox: fixture repos и isolated reads текущих repo.
-
-Работа: Установить обязательный завершающий CI job structural context generation на PR и main по ENGINEERING-APPROACH: short map + parser-compressed pack + manifest/source SHA, PR artifact и stable main publication, README/AGENTS ссылки. Для live repos отдельный installation PR; проверить неуспешный CI и stale SHA. Образец — workflow Repository context в этом repo. Затем compact map (entrypoints/contracts/dependencies/check commands), filtered task bundle, refs к полным источникам, source commit/version и invalidation. Включить error/lifecycle registration, safeSummary/private details, scope/correlation и configurable TTL; log fixture для любого нового module/iteration.
-
-Acceptance: map не теряет критичные constraints, fixture показывает missing/stale context, secrets/generated/native bulky logs excluded. После source change builder не отдаёт старый bundle как свежий. Каждый repo profile проходит intentional failure с читаемым error event. Agent может раскрыть original source ref.
-
-
-
-### I01 — Agent Runner на существующей sandbox VM
-
-Цель: Запустить OpenCode без старого core/frontend/GTD и получить полный наблюдаемый lifecycle.
-Зависимости: I00 accepted; VM существует по сообщению владельца.
-
-**Logs acceptance (I01):** [Sandbox Plan — проверки по Stage](SANDBOX-PLAN.md#логи-обязательны-для-каждой-итерации); схема/TTL — Observability.
-
-#### P01 — Воспроизводимый sandbox Runner
-
-Planning readiness: Draft · Stage: I01
-Component/target repo: ai-agent-runner/setup
-Depends on: Z03
-Sandbox: воспроизводимый сценарий соответствующей итерации из [Sandbox Plan](SANDBOX-PLAN.md); он может включать настоящий сервис.
-
-Работа: Зафиксировать setup/config manifest, отдельные workspace/credentials/log roots и teardown. VM сейчас sandbox; reuse как production только после clean reprovision и smoke, с новым отдельным sandbox.
-
-Acceptance: Чистая VM поднимается без ручного симлинка/клонирования/правки unit; второй setup идемпотентен. Node/runtime path разрешён и проверен, нужные repos/components pinned, host/env manifest валидируется до старта. Host ID уникален; schedules/delivery off по умолчанию. Отсутствие необязательного bot token не мешает standalone Runner; отсутствующий обязательный binding даёт диагностируемую readiness ошибку без бесконечного crash-loop. Teardown затрагивает только experiment namespace; release/config refs сохранены.
-
-Основание: VM2 wave 0 — [Sandbox Plan, уроки bootstrap](SANDBOX-PLAN.md#уроки-пробного-запуска-vm2).
-
-Logs acceptance: соответствующий Stage в [Sandbox Plan](SANDBOX-PLAN.md); приложить sanitized transcript.
-
-Evidence: по общим правилам приёмки, с результатом этой карточки.
-
-#### P02 — OpenCode Run и structured logs
-
-Planning readiness: Draft · Stage: I01
-Component/target repo: ai-agent-runner/engine
-Depends on: P01
-Sandbox: воспроизводимый сценарий соответствующей итерации из [Sandbox Plan](SANDBOX-PLAN.md); он может включать настоящий сервис.
-
-Работа: Fake engine adapter для lifecycle + реальный OpenCode через бесплатный provider profile/LLM Ladder. RunSpec, start/exit, limits, cancel process tree, profile/task/run correlation; без GTD.
-
-Acceptance: Успех, nonzero exit, startup/auth failure, timeout, cancel и child cleanup имеют typed outcome и логи. Два test principals не читают чужие workspace.
-
-Logs acceptance: соответствующий Stage в [Sandbox Plan](SANDBOX-PLAN.md); приложить sanitized transcript.
-
-Evidence: по общим правилам приёмки, с результатом этой карточки.
-
-#### P03 — Fault injection и error source registry
-
-Planning readiness: Draft · Stage: I01
-Component/target repo: Runner + model gateway fixtures
-Depends on: P02
-Sandbox: воспроизводимый сценарий соответствующей итерации из [Sandbox Plan](SANDBOX-PLAN.md); он может включать настоящий сервис.
-
-Работа: Контролируемые rate limit, invalid output, provider unavailable, kill/restart, log sink outage. Live free-provider smoke отдельно от детерминированных проверок.
-
-Acceptance: Каждый failure воспроизводим; logging failure bounded; scope/replyContext и TTL cleanup проверяются. Проверить missing runtime/dependency/required secret, недоступный secret backend и ошибочную identity/scheduler role до старта; readiness отделена от liveness. Проверить firewall снаружи и service reachability изнутри, timestamps UTC. Автоматический paid fallback выключен.
-
-Уточнение владельца 30.09.2026: Сетевой partition при продолжающем работать engine: connection_lost/report, отсутствие автоматического нового Run; выход процесса не удаляет volume. Отдельно моделировать потерю самого диска.
-
-Logs acceptance: соответствующий Stage в [Sandbox Plan](SANDBOX-PLAN.md); приложить sanitized transcript.
-
-Evidence: по общим правилам приёмки, с результатом этой карточки.
-
-### I02A — Внешний Serverless Agent API
-
-Цель: Тестовый внешний клиент запускает, наблюдает и останавливает агента по API.
-Зависимости: I01 accepted.
-
-**Logs acceptance (I02A):** [Sandbox Plan — проверки по Stage](SANDBOX-PLAN.md#логи-обязательны-для-каждой-итерации); схема/TTL — Observability.
-
-#### P04 — Admission и durable receipt
-
-Planning readiness: Draft · Stage: I02A
-Component/target repo: Runner/API admission
-Depends on: P03
-Sandbox: воспроизводимый сценарий соответствующей итерации из [Sandbox Plan](SANDBOX-PLAN.md); он может включать настоящий сервис.
-
-Работа: API keys/test principals, scope/engine/region/quota, idempotency, минимальный durable request/result store. Typed ai-agent-job прямо к Runner adapter, без полного Task Router/GTD.
-
-Acceptance: Duplicate submit возвращает тот же receipt; несовместимый payload conflict; unauthorized principal не запускает Run.
-
-Logs acceptance: соответствующий Stage в [Sandbox Plan](SANDBOX-PLAN.md); приложить sanitized transcript.
-
-Evidence: по общим правилам приёмки, с результатом этой карточки.
-
-#### P05 — Status и replayable streaming
-
-Planning readiness: Draft · Stage: I02A
-Component/target repo: Runner/API events
-Depends on: P04
-Sandbox: воспроизводимый сценарий соответствующей итерации из [Sandbox Plan](SANDBOX-PLAN.md); он может включать настоящий сервис.
-
-Работа: submit/status/cancel/result/events. SSE с sequence/cursor либо эквивалентный replay transport; reconnect и snapshot. Structured progress и доступный native output, без обещания скрытых reasoning traces.
-
-Acceptance: Разрыв stream не теряет итог; queued/starting/running/terminal различимы; export state отдельно; cancel requested не притворяется stopped.
-
-Logs acceptance: соответствующий Stage в [Sandbox Plan](SANDBOX-PLAN.md); приложить sanitized transcript.
-
-Evidence: по общим правилам приёмки, с результатом этой карточки.
-
-#### P06 — Recovery API-сессии
-
-Planning readiness: Draft · Stage: I02A
-Component/target repo: Runner/recovery
-Depends on: P05
-Sandbox: воспроизводимый сценарий соответствующей итерации из [Sandbox Plan](SANDBOX-PLAN.md); он может включать настоящий сервис.
-
-Работа: Test client SDK/CLI fixture, Runner/API restart, late events, lease/ownership reconciliation, invalid keys и concurrency caps.
-
-Acceptance: Принятый request не исчезает после restart; повтор не запускает две копии; клиент узнаёт failed/unknown/cancelled через status. Полностью проходит без Telegram/Web.
-
-Уточнение владельца 30.09.2026: Reconnect/replay без rerun; авторизованный сигнал на следующую попытку с дополнительными инструкциями; сверка и stop/отзыв прав прежнего процесса до нового запуска. Повтор сигнала дедуплицируется, userTaskId сохраняется, runId меняется.
-
-Logs acceptance: соответствующий Stage в [Sandbox Plan](SANDBOX-PLAN.md); приложить sanitized transcript.
-
-Evidence: по общим правилам приёмки, с результатом этой карточки.
-
-### I02B — Артефакты и пользовательский workspace через API
-
-Цель: Клиент получает файлы агента и передаёт вход без тяжёлых payload в control API.
-Зависимости: I02A; object-store sandbox.
-
-**Logs acceptance (I02B):** [Sandbox Plan — проверки по Stage](SANDBOX-PLAN.md#логи-обязательны-для-каждой-итерации); схема/TTL — Observability.
-
-#### P07 — Artifact manifest и export
-
-Planning readiness: Draft · Stage: I02B
-Component/target repo: Runner/artifact export
-Depends on: P06
-Sandbox: воспроизводимый сценарий соответствующей итерации из [Sandbox Plan](SANDBOX-PLAN.md); он может включать настоящий сервис.
-
-Работа: artifactId, bytes/hash/MIME, scope, createdByRun, immutable version; export local files → object storage → committed manifest. Input snapshot и output delta/ref.
-
-Acceptance: Run создал HTML/source/files; no-profile client скачал точные bytes. Cleanup не удаляет единственную копию при export failure; partial manifest объявлен явно.
-
-Уточнение владельца 30.09.2026: Execution/finalizing разделены; тяжёлый локальный файл, crash/restart export и повтор commit не запускают engine. Export progress/ошибка доступны клиенту; sole copy не удаляется до подтверждённого сохранения.
-
-Logs acceptance: соответствующий Stage в [Sandbox Plan](SANDBOX-PLAN.md); приложить sanitized transcript.
-
-Evidence: по общим правилам приёмки, с результатом этой карточки.
-
-#### P08 — Direct upload/download и большие файлы
-
-Planning readiness: Draft · Stage: I02B
-Component/target repo: Storage adapter + API
-Depends on: P07
-Sandbox: воспроизводимый сценарий соответствующей итерации из [Sandbox Plan](SANDBOX-PLAN.md); он может включать настоящий сервис.
-
-Работа: API выдаёт scoped upload/download session и короткоживущие signed object URLs. Multipart/resume для большого input; list manifest/optional archive. Без FTP и передачи гигабайт через Gateway.
-
-Acceptance: Expired URL, wrong principal, CORS browser path, size/hash mismatch, interrupted upload/resume и abort cleanup проверены. API передаёт IDs/метаданные, bytes идут напрямую.
-
-Logs acceptance: соответствующий Stage в [Sandbox Plan](SANDBOX-PLAN.md); приложить sanitized transcript.
-
-Evidence: по общим правилам приёмки, с результатом этой карточки.
-
-#### P09 — Workspace snapshots и конфликты
-
-Planning readiness: Draft · Stage: I02B
-Component/target repo: Storage/snapshot
-Depends on: P07, P08
-Sandbox: воспроизводимый сценарий соответствующей итерации из [Sandbox Plan](SANDBOX-PLAN.md); он может включать настоящий сервис.
-
-Работа: Text+artifact refs пользователя или одноразовый input; snapshot version, разрешённый output destination, commit/export ACK и retention.
-
-Acceptance: Два writers не перезаписывают молча одну версию; path traversal/escaping export отвергнут; no-profile и folder modes работают. Граница cleaned after durable export проверена.
-
-Уточнение владельца 30.09.2026: Workspace/volume task-scoped и переживает процесс; следующая разрешённая попытка видит прежние файлы/checkpoints через новую clean room. Старые процессы/секреты не наследуются. Cleanup отдельно, retention/квоты явны.
-
-Logs acceptance: соответствующий Stage в [Sandbox Plan](SANDBOX-PLAN.md); приложить sanitized transcript.
-
-Evidence: по общим правилам приёмки, с результатом этой карточки.
-
-### I03 — Web и Telegram на том же API
-
-Цель: Сквозной пользовательский workflow и обратная доставка результата, без дубля orchestration в каналах.
-Зависимости: Task Store/Workflow Port + conversation contract + базовый Runner/status/recovery; sandbox Workers/bindings. I02B нужен для файлов; Telegram fixture подключается после текстового Web slice.
-
-**Logs acceptance (I03):** [Sandbox Plan — проверки по Stage](SANDBOX-PLAN.md#логи-обязательны-для-каждой-итерации); схема/TTL — Observability.
-
-#### P10 — Тонкий Web client и task view
-
-Planning readiness: Draft · Stage: I03
-Component/target repo: trained-assist-web
-Depends on: P12 и базовый Run/status/recovery (P02/P05/P06). Artifact-сценарии дополнительно ждут P07–P09; первый текстовый диалог не ждёт файлов.
-Sandbox: воспроизводимый сценарий соответствующей итерации из [Sandbox Plan](SANDBOX-PLAN.md); он может включать настоящий сервис.
-
-Работа: Сначала Web: test profile, submit/status/events/artifacts/cancel; отдельный Worker/API origin и test storage. Thin task facade отображает public receipt/userTaskId.
-
-Acceptance: Пять последовательных уточнений с restart между 3-м и 4-м без потери контекста, measured latency/cost относительно старого пути. После reconnect видно существующую Task; состояние и файлы через общий API; private scopes проверены. Run из Web совпадает с наблюдаемым API Run.
-
-Logs acceptance: соответствующий Stage в [Sandbox Plan](SANDBOX-PLAN.md); приложить sanitized transcript.
-
-Evidence: по общим правилам приёмки, с результатом этой карточки.
-
-#### P11 — Telegram-equivalent fixture и sandbox bot
-
-Planning readiness: Draft · Stage: I03
-Component/target repo: trained-assist-tg-bot
-Depends on: P10
-Sandbox: воспроизводимый сценарий соответствующей итерации из [Sandbox Plan](SANDBOX-PLAN.md); он может включать настоящий сервис.
-
-Работа: Эмулятор inbound update/delivery receipts для CI, затем отдельный реальный test bot + chat smoke. Channel IDs/receipts/media normalize в Gateway, selection вне него.
-
-Acceptance: Batch updates/dedup, user profile mapping, return report, file refs и delivery retry работают; production bot/webhook не переключён sandbox setup.
-
-Logs acceptance: соответствующий Stage в [Sandbox Plan](SANDBOX-PLAN.md); приложить sanitized transcript.
-
-Evidence: по общим правилам приёмки, с результатом этой карточки.
-
-#### P12 — Primitive Input/Output и routing
-
-Planning readiness: Draft · Stage: I03
-Component/target repo: новый control plane — Input/Output/Router/Reporting
-Depends on: P-DB + схема Task Store + conversation/project/audience contract; базовый Runner/status/recovery (P02/P05/P06). P10/P11 — потребители API, не prerequisite этой карточки.
-Sandbox: воспроизводимый сценарий соответствующей итерации из [Sandbox Plan](SANDBOX-PLAN.md); он может включать настоящий сервис.
-
-Работа: Извлечь минимум queue/handoff/result/delivery contract; default route OpenCode, typed deterministic commands; LLM executor только для известного фиксированного recipe. Бесплатный allowlist.
-
-Acceptance: Проекция conversation и task различается, scoped project/audience и контекст сохраняются через restart; один userTaskId виден от ingress до результата; durable ACK и replays; /stop/status не проходят LLM; delivery fail не меняет execution success.
-
-Logs acceptance: соответствующий Stage в [Sandbox Plan](SANDBOX-PLAN.md); приложить sanitized transcript.
-
-Evidence: по общим правилам приёмки, с результатом этой карточки.
-
-### I04 — MCP и доменные capabilities
-
-Цель: Агент и host могут вызвать разрешённые методы с одинаковым contract; GTD пока отсутствует.
-Зависимости: I03; первые fake domain adapters.
-
-**Logs acceptance (I04):** [Sandbox Plan — проверки по Stage](SANDBOX-PLAN.md#логи-обязательны-для-каждой-итерации); схема/TTL — Observability.
-
-#### P13 — MCP lifecycle и scoped bindings
-
-Planning readiness: Draft · Stage: I04
-Component/target repo: Runner + MCP facade
-Depends on: P12
-Sandbox: воспроизводимый сценарий соответствующей итерации из [Sandbox Plan](SANDBOX-PLAN.md); он может включать настоящий сервис.
-
-Работа: Per-run stdio process/proxy и fake remote service fixture, handshake/readiness/timeout/cleanup; shared handlers с API facade.
-
-Acceptance: Tool вызван реально, а не только виден в list; чужой binding недоступен; failed startup отражён в logs. MCP service UID не заявлен доказанной OS isolation.
-
-Logs acceptance: соответствующий Stage в [Sandbox Plan](SANDBOX-PLAN.md); приложить sanitized transcript.
-
-Evidence: по общим правилам приёмки, с результатом этой карточки.
-
-#### P14 — Доменные tools и playbook artifact retrieval
-
-Planning readiness: Draft · Stage: I04
-Component/target repo: software-engineering-playbooks + domain
-Depends on: P13
-Sandbox: воспроизводимый сценарий соответствующей итерации из [Sandbox Plan](SANDBOX-PLAN.md); он может включать настоящий сервис.
-
-Работа: Начать с одного engineering/domain read и безопасного deterministic handler; получить pinned playbook artifact как data/resource. Templates — definitions, MCP — интерфейс.
-
-Acceptance: Версия/bindings/permissions явны; read не запускает plan; fake provider mutation подтверждена receipt. Advisory playbook возможен без gtdId.
-
-Logs acceptance: соответствующий Stage в [Sandbox Plan](SANDBOX-PLAN.md); приложить sanitized transcript.
-
-Evidence: по общим правилам приёмки, с результатом этой карточки.
-
-#### P15 — MCP integration sandbox
-
-Planning readiness: Draft · Stage: I04
-Component/target repo: Domain/MCP fixtures
-Depends on: P14
-Sandbox: воспроизводимый сценарий соответствующей итерации из [Sandbox Plan](SANDBOX-PLAN.md); он может включать настоящий сервис.
-
-Работа: Provider success/error/delay/auth expiry/duplicate callbacks fixtures. HTTP/stdIO contract smoke; реальные доступные test-account read операции отдельно.
-
-Acceptance: Одинаковый action outcome по transport facades; event IDs/profile/reply context не потеряны. Для unsupported external sandbox строится emulator, не ждать production testing.
-
-Logs acceptance: соответствующий Stage в [Sandbox Plan](SANDBOX-PLAN.md); приложить sanitized transcript.
-
-Evidence: по общим правилам приёмки, с результатом этой карточки.
-
-### I05 — Первый надёжный fast path
-
-Цель: FAQ/clarify/known action дают быстрый результат без лишнего agent Run.
-Зависимости: I04; старт corpus collection с I01.
-
-**Logs acceptance (I05):** [Sandbox Plan — проверки по Stage](SANDBOX-PLAN.md#логи-обязательны-для-каждой-итерации); схема/TTL — Observability.
-
-#### P16 — Route policy и high-precision rules
-
-Planning readiness: Draft · Stage: I05
-Component/target repo: Task Router
-Depends on: P15
-Sandbox: воспроизводимый сценарий соответствующей итерации из [Sandbox Plan](SANDBOX-PLAN.md); он может включать настоящий сервис.
-
-Работа: Typed commands/template answers первыми; URL/keywords — features плюс intent/capability, не blind URL⇒agent. Explicit live research/unknown adaptive action → OpenCode.
-
-Acceptance: Текст с цитированной ссылкой не запускает agent без нужды; задача чтения live data не выдаёт выдуманный fast answer; permissions не выводятся regex.
-
-Logs acceptance: соответствующий Stage в [Sandbox Plan](SANDBOX-PLAN.md); приложить sanitized transcript.
-
-Evidence: по общим правилам приёмки, с результатом этой карточки.
-
-#### P17 — Bounded reply-or-route recipe
-
-Planning readiness: Draft · Stage: I05
-Component/target repo: Router + LLM recipe
-Depends on: P16
-Sandbox: воспроизводимый сценарий соответствующей итерации из [Sandbox Plan](SANDBOX-PLAN.md); он может включать настоящий сервис.
-
-Работа: Один полезный вызов reply/clarify/needs_executor; Output continuation с тем же U и новым Job/Run. Fixed LLM без tools; нужный handler вызывает host.
-
-Acceptance: Schema invalid, model timeout, budget/provider failure, awaiting input и insufficient context имеют корректные outcomes; one continuation owner; OpenCode конечный auto executor.
-
-Logs acceptance: соответствующий Stage в [Sandbox Plan](SANDBOX-PLAN.md); приложить sanitized transcript.
-
-Evidence: по общим правилам приёмки, с результатом этой карточки.
-
-#### P18 — Corpus и baseline eval
-
-Planning readiness: Draft · Stage: I05
-Component/target repo: Router eval + observability
-Depends on: P03, P12
-Sandbox: воспроизводимый сценарий соответствующей итерации из [Sandbox Plan](SANDBOX-PLAN.md); он может включать настоящий сервис.
-
-Работа: Sanitized current fast-path errors/requests по read-only extraction; если данных мало, fixtures. Стартовый корпус и формат — [stories/FAST-REPLIES.md](stories/FAST-REPLIES.md), данные [eval/fast-replies/](eval/fast-replies/dialogs.v1.jsonl); ловушки маршрутизации — [PROBES](stories/PROBES.md) PR-21…PR-24. Known answer/action/fresh data/middle constraints/attachments; latency, correctness, unnecessary-agent, provider calls.
-
-Acceptance: Corpus versioned, profile data не публикуются; tests воспроизводимы, live free smoke отдельно; collected logs не считаются истинной разметкой без review.
-
-Logs acceptance: соответствующий Stage в [Sandbox Plan](SANDBOX-PLAN.md); приложить sanitized transcript.
-
-Evidence: по общим правилам приёмки, с результатом этой карточки.
-
-### I06 — Компактный capability catalog и глубокая проверка быстрых ответов
-
-Цель: Небольшой scoped brief объясняет, что умеет система и как исполнять каждый метод.
-Зависимости: I05; P18 baseline.
-
-**Logs acceptance (I06):** [Sandbox Plan — проверки по Stage](SANDBOX-PLAN.md#логи-обязательны-для-каждой-итерации); схема/TTL — Observability.
-
-#### P19 — Четыре режима capability
-
-Planning readiness: Draft · Stage: I06
-Component/target repo: Domain metadata + shared catalog
-Depends on: P14, P17, P18
-Sandbox: воспроизводимый сценарий соответствующей итерации из [Sandbox Plan](SANDBOX-PLAN.md); он может включать настоящий сервис.
-
-Работа: supportedModes=[template,deterministic,llm,agent], preferredMode, inputs/required bindings, effect/readiness/version/freshness и brief label. Может быть несколько допустимых modes.
-
-Acceptance: Template — deterministic-job response handler, не четвёртый Job type. Описание возможности отдельно от user enabled/ready; неподдержанное не рекламируется доступным.
-
-Logs acceptance: соответствующий Stage в [Sandbox Plan](SANDBOX-PLAN.md); приложить sanitized transcript.
-
-Evidence: по общим правилам приёмки, с результатом этой карточки.
-
-#### P20 — Brief builder и retrieval
-
-Planning readiness: Draft · Stage: I06
-Component/target repo: Router/context
-Depends on: P19
-Sandbox: воспроизводимый сценарий соответствующей итерации из [Sandbox Plan](SANDBOX-PLAN.md); он может включать настоящий сервис.
-
-Работа: Tier-1 явные короткие names/aliases+mode tags, Tier-2 relevant schemas/details. Build из verified capability metadata, scoped context cache. Native MCP names сохраняют стабильность.
-
-Acceptance: Brief содержит data/task ограничения и ссылки на оригинал; summary не придумывает права; cache keyed profile/context/catalog/policy; output size budget measured.
-
-Logs acceptance: соответствующий Stage в [Sandbox Plan](SANDBOX-PLAN.md); приложить sanitized transcript.
-
-Evidence: по общим правилам приёмки, с результатом этой карточки.
-
-#### P21 — One-call vs two-call и required-input UX
-
-Planning readiness: Draft · Stage: I06
-Component/target repo: Router + Web wait
-Depends on: P20
-Sandbox: воспроизводимый сценарий соответствующей итерации из [Sandbox Plan](SANDBOX-PLAN.md); он может включать настоящий сервис.
-
-Работа: Сравнить reply-or-route и route-then-handler/reply на том же corpus. Нет обязательных двух LLM для templates/scripts. Missing email/login → structured required input + безопасная инструкция.
-
-Acceptance: Фиксируются correctness/latency/provider calls/cost; выбран путь по evidence. Web Awaiting user input идемпотентен; не теряет userTaskId; сложное reasoning без tools остаётся LLM.
-
-Logs acceptance: соответствующий Stage в [Sandbox Plan](SANDBOX-PLAN.md); приложить sanitized transcript.
-
-Evidence: по общим правилам приёмки, с результатом этой карточки.
-
-### I07 — Расписание, планы и выборочный GTD
-
-Цель: Проверять именно следующий шаг там, где он действительно нужен.
-Зависимости: для P22 — Task Store/Workflow Port и typed dispatch; для P23/P24 — plan contracts и нужные MCP bindings. I06 не блокирует ранний schedule pilot.
-
-**Logs acceptance (I07):** [Sandbox Plan — проверки по Stage](SANDBOX-PLAN.md#логи-обязательны-для-каждой-итерации); схема/TTL — Observability.
-
-#### P22 — Schedule без обязательного GTD
-
-Planning readiness: Draft · Stage: I07
-Component/target repo: Schedule module нового control plane
-Depends on: P-DB, Task Store/Workflow Port и минимальный typed dispatch/result из P12. P21 и полный fast path не обязательны; простой schedule pilot можно начать раньше.
-Sandbox: воспроизводимый сценарий соответствующей итерации из [Sandbox Plan](SANDBOX-PLAN.md); он может включать настоящий сервис.
-
-Работа: Virtual clock occurrences/timezone/dedup/overlap/catch-up; обычный hourly task → Output. gtdId отсутствует при terminal result.
-
-Acceptance: Disable schedule не равен cancel accepted task; crash replay не создаёт второй occurrence; простой cron не начинает control loop.
-
-Logs acceptance: соответствующий Stage в [Sandbox Plan](SANDBOX-PLAN.md); приложить sanitized transcript.
-
-Evidence: по общим правилам приёмки, с результатом этой карточки.
-
-#### P23 — GTD opt-in и bounded control
-
-Planning readiness: Draft · Stage: I07
-Component/target repo: GTD module нового control plane
-Depends on: P22
-Sandbox: воспроизводимый сценарий соответствующей итерации из [Sandbox Plan](SANDBOX-PLAN.md); он может включать настоящий сервис.
-
-Работа: Registration reason, next trigger/check, criteria, deadline/attempt caps; Output→GTD ACK и один owner continuation. CI/wait/input сценарии.
-
-Acceptance: Одна явная managed task получает G; остальные нет. Wait не держит agent токены, self-GTD не создаётся; caps завершают progression, не обходятся новым control record.
-
-Logs acceptance: соответствующий Stage в [Sandbox Plan](SANDBOX-PLAN.md); приложить sanitized transcript.
-
-Evidence: по общим правилам приёмки, с результатом этой карточки.
-
-#### P24 — Реальные playbooks и адаптация плана
-
-Planning readiness: Draft · Stage: I07
-Component/target repo: Engineering playbooks + GTD
-Depends on: P23
-Sandbox: воспроизводимый сценарий соответствующей итерации из [Sandbox Plan](SANDBOX-PLAN.md); он может включать настоящий сервис.
-
-Работа: Engineering feature/integration split, migration dependency; pinned definition/compiled plan, stable step IDs. CI fake provider и controlled artifact edits.
-
-Acceptance: PR→CI→verify gates имеют evidence; native playbook retrieval не подменяет execution plan; edit не меняет running step IDs. HH simple schedule по-прежнему без GTD.
-
-Logs acceptance: соответствующий Stage в [Sandbox Plan](SANDBOX-PLAN.md); приложить sanitized transcript.
-
-Evidence: по общим правилам приёмки, с результатом этой карточки.
-
-### I08 — External Integration Gate
-
-Цель: Выделить provider transport и webhook lifecycle в самостоятельный repo.
-Зависимости: I04 базовый handler; MVP может идти параллельно I05–I07.
-
-**Logs acceptance (I08):** [Sandbox Plan — проверки по Stage](SANDBOX-PLAN.md#логи-обязательны-для-каждой-итерации); схема/TTL — Observability.
-
-#### P25 — Gate extraction и provider sandbox
-
-Planning readiness: Draft · Stage: I08
-Component/target repo: Integration Gate repo
-Depends on: P15
-Sandbox: воспроизводимый сценарий соответствующей итерации из [Sandbox Plan](SANDBOX-PLAN.md); он может включать настоящий сервис.
-
-Работа: Новый repo после его создания, versioned invoke/subscribe/reconcile/events. Provider emulators, signed callbacks, expired auth, webhook inbox и effect operationId.
-
-Acceptance: Бизнес-плейбуки остаются в доменах; read/poll/webhook маршруты сохраняют scope; timeout mutation = unknown до reconcile; нет двух adapter implementations после переключения.
-
-Logs acceptance: соответствующий Stage в [Sandbox Plan](SANDBOX-PLAN.md); приложить sanitized transcript.
-
-Evidence: по общим правилам приёмки, с результатом этой карточки.
-
-#### P26 — HH/домен pilot
-
-Planning readiness: Draft · Stage: I08
-Component/target repo: Gate + trained-assist-hh-skill
-Depends on: P25, P22
-Sandbox: воспроизводимый сценарий соответствующей итерации из [Sandbox Plan](SANDBOX-PLAN.md); он может включать настоящий сервис.
-
-Работа: Один реалистичный provider adapter с safe test account или emulated equivalent; существующий cold search cron mapping к schedule occurrences.
-
-Acceptance: Hourly поддержка не выдаётся за production enabled; unsupported provider webhook не обещан; integration data/results возвращаются через общий task flow.
-
-Logs acceptance: соответствующий Stage в [Sandbox Plan](SANDBOX-PLAN.md); приложить sanitized transcript.
-
-Evidence: по общим правилам приёмки, с результатом этой карточки.
-
-### I09 — Error Watcher
-
-Цель: Ошибки сами порождают ограниченную диагностику и полезный report.
-Зависимости: I01 error contract, I05/I06 diagnosis routing; не блокирует первые API Runs.
-
-**Logs acceptance (I09):** [Sandbox Plan — проверки по Stage](SANDBOX-PLAN.md#логи-обязательны-для-каждой-итерации); схема/TTL — Observability.
-
-#### P27 — Incident aggregation и suppression
-
-Planning readiness: Draft · Stage: I09
-Component/target repo: Error Watcher repo
-Depends on: P03, P18
-Sandbox: воспроизводимый сценарий соответствующей итерации из [Sandbox Plan](SANDBOX-PLAN.md); он может включать настоящий сервис.
-
-Работа: Подключаемый repo, registered readers/cursors, exact fingerprint store, duplicate counts, timed/permanent scoped mute, reopen по regression/expiry.
-
-Acceptance: Шторм 1000 events не создаёт 1000 LLM calls; исходные task errors не исчезают; unknown profile ops reconciliation, не случайная user delivery.
-
-Logs acceptance: соответствующий Stage в [Sandbox Plan](SANDBOX-PLAN.md); приложить sanitized transcript.
-
-Evidence: по общим правилам приёмки, с результатом этой карточки.
-
-#### P28 — Diagnosis LLM→OpenCode и report
-
-Planning readiness: Draft · Stage: I09
-Component/target repo: Watcher + Router + delivery
-Depends on: P27, P21
-Sandbox: воспроизводимый сценарий соответствующей итерации из [Sandbox Plan](SANDBOX-PLAN.md); он может включать настоящий сервис.
-
-Работа: Отдельный diagnosticUserTaskId/incidentId/sourceUserTaskId; workaround/issue adapters сначала fixtures, затем configured permission. Default без GTD.
-
-Acceptance: Profile/channel correlation до ответа; issue создан только после receipt; diagnostic failure не расследует себя рекурсивно; delivery outage видна в Web/API.
-
-Logs acceptance: соответствующий Stage в [Sandbox Plan](SANDBOX-PLAN.md); приложить sanitized transcript.
-
-Evidence: по общим правилам приёмки, с результатом этой карточки.
-
-### I10 — Promotion, совместимость и RU/EU
-
-Цель: Сохранить working old clients, перенести sandbox VM в production воспроизводимо и иметь отдельный sandbox.
-Зависимости: Accepted core path I01–I07; подключённые Gate/Watcher пилоты когда готовы.
-
-**Logs acceptance (I10):** [Sandbox Plan — проверки по Stage](SANDBOX-PLAN.md#логи-обязательны-для-каждой-итерации); схема/TTL — Observability.
-
-#### P29 — Promotion и fleet acceptance
-
-Planning readiness: Draft · Stage: I10
-Component/target repo: Runner + gateways deployment
-Depends on: P24, P09
-Sandbox: воспроизводимый сценарий соответствующей итерации из [Sandbox Plan](SANDBOX-PLAN.md); он может включать настоящий сервис.
-
-Работа: Reprovision/clean experiment data/config; recreate sandbox; feature-flag cohort и rollback. Current VM reusable после baseline, новые VM не закупаются в этом плане.
-
-Acceptance: Pinned release/config, smoke through API/Web/TG, logs retention и rollback evidence; paid profiles default off; ownership/replay не расходятся.
-
-Logs acceptance: соответствующий Stage в [Sandbox Plan](SANDBOX-PLAN.md); приложить sanitized transcript.
-
-Evidence: по общим правилам приёмки, с результатом этой карточки.
-
-#### P30 — Multi-worker/region contract
-
-Planning readiness: Draft · Stage: I10
-Component/target repo: Runner/fleet
-Depends on: P29
-Sandbox: воспроизводимый сценарий соответствующей итерации из [Sandbox Plan](SANDBOX-PLAN.md); он может включать настоящий сервис.
-
-Работа: Two-worker simulation на одной VM, затем существующие RU/EU workers после readiness. Region/provider/credential/data constraints, drain и fencing.
-
-Acceptance: Нет double execution после failover; OpenCode region по provider constraints; Codex/Claude вне RU при разрешённом explicit profile; storage residency утверждается отдельно.
-
-Уточнение владельца 30.09.2026: Partition не означает failover/rerun: ждать восстановления либо явного сигнала. До перехода на другой worker исключить записи прежнего владельца; проверить доступность сохранённых данных с нового worker и отдельно потерю volume.
-
-Logs acceptance: соответствующий Stage в [Sandbox Plan](SANDBOX-PLAN.md); приложить sanitized transcript.
-
-Evidence: по общим правилам приёмки, с результатом этой карточки.
+## Карточки
+
+Полное содержание карточки (работа, sandbox, acceptance, logs acceptance, чек-листы и evidence) — в её issue. Здесь только стабильная структура: ID, название, этап, зависимости и ссылка. Зависимости уровня карточки имеют приоритет над номером этапа.
+
+| ID | Карточка | Stage | Depends on | Issue · эпик |
+|---|---|---|---|---|
+| R01 | Вопросы, coverage и отбор партии | R00 | Нет; inventory Z01 можно делать параллельно | [#34](https://github.com/trained-assist/trained-agent-architecture/issues/34) · R00 [#31](https://github.com/trained-assist/trained-agent-architecture/issues/31) |
+| R02 | Воспроизводимые VM-пилоты по партиям | R00 | R01 по выбранной партии; доступ и bindings этой партии | [#35](https://github.com/trained-assist/trained-agent-architecture/issues/35) · R00 [#31](https://github.com/trained-assist/trained-agent-architecture/issues/31) |
+| R03 | Решение и привязка к реализации | R00 | R02 по соответствующей партии; обоснованный screening rejection не требует установки | [#36](https://github.com/trained-assist/trained-agent-architecture/issues/36) · R00 [#31](https://github.com/trained-assist/trained-agent-architecture/issues/31) |
+| Z01 | Inventory и общий development baseline | I00 | Нет | [#37](https://github.com/trained-assist/trained-agent-architecture/issues/37) · E0 [#16](https://github.com/trained-assist/trained-agent-architecture/issues/16) |
+| Z02 | Bounded AutoFix workflow | I00 | Z01 | [#38](https://github.com/trained-assist/trained-agent-architecture/issues/38) · E0 [#16](https://github.com/trained-assist/trained-agent-architecture/issues/16) |
+| Z03 | Repository context compression и logs baseline | I00 | Z01, Z02 | [#39](https://github.com/trained-assist/trained-agent-architecture/issues/39) · E0 [#16](https://github.com/trained-assist/trained-agent-architecture/issues/16) |
+| P01 | Воспроизводимый sandbox Runner | I01 | Z03 | [#40](https://github.com/trained-assist/trained-agent-architecture/issues/40) · E1 [#17](https://github.com/trained-assist/trained-agent-architecture/issues/17) |
+| P02 | OpenCode Run и structured logs | I01 | P01 | [#41](https://github.com/trained-assist/trained-agent-architecture/issues/41) · E1 [#17](https://github.com/trained-assist/trained-agent-architecture/issues/17) |
+| P03 | Fault injection и error source registry | I01 | P02 | [#42](https://github.com/trained-assist/trained-agent-architecture/issues/42) · E1 [#17](https://github.com/trained-assist/trained-agent-architecture/issues/17) |
+| P-DB | Оркестратор: выбор пары база + движок и cloud smoke (внешняя предпосылка) | I02A | — | [#32](https://github.com/trained-assist/trained-agent-architecture/issues/32) · E2 [#18](https://github.com/trained-assist/trained-agent-architecture/issues/18) |
+| P04 | Admission и durable receipt | I02A | P03 | [#43](https://github.com/trained-assist/trained-agent-architecture/issues/43) · E2 [#18](https://github.com/trained-assist/trained-agent-architecture/issues/18) |
+| P05 | Status и replayable streaming | I02A | P04 | [#44](https://github.com/trained-assist/trained-agent-architecture/issues/44) · E2 [#18](https://github.com/trained-assist/trained-agent-architecture/issues/18) |
+| P06 | Recovery API-сессии | I02A | P05 | [#45](https://github.com/trained-assist/trained-agent-architecture/issues/45) · E2 [#18](https://github.com/trained-assist/trained-agent-architecture/issues/18) |
+| P07 | Artifact manifest и export | I02B | P06 | [#46](https://github.com/trained-assist/trained-agent-architecture/issues/46) · E3 [#19](https://github.com/trained-assist/trained-agent-architecture/issues/19) |
+| P08 | Direct upload/download и большие файлы | I02B | P07 | [#47](https://github.com/trained-assist/trained-agent-architecture/issues/47) · E3 [#19](https://github.com/trained-assist/trained-agent-architecture/issues/19) |
+| P09 | Workspace snapshots и конфликты | I02B | P07, P08 | [#48](https://github.com/trained-assist/trained-agent-architecture/issues/48) · E3 [#19](https://github.com/trained-assist/trained-agent-architecture/issues/19) |
+| P10 | Тонкий Web client и task view | I03 | P12 и базовый Run/status/recovery (P02/P05/P06). Artifact-сценарии дополнительно ждут P07–P09; первый текстовый диалог не ждёт файлов. | [#49](https://github.com/trained-assist/trained-agent-architecture/issues/49) · E4 [#20](https://github.com/trained-assist/trained-agent-architecture/issues/20) |
+| P11 | Telegram-equivalent fixture и sandbox bot | I03 | P10 | [#50](https://github.com/trained-assist/trained-agent-architecture/issues/50) · E4 [#20](https://github.com/trained-assist/trained-agent-architecture/issues/20) |
+| P12 | Primitive Input/Output и routing | I03 | P-DB + схема Task Store + conversation/project/audience contract; базовый Runner/status/recovery (P02/P05/P06). P10/P11 — потребители API, не prerequisite этой карточки. | [#51](https://github.com/trained-assist/trained-agent-architecture/issues/51) · E4 [#20](https://github.com/trained-assist/trained-agent-architecture/issues/20) |
+| P13 | MCP lifecycle и scoped bindings | I04 | P12 | [#52](https://github.com/trained-assist/trained-agent-architecture/issues/52) · E5 [#21](https://github.com/trained-assist/trained-agent-architecture/issues/21) |
+| P14 | Доменные tools и playbook artifact retrieval | I04 | P13 | [#53](https://github.com/trained-assist/trained-agent-architecture/issues/53) · E5 [#21](https://github.com/trained-assist/trained-agent-architecture/issues/21) |
+| P15 | MCP integration sandbox | I04 | P14 | [#54](https://github.com/trained-assist/trained-agent-architecture/issues/54) · E5 [#21](https://github.com/trained-assist/trained-agent-architecture/issues/21) |
+| P16 | Route policy и high-precision rules | I05 | P15 | [#55](https://github.com/trained-assist/trained-agent-architecture/issues/55) · E5 [#21](https://github.com/trained-assist/trained-agent-architecture/issues/21) |
+| P17 | Bounded reply-or-route recipe | I05 | P16 | [#56](https://github.com/trained-assist/trained-agent-architecture/issues/56) · E5 [#21](https://github.com/trained-assist/trained-agent-architecture/issues/21) |
+| P18 | Corpus и baseline eval | I05 | P03, P12 | [#57](https://github.com/trained-assist/trained-agent-architecture/issues/57) · E5 [#21](https://github.com/trained-assist/trained-agent-architecture/issues/21) |
+| P19 | Четыре режима capability | I06 | P14, P17, P18 | [#58](https://github.com/trained-assist/trained-agent-architecture/issues/58) · E5 [#21](https://github.com/trained-assist/trained-agent-architecture/issues/21) |
+| P20 | Brief builder и retrieval | I06 | P19 | [#59](https://github.com/trained-assist/trained-agent-architecture/issues/59) · E5 [#21](https://github.com/trained-assist/trained-agent-architecture/issues/21) |
+| P21 | One-call vs two-call и required-input UX | I06 | P20 | [#60](https://github.com/trained-assist/trained-agent-architecture/issues/60) · E5 [#21](https://github.com/trained-assist/trained-agent-architecture/issues/21) |
+| P22 | Schedule без обязательного GTD | I07 | P-DB, Task Store/Workflow Port и минимальный typed dispatch/result из P12. P21 и полный fast path не обязательны; простой schedule pilot можно начать раньше. | [#61](https://github.com/trained-assist/trained-agent-architecture/issues/61) · E5 [#21](https://github.com/trained-assist/trained-agent-architecture/issues/21) |
+| P23 | GTD opt-in и bounded control | I07 | P22 | [#62](https://github.com/trained-assist/trained-agent-architecture/issues/62) · E5 [#21](https://github.com/trained-assist/trained-agent-architecture/issues/21) |
+| P24 | Реальные playbooks и адаптация плана | I07 | P23 | [#63](https://github.com/trained-assist/trained-agent-architecture/issues/63) · E5 [#21](https://github.com/trained-assist/trained-agent-architecture/issues/21) |
+| P25 | Gate extraction и provider sandbox | I08 | P15 | [#64](https://github.com/trained-assist/trained-agent-architecture/issues/64) · E6 [#22](https://github.com/trained-assist/trained-agent-architecture/issues/22) |
+| P26 | HH/домен pilot | I08 | P25, P22 | [#65](https://github.com/trained-assist/trained-agent-architecture/issues/65) · E6 [#22](https://github.com/trained-assist/trained-agent-architecture/issues/22) |
+| P27 | Incident aggregation и suppression | I09 | P03, P18 | [#66](https://github.com/trained-assist/trained-agent-architecture/issues/66) · E6 [#22](https://github.com/trained-assist/trained-agent-architecture/issues/22) |
+| P28 | Diagnosis LLM→OpenCode и report | I09 | P27, P21 | [#67](https://github.com/trained-assist/trained-agent-architecture/issues/67) · E6 [#22](https://github.com/trained-assist/trained-agent-architecture/issues/22) |
+| P29 | Promotion и fleet acceptance | I10 | P24, P09 | [#68](https://github.com/trained-assist/trained-agent-architecture/issues/68) · E7 [#23](https://github.com/trained-assist/trained-agent-architecture/issues/23) |
+| P30 | Multi-worker/region contract | I10 | P29 | [#69](https://github.com/trained-assist/trained-agent-architecture/issues/69) · E7 [#23](https://github.com/trained-assist/trained-agent-architecture/issues/23) |
+
+Пробелы плана (истории без карточки, предпосылки, открытые пороги и решения) — [#33](https://github.com/trained-assist/trained-agent-architecture/issues/33). Мета-эпик автономной доставки — [#27](https://github.com/trained-assist/trained-agent-architecture/issues/27); credential-контур — [#30](https://github.com/trained-assist/trained-agent-architecture/issues/30).
+
+Трактовка «сжатия» в I00: compact repository map + task-relevant context bundle/brief с refs; исходный код не удаляется. Название/продукт автофиксера не задан, используем configurable AutoFix contract.
 
 ## Review рисков и решения
 
@@ -765,6 +176,8 @@ Evidence: по общим правилам приёмки, с результат
 | Raw HTML/файлы через API блокируют Gateway | artifact manifests/direct transfer, serving policy отдельно от публикации сайта |
 | Sandbox VM превращается в prod с мусором | clean promotion/reprovision + recreate sandbox, pinned config и rollout |
 | Ранние API endpoints порождают второй orchestration owner | minimal admission/result adapter; один dispatcher, versioned handoff |
+| Объём: greenfield шести сервисов при запрете импорта внутренностей старого core | Намеренная цена за отсутствие скрытых контрактов; переносим только самостоятельные части с явным контрактом. План не является оценкой сроков |
+| Каждая карточка — отдельный неизменяемый PR с зелёными CI и staging | Длинный хвост, а не препятствие: постановка по карточкам, а не «пройти всё за одну сессию» |
 
 Не блокирующие вопросы для refinement: место хранения workspace/artifacts в RU/EU; стартовые quotas/concurrency/TTL; ID выбранной VM и sandbox base URL в config registry; первое реальное доменное capability для P14. До получения ответов используются local fixtures и существующая заявленная VM. Точные credentials в Project не размещаются.
 
@@ -772,9 +185,9 @@ Evidence: по общим правилам приёмки, с результат
 
 ## Дополнение 30.09.2026
 
-Стадия 0 — prerequisite implementation. AutoFix/context compression применяются ко всем репозиториям через общий reusable workflow и repo-specific profile, без центрального mega-build. Для нового repo — тот же onboarding. Requirements по logs теперь явно указаны у каждой итерации и карточки; Done без diagnostic evidence невозможен.
+Стадия 0 — prerequisite implementation. AutoFix/context compression применяются ко всем репозиториям через общий reusable workflow и repo-specific profile, без центрального mega-build. Для нового repo — тот же onboarding. Requirements по logs указаны у каждого этапа (Sandbox) и в issue каждой карточки; Done без diagnostic evidence невозможен.
 
-Связанный документ: [SANDBOX-PLAN.md](SANDBOX-PLAN.md). При расхождении прежних proposal о замене live core действует правило параллельной новой реализации из этого документа.
+Связанный документ: [SANDBOX.md](SANDBOX.md). При расхождении прежних proposal о замене live core действует правило параллельной новой реализации из этого документа.
 
 ## Уточнение: потеря связи и lifecycle рабочих данных — 30.09.2026
 
