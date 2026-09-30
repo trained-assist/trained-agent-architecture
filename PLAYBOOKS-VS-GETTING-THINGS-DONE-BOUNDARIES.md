@@ -1,6 +1,6 @@
 # Playbooks vs Getting Things Done Boundaries
 
-Статус: **brainstorm / draft v0.1 · 30.09.2026**. Продолжение [Linearization Step](LINEARIZATION-STEP.md) и [User Task / Reporting](USER-TASK-IDS-AND-REPORTING.md). Здесь рассматриваем только слой над Input → … → Output: методики, конкретный план, расписание, ожидание пользователя и работы, созданные агентом.
+Статус: **brainstorm / draft v0.2 · 30.09.2026**. Продолжение [Linearization Step](LINEARIZATION-STEP.md) и [User Task / Reporting](USER-TASK-IDS-AND-REPORTING.md). Здесь рассматриваем только слой над Input → … → Output: методики, конкретный план, расписание, ожидание пользователя и работы, созданные агентом.
 
 ## 1. Контекст: какие противоречия разрешаем
 
@@ -12,7 +12,7 @@
 | Разовая или периодическая работа | Один Plan/Task отдельно; Schedule создаёт новые исполнения |
 | Процесс жив или цель достигнута | Runner supervision отдельно от GTD progression/acceptance |
 | Привязка к чату или видимость пользователю | Постоянный web task view отдельно от chat notifications |
-| Ждём человека или продолжаем жечь токены | Durable Input Request + checkpoint; после ответа новая попытка продолжения |
+| Ждём человека или продолжаем жечь токены | Durable Awaiting user input + checkpoint; после ответа новая попытка продолжения |
 | Агент создал работу и умер | Durable submitted task живёт независимо от процесса создателя |
 
 **Playbooks выносим из core как контент и authoring.** Они пригодны другим пользователям и другим исполнителям. Но утверждение «они никак не влияют на исполнение» слишком сильное: concrete plan задаёт шаги и проверки. Core/queue не знают отдельные playbooks; GTD понимает общий versioned plan contract.
@@ -28,7 +28,7 @@
 | **Schedule** | Определение когда создавать работу: cron/interval/event и связанные policies |
 | **Scheduled occurrence** | Одно срабатывание Schedule; создаёт отдельный userTaskId и при необходимости Execution Plan |
 | **GTD Manager** | Владелец durable progression: активировать план, выдать готовый шаг, принять outcome, ждать условия/input, решить продолжение и acceptance |
-| **Input Request** | Адресованный пользователю durable запрос информации/решения, связанный с конкретной задачей и checkpoint |
+| **Awaiting user input** | Адресованный пользователю durable запрос информации/решения, связанный с конкретной задачей и checkpoint |
 | **Delegated Task** | Работа, которую создал агент через разрешённый submission API; может пережить его процесс |
 | **Agent harness** | Техническая обвязка исполнения агента: engine/tools/context/limits/lifecycle. В нашей схеме значительная часть относится к Agent Runner |
 
@@ -83,7 +83,7 @@ Hard gate не пропускаем молча. Разрешённое искл�
 | Router / executors | Направить и исполнить Job | Не перепланируют весь playbook |
 | Runner / technical watchdog | Процессы, heartbeat, stop, crash reconciliation | Не решают достигнута ли цель |
 | Output Task Queue Manager | Учитывает outcome, передаёт report/recovery по policy | Не выбирает одновременно с GTD следующий шаг того же плана |
-| Reporting / Web | Состояние, plan/checklist view, Input Requests и ответы | Не угадывает статус по сообщениям чата |
+| Reporting / Web | Состояние, plan/checklist view, Awaiting user input и ответы | Не угадывает статус по сообщениям чата |
 
 Schedule module может жить внутри GTD repo отдельным module. GTD при этом остаётся **производителем работ и потребителем outcomes над линейной системой**, а не центральным исполнителем каждого пользовательского запроса.
 
@@ -92,6 +92,24 @@ Schedule module может жить внутри GTD repo отдельным mod
 Для простой User Task Output применяет outcome/recovery policy как в Linearization Step. Для plan-owned работы Output фиксирует результат и передаёт событие GTD; **GTD выбирает следующий шаг и разрешённую escalation**.
 
 Используем явное `continuationOwner = output | gtd`. Один failed Run не должен одновременно породить follow-up в Output и ещё один в GTD. Технические redelivery того же Run остаются transport-level; GTD управляет новыми попытками и progression своего плана.
+
+## 5a. gtdId — запись контроля, даже без playbook
+
+**gtdId** создаёт GTD Manager при регистрации одной User Task на контроль. Это постоянный ID control record, не scheduleId, не planId и не runId. Простой запрос «сделать и проверить до конца» тоже может иметь gtdId, без плейбука и cron.
+
+В этой версии один gtdId связан с одной userTaskId; при нескольких шагах/повторах сохраняется. Независимая дочерняя User Task получает собственную запись контроля, если контроль нужен. Handoff внутри прежней Task сохраняет gtdId. Следующая occurrence расписания получает новую User Task и новый gtdId; scheduleId остаётся постоянным.
+
+Контроль имеет отдельные настройки: completion criteria, allowed retry/escalation, next checks, budget/deadline, wait/resume и статус active/paused/awaiting_user/completed/cancelled. Наличие ID означает регистрацию; для текущего признака «на контроле» Reporting показывает также gtdState. ID закрытой записи остаётся в истории.
+
+**Контракт:** у managed work gtdId обязателен в Input → Router → executor → Output → GTD outcome и в continuation. Перед запуском запись и binding уже durable. Агент не выбирает чужой gtdId произвольно: host проверяет userTaskId/scope/control generation.
+
+Output сохраняет outcome и отправляет его в GTD inbox по gtdId, включая ошибки, awaiting-user/condition и окончательный результат. GTD находит control record, учитывает eventId/resultId и решает следующий шаг. Output освобождает outgoing item после durable GTD ACK; после ACK replay/continuation принадлежит GTD. Reporting/message delivery может идти независимо.
+
+Отсутствующий/неизвестный gtdId у managed outcome — contract error: quarantine/reconciliation и явный статус, не тихий переход к Output-owned recovery. Поздний результат закрытой записи дополняет историю, но не возрождает работу. Сам ID не гарантирует отсутствие потерь: нужны durable inbox/outbox, dedup и восстановление lease/deadline.
+
+continuationOwner=gtd при зарегистрированном контроле; для неконтролируемой Task gtdId=null и continuationOwner=output. Два механизма не создают новые работы по одному outcome.
+
+[Review with real playbooks](REVIEW-WITH-REAL-PLAYBOOKS.md) приземляет контракт на проверенные artifacts.
 
 ## 6. Узкая схема: только границы Input и Output
 
@@ -104,7 +122,7 @@ flowchart TD
   X --> O["Output Task Queue"]
   O -->|"Plan / delegated outcomes"| G
   O --> R["Reporting / Web task view"]
-  G -->|"Plan state / Input Requests"| R
+  G -->|"Plan state / Awaiting user input"| R
 ```
 
 GTD submission — общий admission adapter для agent-created работ, а не обязательное создание playbook. Для single delegated task он проверяет и регистрирует работу, затем передаёт её Input без workflow loop. При отсутствии плана агент **может использовать тот же общий Task Submission API**, реализованный этим adapter.
@@ -139,22 +157,22 @@ Web видимость включает access scope: задача показы�
 
 ## 9. Запрос input: durable пауза вместо живого окна агента
 
-Называем это **Input Request**; пользовательский статус — **awaiting_user**. Это бизнес-пауза, не ошибка и не обязательное сохранение живого process.
+Называем это **Awaiting user input**; пользовательский статус — **awaiting_user**. Это бизнес-пауза, не ошибка и не обязательное сохранение живого process.
 
-1. Executor сохраняет checkpoint/continuation artifact и создаёт Input Request: вопрос, schema, buttons/options, reason, deadline, allowed respondent.
+1. Executor сохраняет checkpoint/continuation artifact и создаёт Awaiting user input: вопрос, schema, buttons/options, reason, deadline, allowed respondent.
 2. Через durable outcome/outbox в Output передаётся `awaiting_user` с request ref. Для такой паузы **новую работу в Input пока не создаём**.
 3. Reporting/Web показывает запрос в task view и общем списке «Нужен ваш ответ». Optional chat notice содержит web link.
 4. Engine Run завершается корректным outcome `suspended / needs_input`, clean room освобождается после сохранения state. Logical step остаётся waiting.
-5. Ответ пользователя сохраняется через authenticated Input Request API с requestId/version/operationId.
+5. Ответ пользователя сохраняется через authenticated Awaiting user input API с requestId/version/operationId.
 6. GTD (или continuation adapter простой Task) проверяет, что ожидание ещё актуально, и идемпотентно enqueue-ит **новый Run** с тем же userTaskId и checkpoint/ответом.
 
 Поэтому связь с Input есть **после ответа**. Сам запрос проходит только в Output/Reporting. Ответ не теряется в произвольном сообщении чата.
 
 Native engine interrupt может остаться внутри короткого Run, если adapter умеет это безопасно. Durable pause/resume разных engines — целевой контракт, не уже готовая функция: нужны явный checkpoint, поддержка adapter и граница побочных эффектов. Если восстановление невозможно, status blocked с понятной причиной; не обещаем «продолжить с той же строки» универсально.
 
-### Что обязательно хранит Input Request
+### Что обязательно хранит Awaiting user input
 
-`inputRequestId, userTaskId, planId/stepId?`, sourceRunId, checkpointRef, kind (data/choice/approval), schema/options, respondentScope, createdAt/deadline, status и version.
+`awaitingInputId, userTaskId, planId/stepId?`, sourceRunId, checkpointRef, kind (data/choice/approval), schema/options, respondentScope, createdAt/deadline, status и version.
 
 Ответ после timeout/cancel/supersede не возрождает задачу. Повтор submit ответа возвращает прежний receipt. Одновременно открытые requests имеют разные IDs и явно адресуются; неизвестный «да» не применяется ко всем.
 
@@ -195,10 +213,11 @@ Approval связывается с конкретным action payload/digest/sc
 | Поле | Назначение |
 |---|---|
 | playbookRef + revision/digest | Версионированное определение и provenance |
+| gtdId | Запись контроля одной User Task; опциональна для неконтролируемой работы |
 | planId | Конкретный экземпляр исполнения методики |
 | stepId | Шаг в этом plan, сохраняется между попытками |
 | scheduleId + occurrenceKey | Определение расписания и dedup конкретного срабатывания |
-| inputRequestId | Точный запрос ответа/approval |
+| awaitingInputId | Точный запрос ответа/approval |
 | parentUserTaskId + createdByRunId | Происхождение independent delegated task |
 
 planId не заменяет userTaskId. Шаги одного плана и их retries сохраняют userTaskId текущей пользовательской цели; independent delegated task получает новый userTaskId. Checklist не требует ещё одного ID — это view выбранного planId.
@@ -225,7 +244,7 @@ planId не заменяет userTaskId. Шаги одного плана и и�
 | **GTD package/repo — кандидат** | Plan compiler/runtime, step progression, waits/input resume, schedule module, submission adapter |
 | Task-queue package/repo | Input/Output, journal/Reporting и согласованный continuationOwner |
 | ai-agent-runner | Execution adapters, clean room, checkpoint/export контракт и technical supervision |
-| Web | Task/plan/checklist view, Input Requests UI, history |
+| Web | Task/plan/checklist view, Awaiting user input UI, history |
 | Telegram gateway | Optional started/final/needs-input notifications и web links |
 
 Сначала выделяем interfaces/modules; новые repos этим draft не создаются. GTD compiler/runtime может быть общим reusable package: portable playbook не означает обязательную привязку к нашей платформе.
@@ -236,10 +255,10 @@ planId не заменяет userTaskId. Шаги одного плана и и�
 - [ ] Gate, порядок, schedule и visibility независимо включаются/выключаются.
 - [ ] Disable Schedule не путается с cancel текущего Run.
 - [ ] Task без Telegram/chat binding видна и исполняется через Web/Reporting.
-- [ ] Input Request переживает restart; во время ожидания engine не жжёт токены.
+- [ ] Awaiting user input переживает restart; во время ожидания engine не жжёт токены.
 - [ ] Дубликат/поздний ответ не возобновляет работу дважды.
 - [ ] Родительский engine умер, accepted independent child завершается и публикует результат.
 - [ ] Handoff Claude → OpenCode сохраняет userTaskId, создаёт новый Run и проверяет permissions.
 - [ ] Output и GTD не создают два continuation на один outcome.
 
-Предпочтение draft: **Playbook — переносимая методика; Execution Plan — экземпляр; Checklist — view; GTD — progression; Schedule — trigger; Input Request — durable ожидание; delegation — обычная разрешённая Task, независимая от живого parent process.**
+Предпочтение draft: **Playbook — переносимая методика; Execution Plan — экземпляр; Checklist — view; GTD — progression; Schedule — trigger; Awaiting user input — durable ожидание; delegation — обычная разрешённая Task, независимая от живого parent process.**
