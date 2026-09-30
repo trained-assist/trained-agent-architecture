@@ -160,8 +160,6 @@ Acceptance: map не теряет критичные constraints, fixture пок
 
 **Logs acceptance (I01):** Run start/exit/cancel/process-tree/heartbeat/recovery, profile/task/run/engine/provider refs, structured errors и cleanup. Intentional failed startup/timeout обязаны оставлять диагностируемую запись. Общий обязательный baseline: trusted profile/tenant, Task/Run IDs когда есть, известный replyContext, source/environment/version, registered errors/main events и retention class/TTL; positive и controlled failure evidence.
 
-Logs acceptance: I00 baseline; source/profile/request correlation, AutoFix check/attempt/patch refs либо context version/manifest/size; controlled failure, no-change repeat и retention evidence обязательны.
-
 #### P01 — Воспроизводимый sandbox Runner
 
 Planning readiness: Draft · Stage: I01

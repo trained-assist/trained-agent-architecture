@@ -64,7 +64,7 @@ Output не обязан помнить весь running task в своей оч
 | Поле | Примеры / смысл |
 |---|---|
 | state | active, blocked, succeeded, failed, cancelled |
-| stage | collecting, preparing, queued, handing_off, running, evaluating, waiting_followup, finished |
+| stage | collecting, preparing, queued, handing_off, running, evaluating, waiting_input, waiting_followup, finished |
 | currentExecutionType | deterministic, llm_recipe, ai_agent; null до выбора |
 | currentPurpose | primary, diagnosis, repair, retry, escalation |
 | escalationDepth | 0 — исходная работа; увеличивается при переходе к новому типу решения, а не при каждом retry |
@@ -228,6 +228,6 @@ Journal — небольшой shared operational module, не новый биз
 
 ## Уточнение 30.09.2026: opt-in контроль и error context
 
-GTD не добавляется ко всем задачам. Cron, delegation, длинный Run и эскалация ошибки сами по себе не создают gtdId; explicit next-step/acceptance control создаёт его. [Общая v0.4](ARCHITECTURE.md).
+GTD не добавляется ко всем задачам. Cron, delegation, длинный Run и эскалация ошибки сами по себе не создают gtdId; explicit next-step/acceptance control создаёт его. [Общая архитектура v0.6](ARCHITECTURE.md).
 
 [Error contract](OBSERVABILITY-AND-ERROR-CONTRACT.md) обязателен: profile scope, channel/destinationRef если известны, source/task/run IDs. [Watcher](SYSTEM-ERROR-WATCHER.md) создаёт отдельный diagnosticUserTaskId с incidentId/sourceUserTaskId; исходная ошибка не переименовывается в успешную диагностику. Serverless client receipt однозначно mapped к userTaskId, даже без Web UI.

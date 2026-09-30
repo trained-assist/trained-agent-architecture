@@ -4,7 +4,7 @@
 
 ## Цель и границы
 
-Один поток принимает задачи от Web, Telegram, внешнего API, расписания и других агентов. Одна пользовательская задача имеет стабильный **userTaskId**, доступный до окончательного результата. Web предоставляет приватный task view и справочную состояния; чат получает уведомления и результаты по настройке. Чат не владелец фоновой задачи.
+Один поток принимает задачи от Web, Telegram, внешнего API, расписания и других агентов. Одна пользовательская задача имеет стабильный **userTaskId**, доступный до окончательного результата. Web предоставляет приватный task view и справочную о состоянии задачи; чат получает уведомления и результаты по настройке. Чат не владелец фоновой задачи.
 
 Три вида Job: **deterministic-job**, **llm-recipe-job**, **ai-agent-job**. Job — определение работы; Run — конкретное выполнение. Фиксированный LLM recipe получает подготовленный вход и возвращает результат, без самостоятельного доступа к профилям и инструментам. Agent Runner запускает agent process в **Agent clean room**; clean room требуется агенту, а не каждому Job. Детали соответствия OpenLineage — в [терминологии](TERMINOLOGY.md).
 
@@ -161,7 +161,7 @@ userTaskId, gtdId при наличии, tenant/profile context и causation п�
 | Serverless API adapter в ai-agent-runner | Ключи/scopes/quotas, durable submit/status/result/callback; без обязательного GTD/frontend |
 | Общие contracts/schema — пакет либо каталог | Versioned envelopes и совместимость; без бизнес-логики |
 
-Проверенные доменные репозитории: software-engineering-playbooks, trained-assist-hh-skill, trained-assist-sales-skill, trained-assist-documents-skill, trained-assist-marketing-skill. Freelance в прочитанном inventory — playbook в documents-skill, а не доказанный отдельный repo. Speech/search и будущие домены требуют отдельного inventory. Точный inventory и происхождение артефактов — в [review](REVIEW-WITH-REAL-PLAYBOOKS.md) и [scenarios](scenarios/README.md). Общая архитектура не переносит их playbooks в core.
+Проверенные доменные репозитории: software-engineering-playbooks, trained-assist-hh-skill, trained-assist-sales-skill, trained-assist-documents-skill, trained-assist-marketing-skill. Playbook freelance-project-spec лежит в documents-skill; кроме того, уже существуют выделенные из core доменные MCP-репозитории trained-assist-freelance-skill, trained-assist-speech-skill и trained-assist-search-skill (созданы 24–28.09.2026) — их playbooks/contracts ещё требуют inventory, как и будущие домены. Точный inventory и происхождение артефактов — в [review](REVIEW-WITH-REAL-PLAYBOOKS.md) и [scenarios](scenarios/README.md). Общая архитектура не переносит их playbooks в core.
 
 ### MCP, данные и credentials
 
