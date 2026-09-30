@@ -29,6 +29,16 @@ AutoFix начинает с механических исправлений, з�
 
 Context compression — компактная карта repo и task-specific brief со ссылками на полные исходники, pinned revision и invalidation. Исходники не удаляются. Entry points, contracts, команды проверки и ограничения сохраняются; secrets/generated logs исключаются. Недостаточный brief раскрывается до исходного источника.
 
+## Обязательный CI-артефакт во всех репозиториях
+
+Каждый участвующий repo генерирует структурный context pack на каждом PR/revision и после обновления основной ветки. Это детерминированная обработка без LLM: краткая REPO-MAP, language-aware code compression (Tree-sitter или подходящий parser) и manifest с source SHA, версией generator/config, scope/ограничениями и hashes. В docs-only repo краткая карта строится по заголовкам и путям; исходники не заменяются пересказом.
+
+Context-generation — завершающий шаг CI/CD, исполняемый также после failed checks: при интеграции в существующий workflow job зависит от check jobs через `needs`, использует `if: always()` и не требует application build/deploy для анализа. Успех генерации не объявляет неуспешный build успешным. В этом docs repo отдельный workflow Repository context выполняется на каждом PR/push и служит CI baseline.
+
+README и AGENTS.md указывают краткую карту, способ проверить SHA и локальную команду. PR-specific pack публикуется как Actions artifact; main получает постоянную ссылку в отдельной generated ветке `repo-context`. Сгенерированные файлы не коммитятся в main и не содержат новых инструкций для агента. Только trusted main публикует постоянную версию; PR не получает publish credentials. Retention PR artifact — 30 дней; fresh main snapshot хранится в generated branch. Проверять свежесть по manifest обязательно.
+
+Рабочий образец здесь: `.github/workflows/repo-context.yml`, `tools/repo-context/`, `.repo-context/repomix.config.json`. Repomix и зависимости pinned lockfile; код извлекается структурно. PR Fix отдельно сжимает diff/CI logs, это не замена repo-wide pack. Каждый repo адаптирует inclusion profile к своему языку и исключает secrets/generated/binary/runtime data; security scan сохраняется. Rollout в остальные live repo — задача Z03 через отдельные installation PR, не молчаливое изменение всех deployments.
+
 ## Где практика и план
 
 - [Sandbox Plan](SANDBOX-PLAN.md) — методы, controlled failures, stage-specific logs checks и уроки VM2.

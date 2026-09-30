@@ -2,6 +2,23 @@
 
 Архитектура Trained Assist и подготовка реализации. Принятые решения, предложения и подтверждённые прогоны различаются; наличие документа не означает готовность компонента.
 
+## Быстрый обзор для агента
+
+Перед изучением откройте [короткую карту репозитория](https://github.com/trained-assist/trained-agent-architecture/blob/repo-context/REPO-MAP.md). Рядом лежат [Tree-sitter pack](https://github.com/trained-assist/trained-agent-architecture/blob/repo-context/repo-compressed.xml) и [manifest с sourceSha](https://github.com/trained-assist/trained-agent-architecture/blob/repo-context/manifest.json). Это постоянные ссылки на последний опубликованный main; sourceSha показывает свежесть.
+
+Каждый PR получает свой `repo-context-<sha>` в [Repository context Actions](https://github.com/trained-assist/trained-agent-architecture/actions/workflows/repo-context.yml), а краткая карта видна в job summary. Сверяйте SHA; main-карта не описывает незамерженный PR. Генерация автоматическая, без LLM и application build. Артефакты PR хранятся 30 дней; main публикуется отдельно в ветке `repo-context`, не создавая конфликтов исходников.
+
+Локально:
+
+```bash
+npm ci --prefix tools/repo-context --ignore-scripts
+mkdir -p .repo-context/output
+tools/repo-context/node_modules/.bin/repomix --config .repo-context/repomix.config.json
+python3 tools/repo-context/map.py
+```
+
+Карта — ограниченный индекс, pack — структурное сжатие кода; Markdown не имеет AST-сжатия. Ограничения и исключённые пути отражаются в manifest. Перед изменением поведения откройте исходник. Если CI/публикация ещё не прошли, используйте README и локальную генерацию.
+
 ## Начать разработку
 
 1. Прочитать [ARCHITECTURE](ARCHITECTURE.md): границы, ownership, инварианты и условия перехода с живого сервиса.

@@ -156,7 +156,7 @@ Component/target repo: reusable context builder + все repo profiles
 Depends on: Z01, Z02
 Sandbox: fixture repos и isolated reads текущих repo.
 
-Работа: compact map (entrypoints/contracts/dependencies/check commands), filtered task bundle, refs к полным источникам, source commit/version и invalidation. Включить error/lifecycle registration, safeSummary/private details, scope/correlation и configurable TTL; log fixture для любого нового module/iteration.
+Работа: Установить обязательный завершающий CI job structural context generation на PR и main по ENGINEERING-APPROACH: short map + parser-compressed pack + manifest/source SHA, PR artifact и stable main publication, README/AGENTS ссылки. Для live repos отдельный installation PR; проверить неуспешный CI и stale SHA. Образец — workflow Repository context в этом repo. Затем compact map (entrypoints/contracts/dependencies/check commands), filtered task bundle, refs к полным источникам, source commit/version и invalidation. Включить error/lifecycle registration, safeSummary/private details, scope/correlation и configurable TTL; log fixture для любого нового module/iteration.
 
 Acceptance: map не теряет критичные constraints, fixture показывает missing/stale context, secrets/generated/native bulky logs excluded. После source change builder не отдаёт старый bundle как свежий. Каждый repo profile проходит intentional failure с читаемым error event. Agent может раскрыть original source ref.
 
