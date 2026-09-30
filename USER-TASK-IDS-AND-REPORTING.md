@@ -2,7 +2,9 @@
 
 Статус: **draft / продолжение Linearization Step · 30.09.2026**. Прорабатываем **одну пользовательскую задачу**. Playbooks, групповые задачи и batch API здесь не проектируем.
 
-**Следующий отдельный слой:** [Playbooks / GTD boundaries](PLAYBOOKS-VS-GETTING-THINGS-DONE-BOUNDARIES.md) добавляет planId/stepId, schedule occurrence и inputRequestId; прежняя модель одной User Task сохраняется. Каждая Task имеет основной web view; чат — notification subscription. Awaiting-user отображается как state=blocked, stage=waiting_input, reason=awaiting_user, со ссылкой на активный Input Request; после ответа разрешённое продолжение возвращает active.
+**Следующий отдельный слой:** [Playbooks / GTD boundaries](PLAYBOOKS-VS-GETTING-THINGS-DONE-BOUNDARIES.md) добавляет planId/stepId, schedule occurrence и awaitingInputId; прежняя модель одной User Task сохраняется. Каждая Task имеет основной web view; чат — notification subscription. Awaiting-user отображается как state=blocked, stage=waiting_input, reason=awaiting_user, со ссылкой на активный Awaiting user input; после ответа разрешённое продолжение возвращает active.
+
+**Уточнение 30.09:** gtdId обозначает регистрацию одной User Task на GTD-контроль, даже без playbook/schedule. У controlled work он проходит весь execution/result/continuation путь. Термин ожидания — **Awaiting user input**; durable request сохраняет awaitingInputId. [Проверка на реальных playbooks](REVIEW-WITH-REAL-PLAYBOOKS.md).
 
 ## 1. Главный ID — userTaskId
 
@@ -47,6 +49,7 @@ flowchart TD
 - userTaskId, owner/scope, source, createdAt;
 - state, stage, currentExecutionType, currentPurpose;
 - currentJobId/currentRunId, escalationDepth;
+- gtdId/gtdState для контролируемой задачи; awaitingInputId при ожидании ответа;
 - currentReasonCode и пользовательское объяснение;
 - result refs, отдельно deliveryState;
 - version, updatedAt, lastProgressAt, lastHeartbeatAt, freshness;
@@ -94,6 +97,7 @@ Failure отдельного Run не делает User Task failed, пока е
 | ID / ref | Что обозначает и кто создаёт | Где передаётся | Видимость |
 |---|---|---|---|
 | **userTaskId** | Одна пользовательская работа; Intake/admission или trusted scheduled producer | Весь Input → Router → executor → Output → follow-up → Report → gateway; Reporting и logs | Основной пользовательский/API ID |
+| **gtdId** | Одна запись контроля User Task; создаёт GTD Manager | Input/Router/executor/Output → GTD inbox, continuations, journal/Reporting | Scoped API/support; UI показывает gtdState и «на контроле» |
 | **jobId** | Определённая работа/Job; resolved JobSpec owner | Router, executor, outputs, journal; новая работа при escalation имеет собственную Job | Внутренний; debug/API history при необходимости |
 | **runId** | Одна попытка Job; dispatch owner резервирует до start | Executor/Runner, clean room bindings, usage, outcomes, journal | Внутренний; support/debug |
 | **parentRunId** | Run, outcome которого породил diagnosis/repair/escalation | Follow-up Input, resolved JobSpec, history | Внутренний; причинная связь в support view |
@@ -145,6 +149,8 @@ operationId имеет scope «caller + operation kind + logical operation». Н
 У пользовательской работы missing userTaskId — ошибка контракта, а не генерация случайного нового ID в downstream. Технические maintenance operations без пользователя отдельно помечаются system scope и не выдают себя за User Task.
 
 Первый ACK содержит userTaskId, чтобы после обновления страницы web мог запросить status. Gateway сохраняет mapping своего client request/native update к userTaskId: если ответ потерялся, повтор вернёт прежний ID.
+
+Для work под GTD к каждой границе выше добавляется gtdId. ResultEnvelope не может его потерять; Output отправляет outcome в durable GTD inbox и сохраняет receipt. Retries/handoff оставляют gtdId; independent child и новая scheduled occurrence получают новый control record. Существование gtdId не равно active control — gtdState хранится отдельно.
 
 ## 8. Reporting API и пример snapshot
 
