@@ -2,6 +2,16 @@
 
 Статус: architecture draft v0.1 · 30.09.2026. Выбор владельца: **самостоятельный репозиторий Task Router**. Предлагаемое имя: **trained-assist-task-router**; репозиторий создаёт владелец, здесь пока только спецификация.
 
+## Принятая policy 30.09.2026
+
+Автоматический агентский executor эскалации — **OpenCode**. Автоматическую цепочку OpenCode → Claude Code/Codex не проектируем. Явный пользовательский запуск другого engine — отдельная allowed policy, не следующий escalation rung.
+
+GTD opt-in: error diagnosis, fast reply и ordinary delegation не создают gtdId. Output/Router выполняют ограниченную progression; только registered managed task передаёт решение GTD. Системные ошибки могут поступать от [Error Watcher](SYSTEM-ERROR-WATCHER.md) с incidentId/sourceUserTaskId и отдельной diagnosticUserTaskId.
+
+LLM budget/auth denial не позволяет продолжать платные вызовы по отсутствующему разрешению. Можно сформировать deterministic report/blocked или использовать заранее разрешённый доступный OpenCode profile; caps и provider readiness всё равно проверяются. Низкая стоимость не равна отсутствию лимитов.
+
+Error и основные routing lifecycle events обязаны выполнять [Observability contract](OBSERVABILITY-AND-ERROR-CONTRACT.md): trusted profile, reply context когда известен, source/task/run IDs и TTL. Длинная диагностическая задача не должна терять канал исходной пользовательской ошибки.
+
 ## 1. Ответственность
 
 Router определяет разрешённый способ работы: deterministic-job, llm-recipe-job или ai-agent-job. Он получает scoped input/context/capability snapshot и отдаёт resolved dispatch/decision. Авторитетного пользовательского task state у него нет: состояние и receipts принадлежат task queue/journal/GTD.
