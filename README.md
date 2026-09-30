@@ -4,7 +4,7 @@
 
 ## Текущая архитектура
 
-- [ARCHITECTURE v0.5](ARCHITECTURE.md) — три схемы: сервисы/география; одна задача с результатом пользователю; GTD/playbook и внешние интеграции. IDs, ownership, миграционные границы и открытые решения.
+- [ARCHITECTURE v0.6](ARCHITECTURE.md) — три схемы: сервисы/география; одна задача с результатом пользователю; GTD/playbook и внешние интеграции. IDs, ownership, миграционные границы и открытые решения.
 - [Task Router and MCP](TASK-ROUTER-AND-MCP.md) — архитектура отдельного Router, быстрый reply-or-route, эскалация, context policy, роли MCP и сверка текущего pipeline.
 - [Model Gateway and Costs](MODEL-GATEWAY-AND-COSTS.md) — model ladder, бюджет, Ledger и correlation расходов; цены отдельно от общей схемы.
 - [External Integration Gate](EXTERNAL-INTEGRATION-GATE.md) — отдельный repo, provider APIs/webhooks, transport adapters и extraction boundary.
@@ -22,13 +22,18 @@
 - [Engineering Approach — Sandbox Driven Development](ENGINEERING-APPROACH.md) — воспроизводимая среда, fault fixtures, free-only smoke и acceptance.
 - [Capability Catalog and Fast Replies](CAPABILITY-CATALOG-AND-FAST-REPLIES.md) — четыре режима, scoped brief, required-input UX и сравнение одного/двух LLM этапов.
 
-Implementation plan ведётся отдельно в GitHub Projects; runtime GTD не является development board.
+## Рабочий план
+
+- [План реализации и интеграции](IMPLEMENTATION-AND-INTEGRATION-PLAN.md) — 33 work items, dependencies, новая параллельная реализация и отдельный pilot/cutover с rollback.
+- [Sandbox Plan](SANDBOX-PLAN.md) — real-service scenarios, controlled provider failures, sandbox construction и обязательные logs checks каждого этапа.
+
+GitHub Project пока отложен. Production и старые репозитории сохраняются; runtime GTD не является development board.
 
 ## История и evidence
 
 - [Аудит архитектуры v0.2](audits/ARCHITECTURE-0.2-CODE-AUDIT.md) — прежние факты, source revisions, A01–A13 и инварианты.
 - [Linearization Step](LINEARIZATION-STEP.md) — итерация линейного Input → Router → executor → Output → user flow.
-- [Brainstorm: core и репозитории](BRAINSTORM-CORE-AND-REPOSITORIES.md) — ранние варианты; controller/conversation идеи не заменяют текущую v0.3.
+- [Brainstorm: core и репозитории](BRAINSTORM-CORE-AND-REPOSITORIES.md) — ранние варианты; controller/conversation идеи не заменяют текущую v0.6.
 
 ## Как привязывать работу
 
