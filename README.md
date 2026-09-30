@@ -18,6 +18,7 @@
 |---|---|
 | [ARCHITECTURE](ARCHITECTURE.md) | Целевая модель, принятые границы, IDs и инварианты |
 | [Implementation and Integration Plan](IMPLEMENTATION-AND-INTEGRATION-PLAN.md) | Порядок, зависимости, scope и специфическая приёмка карточек |
+| [Migration Plan](MIGRATION-PLAN.md) | Какие репозитории создаём и когда, этапы M0–M6, рубильник по профилям, перенос данных, откат и вывод старой системы |
 | [Engineering Approach](ENGINEERING-APPROACH.md) | Концепция Sandbox Driven Development и общие правила разработки |
 | [Sandbox Plan](SANDBOX-PLAN.md) | Практические среды, сценарии сбоев, пробелы и logs checks по этапам |
 | [Contracts](contracts/README.md) | Межкомпонентные обязательства; wire API имеет собственный статус согласования |
@@ -51,6 +52,8 @@
 - [VM2 wave 0](https://instant-publish.trainedassist.store/p/vm2-wave0-done) — отчёт о запуске существующего агента 29.09.2026; применённые уроки и ограничения доказательства — Sandbox Plan.
 
 ## Отдельный поток: действующий сервис
+
+Как и когда новая система заменяет действующую — [Migration Plan](MIGRATION-PLAN.md).
 
 [План взаимодействия TG/Web](TG-AND-WEB-INTERACTION-REFACTORING-PLAN.md) относится к текущему продукту. Он не является очередной стадией greenfield-плана и не разрешает скрыто переключать production на новую систему.
 
