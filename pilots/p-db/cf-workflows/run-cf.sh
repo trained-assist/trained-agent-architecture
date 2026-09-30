@@ -70,7 +70,7 @@ fx_is "$B" && res R1 PASS "$B wall=$(( $(date +%s%3N)-t0 ))ms signal->apply=${LA
 for id in r2 r2b r2c; do start ut-$id '{"pauseAfterRunSec":90}'; done  # durable sleep x3 (run 2: one sleeper never took its signal)
 start ut-r3 '{"failOnce":"throw","retryDelaySec":30}'    # failed attempt -> platform retry timer
 start ut-r4 '{"failOnce":"oom","retryDelaySec":10}'      # isolate killed mid-step
-start ut-r5; start ut-r6 '{"pauseAfterRunSec":120}'     # deploy during wait / during sleep
+start ut-r12; start ut-r5; start ut-r6 '{"pauseAfterRunSec":120}'     # deploy during wait / during sleep
 
 # ---- R7 early signal
 start ut-r7 '{"pauseAfterRunSec":20}'; signal ut-r7 >>run-cf.log; wait_until ut-r7 "$DONE" 120
@@ -103,6 +103,11 @@ for id in r2 r2b r2c r3 r4; do log "$id before signal: $(brief ut-$id)"; done
 wait_until ut-r5 "$AWAIT" 60
 wait_until ut-r6 '[.taskStore.history|fromjson|.[]|select(.kind=="step_done" and .step=="run")]|length==1' 60
 log "before deploy: r5=$(brief ut-r5) r6=$(brief ut-r6)"
+# ---- R12 control: idle wait of several minutes WITHOUT a deploy (run 4: every instance that sat in
+# waitFor across the deploy took 170-270 s to take its signal, one that started waiting after it 0.2 s)
+IDLE=$(( $(date +%s%3N) - $(hist_at ut-r12 status wait) )); signal ut-r12 >/dev/null; wait_until ut-r12 "$DONE" 420
+S=$(hist_at ut-r12 signal user_reply); A=$(hist_at ut-r12 step_done apply); B=$(brief ut-r12)
+fx_is "$B" && res R12 PASS "idle ${IDLE}ms, no deploy: signal->apply=$(( A - S ))ms; $B" || res R12 FAIL "idle ${IDLE}ms; $B"
 NB=$(deploy v2); log "deployed v2 ($NB) version endpoint: $(api GET /version | jq -c .)"
 wait_until ut-r6 "$AWAIT" 300; log "r6 after sleep on v2: $(brief ut-r6)"
 
