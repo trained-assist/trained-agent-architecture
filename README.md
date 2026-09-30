@@ -1,27 +1,25 @@
 # Trained Agent Architecture
 
-Общая архитектура Trained Assist и сквозные спецификации продукта. Фокус — явные границы сервисов и уменьшение связанности core.
+Общая архитектура Trained Assist, границы репозиториев и сквозные контракты. Статус: draft · 30.09.2026. Целевая схема отделена от подтверждённого текущего кода.
 
-## Разделы
+## Текущая архитектура
 
-- [Review with real playbooks](REVIEW-WITH-REAL-PLAYBOOKS.md) — виртуальный прогон 11 JSON artifacts / 132 steps из engineering, sales, documents, HH и marketing; gtdId, waits, effects и acceptance gaps.
+- [ARCHITECTURE v0.3](ARCHITECTURE.md) — три схемы: сервисы/география; одна задача с результатом пользователю; GTD/playbook и внешние интеграции. IDs, ownership, миграционные границы и открытые решения.
+- [Task Router and MCP](TASK-ROUTER-AND-MCP.md) — архитектура отдельного Router, быстрый reply-or-route, эскалация, context policy, роли MCP и сверка текущего pipeline.
+- [Model Gateway and Costs](MODEL-GATEWAY-AND-COSTS.md) — model ladder, бюджет, Ledger и correlation расходов; цены отдельно от общей схемы.
+- [User Task: ID и Reporting](USER-TASK-IDS-AND-REPORTING.md) — сквозной userTaskId и справочная по статусу.
+- [Playbooks vs Getting Things Done Boundaries](PLAYBOOKS-VS-GETTING-THINGS-DONE-BOUNDARIES.md) — методика, plan, контроль, расписание, Awaiting user input и delegation.
+- [Review with real playbooks](REVIEW-WITH-REAL-PLAYBOOKS.md) — виртуальный прогон 11 артефактов / 132 шагов, IDs, waits, effects и gaps.
+- [Контракты](contracts/README.md) — C01–C11; распределение прежнего Orchestrator по новым владельцам.
+- [Agent Runner](runtime/EXECUTION-RUNTIME.md) — clean room lifecycle и граница [ai-agent-runner](https://github.com/trained-assist/ai-agent-runner).
+- [Терминология и OpenLineage](TERMINOLOGY.md) — Job/Run/Dataset и наши типы Job.
+- [Пользовательские сценарии](scenarios/README.md) — исходные копии с provenance; копирование не меняет runtime readers.
 
-- [Playbooks vs Getting Things Done Boundaries](PLAYBOOKS-VS-GETTING-THINGS-DONE-BOUNDARIES.md) — отдельный brainstorm: методика/plan/checklist, расписание, web view, ожидание пользователя и durable agent delegation.
+## История и evidence
 
-- [User Task: ID и Reporting](USER-TASK-IDS-AND-REPORTING.md) — один сквозной userTaskId, внутренние IDs, история эскалации и справочная по состоянию; пока без playbooks и групп задач.
-
-- [Linearization Step — текущая итерация brainstorm](LINEARIZATION-STEP.md) — Input → Router → три типа executor → Output → Report to User → Gateway → пользователь; одна обратная связь для follow-up.
-
-- [Brainstorm: core и границы репозиториев](BRAINSTORM-CORE-AND-REPOSITORIES.md) — предыдущая итерация: Conversation Service, controller и распределение state. Текущий фокус центрального потока перенесён в Linearization Step; варианты не утверждены.
-
-- [Терминология и OpenLineage](TERMINOLOGY.md) — Job, Run, Dataset, Facets и границы нашей инфраструктуры.
-
-- [Целевая архитектура бэкенда](ARCHITECTURE.md) — блоки A01–A13, инварианты INV-01–INV-13, факты и открытые решения.
-- [Пользовательские сценарии](scenarios/README.md) — общий индекс и 39 исходных файлов из шести репозиториев; происхождение закреплено в manifest.
-- [Контракты](contracts/README.md) — девять предлагаемых границ ключевых сервисов, семантика сообщений, ownership, retries и failures.
-- [Execution runtime](runtime/EXECUTION-RUNTIME.md) — терминология изолированного исполнения и предложение о выделении runner из core.
-
-Статус: draft для согласования. Копирование сценариев не меняет runtime readers и не утверждает старые планы как новые решения. API в контрактах иллюстративен.
+- [Аудит архитектуры v0.2](audits/ARCHITECTURE-0.2-CODE-AUDIT.md) — прежние факты, source revisions, A01–A13 и инварианты.
+- [Linearization Step](LINEARIZATION-STEP.md) — итерация линейного Input → Router → executor → Output → user flow.
+- [Brainstorm: core и репозитории](BRAINSTORM-CORE-AND-REPOSITORIES.md) — ранние варианты; controller/conversation идеи не заменяют текущую v0.3.
 
 ## Как привязывать работу
 
