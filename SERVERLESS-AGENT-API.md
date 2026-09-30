@@ -38,6 +38,10 @@ Public receipt: requestId/userTaskId для одной клиентской за
 
 Без user folder вход материализуется из разрешённых input refs, выход экспортируется в storage/API destination. При наличии folder — scoped snapshot/version contract. Данные очищаются после подтверждённого экспорта по lifecycle policy; при неудаче export результат не теряется молча.
 
+## Логи и события
+
+[Observability contract](OBSERVABILITY-AND-ERROR-CONTRACT.md) обязателен и standalone adapter: user/tenant context, request/run IDs, error и основные lifecycle events, declared TTL. Для API-only клиента replyContext=web_only/API destination либо explicit unavailable; профиль нельзя потерять из-за отсутствия Telegram. Внешний principal связан с platform profile/binding или эквивалентным scoped account в standalone.
+
 ## Clean room и право запуска
 
 API key связан с tenant/principal, allowed engines/tools/regions, credentials bindings и квотами. Engine defaults не предоставляют клиенту произвольный root command, соседние profiles или shared secrets. Подключение user keys — через credential binding, а не prompt.
