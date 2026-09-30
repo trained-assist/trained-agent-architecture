@@ -149,7 +149,7 @@ userTaskId, gtdId при наличии, tenant/profile context и causation п�
 | Credential Broker / Storage — модули, размещение не выбрано | Scoped credentials, snapshots, artifacts; не подразумевается repo на каждый модуль |
 | Общие contracts/schema — пакет либо каталог | Versioned envelopes и совместимость; без бизнес-логики |
 
-Доменные репозитории из текущего аудита: software-engineering-playbooks, trained-assist-hh-skill, trained-assist-sales, trained-assist-documents, trained-assist-freelance, trained-assist-speech, trained-assist-search, trained-assist-marketing. Точный inventory и происхождение артефактов — в [review](REVIEW-WITH-REAL-PLAYBOOKS.md) и [scenarios](scenarios/README.md). Общая архитектура не переносит их playbooks в core.
+Проверенные доменные репозитории: software-engineering-playbooks, trained-assist-hh-skill, trained-assist-sales-skill, trained-assist-documents-skill, trained-assist-marketing-skill. Freelance в прочитанном inventory — playbook в documents-skill, а не доказанный отдельный repo. Speech/search и будущие домены требуют отдельного inventory. Точный inventory и происхождение артефактов — в [review](REVIEW-WITH-REAL-PLAYBOOKS.md) и [scenarios](scenarios/README.md). Общая архитектура не переносит их playbooks в core.
 
 ### MCP, данные и credentials
 
@@ -178,7 +178,7 @@ Credentials имеют shared/platform, private/user и replaceable-default scop
 
 A01–A13 сохраняют прежние значения из [audit](audits/ARCHITECTURE-0.2-CODE-AUDIT.md); эпики не перенумеровываются. Для новой работы добавлять конкретный контракт и владельца из таблицы выше. C01–C09 остаются ссылками, но старое слово Orchestrator раскладывается по новым владельцам в [контрактах](contracts/README.md).
 
-INV-01–INV-13 остаются индексом прежних проверок. **Пересмотр INV-03:** чат больше не ограничивает все фоновые задачи одним execution; отдельная политика интерактивного потока может ограничивать конкуренцию. Старое правило совместимости сохраняется при миграции до явного переключения. INV-14: managed outcome доставляется GTD через durable inbox с gtdId. INV-15: Awaiting user input видим в Web и не требует живого Agent Run.
+INV-01–INV-13 остаются индексом прежних проверок. **Уточнение INV-03:** прежнее правило ограничивает одну интерактивную execution в Telegram lane и writers Web-сессии; оно не запрещает параллельные фоновые задачи. В целевой модели чат не владеет фоновой задачей. Интерактивная политика совместимости сохраняется при миграции до явного переключения. INV-14: managed outcome доставляется GTD через durable inbox с gtdId. INV-15: Awaiting user input видим в Web и не требует живого Agent Run.
 
 Миграция не должна удалять работающие старые пути до проверки нового сквозного сценария: приём → результат → Web/чат, stop/supplement, повтор после сбоя, бюджетный отказ, external callback и ожидание ответа. Исторические копии [сценариев](scenarios/README.md) — evidence, а не автоматически новые требования.
 
