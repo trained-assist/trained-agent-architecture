@@ -18,7 +18,7 @@
 - [Agent Runner](runtime/EXECUTION-RUNTIME.md) — clean room lifecycle и граница [ai-agent-runner](https://github.com/trained-assist/ai-agent-runner).
 - [Терминология и OpenLineage](TERMINOLOGY.md) — Job/Run/Dataset и наши типы Job.
 - [Пользовательские сценарии](scenarios/README.md) — исходные копии с provenance; копирование не меняет runtime readers.
-- [Run conflict — явный выбор](scenarios/interaction/run-conflict-explicit-choice.md) — новая задача во время работающего рана: меню «в очередь / параллельно / стоп с добавкой / стоп → новая / подождать» вместо скрытого запрета; кнопочная гигиена (RC-01…RC-08).
+- [Run conflict — явный выбор](scenarios/interaction/run-conflict-explicit-choice.md) — новая задача во время работающего рана: меню «в очередь / параллельно / стоп с добавкой / стоп → новая» вместо скрытого запрета (ждущее состояние — бездействие, без отдельной кнопки); кнопочная гигиена (RC-01…RC-08).
 
 - [Engineering Approach — Sandbox Driven Development](ENGINEERING-APPROACH.md) — воспроизводимая среда, fault fixtures, free-only smoke и acceptance.
 - [Capability Catalog and Fast Replies](CAPABILITY-CATALOG-AND-FAST-REPLIES.md) — четыре режима, scoped brief, required-input UX и сравнение одного/двух LLM этапов.
