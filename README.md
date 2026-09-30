@@ -29,7 +29,8 @@
 
 - [План реализации и интеграции](IMPLEMENTATION-AND-INTEGRATION-PLAN.md) — 33 work items, dependencies, новая параллельная реализация и отдельный pilot/cutover с rollback.
 - [Рефакторинг взаимодействия TG и связки с вебом](TG-AND-WEB-INTERACTION-REFACTORING-PLAN.md) — факты двух существующих блокировок, решения владельца 30.09 и фазы Ф0–Ф6 действующего сервиса (скрытый запрет → явный выбор).
-- [Sandbox Plan](SANDBOX-PLAN.md) — real-service scenarios, controlled provider failures, sandbox construction и обязательные logs checks каждого этапа.
+- [Sandbox Plan](SANDBOX-PLAN.md) — real-service scenarios, controlled provider failures, sandbox construction и обязательные logs checks каждого этапа; раздел «Блокеры полного прохода» — что реально мешает выполнить I00–I10 подряд.
+- [Sandbox Bindings и Credentials](SANDBOX-BINDINGS-AND-CREDENTIALS.md) — где лежит каждый ключ/токен/binding (путь, имя переменной, владелец, процедура получения), что отсутствует и должно быть создано. Значений секретов в репозитории нет.
 
 GitHub Project пока отложен. Production и старые репозитории сохраняются; runtime GTD не является development board.
 
