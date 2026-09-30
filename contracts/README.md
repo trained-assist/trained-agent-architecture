@@ -4,7 +4,7 @@
 
 ## Уточнение владельцев v0.3
 
-Слово **Orchestrator** ниже — историческое общее обозначение. Оно не означает новый монолитный сервис. Текущая схема — [ARCHITECTURE v0.3](../ARCHITECTURE.md); API остаются предложениями.
+Слово **Orchestrator** ниже — историческое общее обозначение. Оно не означает новый монолитный сервис. Текущая схема — [ARCHITECTURE v0.4](../ARCHITECTURE.md); API остаются предложениями.
 
 | Контракт | Целевой владелец |
 |---|---|
@@ -24,6 +24,20 @@
 ### C11 — Output ↔ GTD / Input continuation
 
 Предлагаемый контракт. Managed outcome с userTaskId/gtdId/resultId сохраняется в GTD inbox; повтор возвращает тот же ACK. GTD принимает transition один раз и передаёт continuation через outbox в Input. Для неуправляемой задачи continuation owner — Output/Router policy. Два владельца не могут независимо эскалировать один outcome. needs_executor — допустимый результат reply-or-route, а не техническая ошибка; бюджетный отказ не разрешает автоматически более дорогого агента.
+
+### C12 — Все модули → registered Error/Lifecycle sources → readers
+
+Обязательный целевой контракт: [Observability](../OBSERVABILITY-AND-ERROR-CONTRACT.md). Structured error содержит eventId, source/release/environment, trusted profile scope для пользовательской ошибки, replyContext channel/destinationRef когда известны, task/run/operation correlation, safe summary/private details ref и origin/cause. Общесистемный failure имеет explicit platform scope. Lifecycle transitions — второй обязательный слой. Retention class/TTL объявляются источником; indefinite storage не default.
+
+Error reader поддерживает cursor/replay/dedup, producer — bounded delivery/spool policy. Watcher читает registered sources, а не восстанавливает пользователя из произвольного текста. Отсутствующий профиль у user error — contract violation/reconciliation; событие не отправляется случайному пользователю. Delivery исходного user error не ждёт diagnosis. Sandbox fixtures проверяют scope, async correlation, storm, TTL cleanup и logging outage.
+
+### C13 — External client / Watcher → Task or Runner admission → Output/result
+
+[Serverless Agent API](../SERVERLESS-AGENT-API.md): key/scopes, quotas, idempotent durable receipt, run status, cancel, artifact/result и callback receipt. В платформе — Task API; standalone — Runner admission adapter. [Error Watcher](../SYSTEM-ERROR-WATCHER.md) отправляет diagnostic Task с incidentId и sourceUserTaskId, не подменяет исходную пользовательскую работу. GTD не включается этим submission автоматически. Публичный client API не является provider Integration Gate.
+
+### Уточнение GTD и агентской эскалации
+
+gtdId opt-in только при явном completion control/конкретном следующем шаге. Cron/delegation/errors не требуют его сами по себе. Автоматическая escalation заканчивается OpenCode; автоматического следующего Claude Code/Codex rung нет. C10 принадлежит выделяемому Integration Gate repo; business domain rules остаются отдельно.
 
 ## Что называем контрактом
 
