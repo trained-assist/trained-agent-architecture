@@ -101,3 +101,19 @@ Contract/fixture checks дешёвые и воспроизводимые. Real e
 Промежуточные artifacts и verbose logs имеют TTL. Proposed стартовые сроки из Observability — errors/main events 30 дней, verbose 7; это draft config, не утверждение deployed настройки. Fixture с ускоренным clock проверяет expires/cleanup, не ждёт неделю.
 
 GitHub Project пока отложен; оба документа — рабочий plan/reference. Никакие production Runs, deploy, AutoFix patches или cutover этой документацией не выполняются.
+
+## Проверки связи, диска и финализации — уточнение 30.09.2026
+
+Основание — [ARCHITECTURE §4.6](ARCHITECTURE.md#46-связка-workflow--runner--рабочие-данные), P03/P06/P07/P09/P30 [плана реализации](IMPLEMENTATION-AND-INTEGRATION-PLAN.md).
+
+| Контролируемый сбой | Ожидаемый результат |
+|---|---|
+| Разорвать связь control plane ↔ VM, оставить engine живым | connection_lost и уведомление; нет автоматического rerun по heartbeat/lease; после reconnect replay без дубля |
+| Завершить agent/Runner, сохранить volume | Файлы и manifest доступны; никакого удаления из-за exit |
+| Дать явный сигнал перезапуска с дополнительными инструкциями | Сверка и прекращение записей старого процесса; новый runId при прежнем userTaskId, доступ к старым файлам/checkpoints |
+| Уронить finalization при загрузке тяжёлого файла | Export возобновляется без engine restart; manifest публикуется после commit; sole copy не удалена |
+| Перезапустить VM с persistent volume | Отдельно подтвердить сохранность данных и возможность повторной финализации |
+| Уничтожить единственный volume | Явная потеря данных; отсутствие ложного обещания восстановленных артефактов |
+| Повторить export/cleanup и ускорить retention clock | Идемпотентность; очистка незавершённой единственной копии блокируется, срок/квота требуют явной политики |
+
+Логи: task/run/generation, workspace/volume refs, состояние связи, сигнал/источник перезапуска, manifest/checkpoints, export progress/commit/error и cleanup decision. Проверки только в отдельном sandbox; живые volume/данные не используются для destructive tests.
