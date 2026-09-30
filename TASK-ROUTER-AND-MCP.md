@@ -1,6 +1,6 @@
 # Task Router — routing, fast replies и MCP
 
-Статус: актуальная спецификация Task Router/MCP · 30.09.2026. Реализация и точный wire API не объявляются готовыми. Выбор владельца: **самостоятельный репозиторий Task Router**. Предлагаемое имя: **trained-assist-task-router**; репозиторий создаёт владелец, здесь пока только спецификация.
+Статус: актуальная спецификация Task Router/MCP · 30.09.2026. Реализация и точный wire API не объявляются готовыми. Размещение по [ARCHITECTURE §9](ARCHITECTURE.md): **Router сначала модуль общего control plane над Task Store**. Отдельный репозиторий — возможное последующее выделение при независимом жизненном цикле, не prerequisite реализации. Этот документ специфицирует routing/MCP, не вводит второго владельца task state.
 
 ## Принятая policy 30.09.2026
 
@@ -156,11 +156,11 @@ Latency measure: acceptance, time-to-first-useful-reply, route decision, executo
 
 Evals: common FAQ/Tilda, сложное tool-free reasoning, fresh/private data, constraints в середине длинного ввода, stop/typed jobs, late media, unavailable LLM/budget, invalid JSON, repeated escalation, duplicate request/context changes. Измеряем false-fast (неосновательный ответ), unnecessary-agent, latency p50/p95, correctness и стоимость вместе.
 
-## 10. Будущий repo
+## 10. Размещение модуля
 
-Минимальная структура: contracts/, policy/, recipes/reply-or-route/, context/, capability-adapters/, evals/, integration fixtures. Router не импортирует внутренние core modules и не хранит credstore.
+Логические каталоги модуля внутри control-plane repo: contracts/, policy/, recipes/reply-or-route/, context/, capability-adapters/, evals/, integration fixtures. Router не импортирует внутренние core modules и не хранит credstore.
 
-API: route(preparedInput, resolvedPolicy) → decision/dispatch spec; typed continuation сохраняет U/G refs. Transport выбирается отдельно, package adapter допустим между repositories. Весь durable task state остаётся за boundary.
+API: route(preparedInput, resolvedPolicy) → decision/dispatch spec; typed continuation сохраняет U/G refs. Transport выбирается отдельно, package adapter допустим при последующем выделении. Весь durable task state остаётся за boundary.
 
 ## Implementation refinement: compact capabilities
 
