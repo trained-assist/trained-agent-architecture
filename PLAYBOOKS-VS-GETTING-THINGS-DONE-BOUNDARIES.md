@@ -235,6 +235,20 @@ planId не заменяет userTaskId. Шаги одного плана и и�
 - [Внутренний аудит 30.09](https://github.com/trained-assist/trained-assist-agent/blob/bbc0b91e503e65ede3adc0a87abf9bba59a1ad25/docs/audits/playbook-background-execution-audit-2026-09-30.md) описывает missing terminal markers, невидимые awaiting_user, уведомления/consent и protocol errors, попадающие в quality retry. Его production-цифры независимо не перепроверены; используем как список сценариев для новой модели.
 - [hermes-run.js](https://github.com/trained-assist/trained-assist-agent/blob/bbc0b91e503e65ede3adc0a87abf9bba59a1ad25/src/hermes-run.js) описан как один structured-output LLM вызов без tools/cron. Нельзя объединять все Hermes операции под единственным agent-job типом.
 
+## 12a. Уточнения после review реальных artifacts
+
+[Review with real playbooks](REVIEW-WITH-REAL-PLAYBOOKS.md) прочитал 11 JSON artifacts / 132 шага и добавил требования:
+
+- Compiler сохраняет stepId: в проверенных definitions нет step.id. Legacy stage/ordinal mapping допустим только при pinned revision.
+- Wait различает **Awaiting user input**, external condition и timer/observation. Нужны awaitingInputId либо condition/timer refs; run deadline не равен wait/task deadline.
+- Между clean rooms сохраняются workspaceRef, artifact manifest/version и typed externalOperationRefs (GitHub Actions run_id не platform runId).
+- Детерминированный шаг требует execution operationRef/handler contract отдельно от validator; named validators разрешаются до dispatch.
+- Cleanup obligations для test/external mutations переживают ошибку/cancel основного Run; effect receipts ограничивают повтор.
+- CI report «тесты красные» может завершить reporting Task успешно; тот же conclusion не проходит required gate feature plan.
+- Существующий HH launch artifact не задаёт hourly cold search; schedule создаём отдельно. Chat как source data не равен chat как notification destination.
+
+GTD record сохраняет ожидаемый accepted Run/deadline. Если исходного outcome нет, technical reconciliation формирует missing/unknown result и уведомляет GTD; нельзя ждать результата бесконечно только потому, что gtdId корректен.
+
 ## 13. Репозитории и следующая проверка
 
 | Место | Предлагаемое содержимое |
