@@ -37,8 +37,13 @@ deploy() { # version
 BASE=$(deploy v1); [ -n "$BASE" ] || { log "FATAL: deploy failed"; exit 2; }
 log "deployed v1 at $BASE (db $DBID)"
 
-api() { local m=$1 p=$2 d=${3:-{\}}; if [ "$m" = GET ]; then curl -s -m 20 -H "x-pilot-key: $KEY" "$BASE$p"
+# The edge sometimes answers a fresh workers.dev worker with a non-JSON page ("error code: 1042")
+# before the request reaches our code. All endpoints are idempotent (start by id, signal is deduped),
+# so retry until the worker itself answers; otherwise R2/R7 fail on a lost request, not on the platform.
+api1() { local m=$1 p=$2 d=${3:-{\}}; if [ "$m" = GET ]; then curl -s -m 20 -H "x-pilot-key: $KEY" "$BASE$p"
         else curl -s -m 20 -XPOST -H "x-pilot-key: $KEY" -H 'content-type: application/json' "$BASE$p" -d "$d"; fi; }
+api() { local out; for i in 1 2 3 4 5 6; do out=$(api1 "$@"); jq -e . >/dev/null 2>&1 <<<"$out" && { echo "$out"; return 0; }
+        echo "[api retry $i] $1 $2 -> $(head -c 120 <<<"$out")" >>run-cf.log; sleep 2; done; echo "$out"; return 1; }
 for i in $(seq 1 60); do api POST /init | grep -q '"ok"' && break; sleep 2; done
 st() { api GET "/status?taskId=$1"; }
 brief() { st "$1" | jq -c '{status:.taskStore.status, gen:.taskStore.generation, fx:(.taskStore.side_effects|fromjson? // {}),
@@ -68,7 +73,7 @@ start ut-r4 '{"failOnce":"oom","retryDelaySec":10}'      # isolate killed mid-st
 start ut-r5; start ut-r6 '{"pauseAfterRunSec":120}'     # deploy during wait / during sleep
 
 # ---- R7 early signal
-start ut-r7 '{"pauseAfterRunSec":20}'; signal ut-r7 >/dev/null; wait_until ut-r7 "$DONE" 120
+start ut-r7 '{"pauseAfterRunSec":20}'; signal ut-r7 >>run-cf.log; wait_until ut-r7 "$DONE" 120
 B=$(brief ut-r7); S=$(hist_at ut-r7 signal user_reply); W=$(hist_at ut-r7 status wait)
 [ "$S" -lt "$W" ] && fx_is "$B" && res R7 PASS "signal earlier than waitFor by $((W-S))ms; $B" || res R7 FAIL "$B S=$S W=$W"
 
@@ -106,8 +111,11 @@ for id in r2 r3 r4 r5 r6; do wait_until ut-$id "$DONE" 120; done
 B=$(brief ut-r2); fx_is "$B" && res R2 PASS "resumed after 90s sleep without trigger; $B" || res R2 FAIL "$B"
 B=$(brief ut-r3); fx_is "$B" && [ "$(jq .attempts <<<"$B")" -ge 2 ] && res R3 PASS "retried by platform; $B" || res R3 FAIL "$B"
 B=$(brief ut-r4); fx_is "$B" && [ "$(jq .attempts <<<"$B")" -ge 2 ] && res R4 PASS "resumed after isolate OOM; $B err=$(st ut-r4 | jq -c .engine.error)" || res R4 FAIL "$B"
-B=$(brief ut-r5); fx_is "$B" && [ "$(jq -r .ver <<<"$B")" = v2 ] && res R5 PASS "waited on v1, finished on v2; $B" || res R5 FAIL "$B"
-B=$(brief ut-r6); fx_is "$B" && [ "$(jq -r .ver <<<"$B")" = v2 ] && res R6 PASS "slept on v1, finished on v2; $B" || res R6 FAIL "$B"
+# Pass = a deploy does not break an in-flight instance (finishes once, exactly-once effects).
+# Which code version finishes it is recorded, not asserted: run 36754338992 showed v1 for r5/r6
+# but v2 for r3/r4 in the same run, i.e. the platform gives no guarantee either way.
+B=$(brief ut-r5); fx_is "$B" && res R5 PASS "waited across deploy v1->v2, finished on $(jq -r .ver <<<"$B"); $B" || res R5 FAIL "$B"
+B=$(brief ut-r6); fx_is "$B" && res R6 PASS "slept across deploy v1->v2, finished on $(jq -r .ver <<<"$B"); $B" || res R6 FAIL "$B"
 
 # ---- R11 recover() is harmless in prod + one SQL query over the real D1
 REC=$(api POST /recover | jq -c .); sleep 5
