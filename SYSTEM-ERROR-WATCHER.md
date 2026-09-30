@@ -8,6 +8,10 @@ Watcher превращает наблюдаемую ошибку системы 
 
 Сервис слушает поток ошибок, а не каждое пользовательское сообщение. Баг в вёрстке не всегда создаёт exception: нужны Web telemetry, пользовательские reports и отдельные visual/synthetic checks. «Все баги» означает coverage источников, а не обещание автоматически увидеть любой дефект интерфейса.
 
+## Предусловие: registered scoped error sources
+
+[Обязательный Observability contract](OBSERVABILITY-AND-ERROR-CONTRACT.md) задаёт source registry, schema, delivery и TTL. Profile обязателен для пользовательского error; reply channel/destinationRef прокидываются из origin и сохраняются для async reports. Для platform outage без профиля — ops scope, без произвольной рассылки. Несколько физических backends допустимы через normalized readers.
+
 ## Поток
 
 ```mermaid
