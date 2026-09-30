@@ -1,6 +1,27 @@
 # Playbooks vs Getting Things Done Boundaries
 
-Статус: **brainstorm / draft v0.2 · 30.09.2026**. Продолжение [Linearization Step](LINEARIZATION-STEP.md) и [User Task / Reporting](USER-TASK-IDS-AND-REPORTING.md). Здесь рассматриваем только слой над Input → … → Output: методики, конкретный план, расписание, ожидание пользователя и работы, созданные агентом.
+Статус: **brainstorm / draft v0.3 · 30.09.2026**. Продолжение [Linearization Step](LINEARIZATION-STEP.md) и [User Task / Reporting](USER-TASK-IDS-AND-REPORTING.md). Здесь рассматриваем только слой над Input → … → Output: методики, конкретный план, расписание, ожидание пользователя и работы, созданные агентом.
+
+## Решение владельца: GTD только там, где нужен следующий контроль
+
+GTD **не включён по умолчанию**. Наличие долгой работы, cron, delegation, ошибки или playbook как справочника не создаёт gtdId. Обычный результат и bounded error escalation остаются в Output/Router.
+
+GTD подключаем, когда пользователь явно просит довести цель до конца с проверкой результата или задан конкретный следующий шаг после текущего execution: дождаться CI и проверить release, пройти migration gate, продолжить многошаговый план. При регистрации сохраняем reason, completion criteria, next trigger/check, continuation owner, deadline и attempt/budget caps. Слово «контролировать» без конкретного следующего действия недостаточно.
+
+| Пример | GTD |
+|---|---|
+| FAQ / сложный ответ без tools | Нет |
+| Разовый агент выполнил действие и вернул результат | Нет по умолчанию |
+| Hourly cold search, terminal result | Нет; расписание создаёт occurrences, Output принимает итог |
+| LLM diagnosis → OpenCode investigation | Нет по умолчанию; это bounded routing escalation |
+| PR создан → ждать CI → проверить интеграцию | Да, concrete next-step contract |
+| Агент передал самостоятельный расчёт другой программе | Нет по умолчанию; Task API и technical recovery достаточны |
+| Пользователь просит «доведи до конца и проверь» | Да с зафиксированным критерием |
+| GTD контролирует свой собственный GTD | Не допускается; только deterministic health supervision |
+
+Agent может адаптировать playbook к новой фиче: разделить feature/integration, добавить migration и dependencies. Сохраняются pinned base revision, compiled plan revision и evidence изменений; running steps не переименовываются задним числом. Planning не обязывает контролировать каждую микрооперацию.
+
+В prompt исполнителя передаётся текущий шаг, релевантные ограничения и ожидаемый result/evidence contract. Полный GTD meta-process не копируется в каждый prompt. GTD получает structured outcomes и двигается по событиям/таймерам; не запускает постоянные LLM «проверить, что контроль контролируется». Исчерпание caps даёт stopped/needs input, а не создание нового GTD для обхода лимита.
 
 ## 1. Контекст: какие противоречия разрешаем
 
@@ -97,7 +118,7 @@ Schedule module может жить внутри GTD repo отдельным mod
 
 **gtdId** создаёт GTD Manager при регистрации одной User Task на контроль. Это постоянный ID control record, не scheduleId, не planId и не runId. Простой запрос «сделать и проверить до конца» тоже может иметь gtdId, без плейбука и cron.
 
-В этой версии один gtdId связан с одной userTaskId; при нескольких шагах/повторах сохраняется. Независимая дочерняя User Task получает собственную запись контроля, если контроль нужен. Handoff внутри прежней Task сохраняет gtdId. Следующая occurrence расписания получает новую User Task и новый gtdId; scheduleId остаётся постоянным.
+В этой версии один gtdId связан с одной userTaskId; при нескольких шагах/повторах сохраняется. Независимая дочерняя User Task получает собственную запись контроля, если контроль нужен. Handoff внутри прежней Task сохраняет gtdId. Следующая occurrence расписания получает новую User Task; gtdId создаётся только если этот запуск отдельно зарегистрирован на контроль. scheduleId остаётся постоянным.
 
 Контроль имеет отдельные настройки: completion criteria, allowed retry/escalation, next checks, budget/deadline, wait/resume и статус active/paused/awaiting_user/completed/cancelled. Наличие ID означает регистрацию; для текущего признака «на контроле» Reporting показывает также gtdState. ID закрытой записи остаётся в истории.
 
@@ -116,17 +137,17 @@ continuationOwner=gtd при зарегистрированном контрол
 ```mermaid
 flowchart TD
   U["Пользователь / scheduled producer"] --> I["Input Task Queue"]
-  A["Агент: create task / handoff"] --> G["GTD submission / plan manager"]
+  A["Агент: create task / handoff"] --> I
+  A -->|"Explicit completion control"| G["GTD Manager"]
   G --> I
   I --> X["… исполнение …"]
   X --> O["Output Task Queue"]
-  O -->|"Plan / delegated outcomes"| G
+  O -->|"Managed outcomes only"| G
   O --> R["Reporting / Web task view"]
   G -->|"Plan state / Awaiting user input"| R
 ```
 
-GTD submission — общий admission adapter для agent-created работ, а не обязательное создание playbook. Для single delegated task он проверяет и регистрирует работу, затем передаёт её Input без workflow loop. При отсутствии плана агент **может использовать тот же общий Task Submission API**, реализованный этим adapter.
-
+Task Submission API принадлежит Input/admission. Он проверяет и сохраняет agent-created работу без обязательного GTD. Только explicit managed work регистрируется в GTD и возвращает ему outcome по gtdId.
 Полный response/delivery flow остаётся в Linearization Step. Здесь intentionally скрыт executor internals, а не изменён протокол вывода.
 
 ## 7. Расписание: включить, выключить, остановить — разные команды
