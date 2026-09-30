@@ -1,6 +1,6 @@
 # Архитектура Trained Assist
 
-Версия 0.5 · 30.09.2026 · целевая архитектура, draft. Это схема ответственности, а не утверждение, что все компоненты уже выделены и развёрнуты. Исторические факты, ссылки на код и прежние A01–A13 сохранены в [аудите v0.2](audits/ARCHITECTURE-0.2-CODE-AUDIT.md).
+Версия 0.6 · 30.09.2026 · целевая архитектура, draft. Это схема ответственности, а не утверждение, что все компоненты уже выделены и развёрнуты. Исторические факты, ссылки на код и прежние A01–A13 сохранены в [аудите v0.2](audits/ARCHITECTURE-0.2-CODE-AUDIT.md).
 
 ## Цель и границы
 
@@ -187,7 +187,7 @@ Credentials имеют shared/platform, private/user и replaceable-default scop
 
 [Sandbox Driven Development](ENGINEERING-APPROACH.md) — обязательная практика разработки: reproducible setup, controlled failures, scoped errors/events, TTL и acceptance evidence. Existing VM сначала sandbox, позже clean promotion; отдельный sandbox воспроизводится. Run isolation проверяется внутри development sandbox, это разные границы.
 
-Порядок вертикальных приёмок: Runner/VM → external API lifecycle → artifacts/workspace → Web/TG → MCP → fast replies → compact capabilities → opt-in GTD/schedules/playbooks. Integration Gate/Watcher подключаются по готовности contracts; они не обязательны standalone Runner. Изменяемый implementation plan ведётся в GitHub Projects, не в runtime GTD и не в git status checklist.
+Порядок вертикальных приёмок: Runner/VM → external API lifecycle → artifacts/workspace → Web/TG → MCP → fast replies → compact capabilities → opt-in GTD/schedules/playbooks. Integration Gate/Watcher подключаются по готовности contracts; они не обязательны standalone Runner. GitHub Project отложен. Рабочие документы — [план реализации и интеграции](IMPLEMENTATION-AND-INTEGRATION-PLAN.md) и [Sandbox Plan](SANDBOX-PLAN.md); это план development, не runtime GTD.
 
 [Capability Catalog](CAPABILITY-CATALOG-AND-FAST-REPLIES.md): template/deterministic/llm/agent — execution modes, Job types остаются три. Scoped brief имеет required inputs, readiness/bindings, versions и supportedModes. One-call reply-or-route и two-stage selection/reply сравниваются на corpus; не вводим обязательных двух LLM на каждый вопрос. URL/keyword features не означают agent для каждой ссылки.
 
@@ -221,3 +221,11 @@ INV-01–INV-13 остаются индексом прежних проверо�
 - Какие фактические gaps Ledger и latency baseline подтвердит следующий runtime audit?
 
 Решения 30.09.2026: GTD selective opt-in; Integration Gate и Error Watcher — самостоятельные repos; автоматический конечный агент эскалации — OpenCode. Имена новых repos ещё предложения. TTL в observability и конкретные budget limits ещё draft.
+
+## Уточнение перехода — 30.09.2026
+
+Новая реализация создаётся параллельно работающему сервису в новых implementation repos/deployments либо в уже созданном новом Runner repo. Старые репозитории/production не заменяются и не удаляются этой работой. Они reference для сценариев/contracts; перенос standalone частей допустим с явной границей, без скрытых imports старого ядра.
+
+Web/TG сначала новые sandbox adapters к новому API, production endpoints/webhooks сохраняются. Pilot/cohort cutover — отдельный этап с single dispatch owner и rollback; существующие принятые задачи завершает их прежний владелец. Legacy cleanup/archive не входят в текущий план. Эта граница уточняет прежние proposals об extraction/замене.
+
+Test fixture означает воспроизводимый сценарий (input/state/dependencies/expected outcome/cleanup), а не обязательную заглушку вместо реального сервиса. Проверяем настоящий Runner/API; эмуляторы дают контролируемые provider failures. Требования logs/TTL проверяются у каждой iteration/work item.
