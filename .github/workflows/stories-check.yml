@@ -1,0 +1,22 @@
+name: Stories and fast-reply corpus
+
+on:
+  pull_request:
+    paths: ['stories/**', 'eval/**']
+  push:
+    branches: [main]
+    paths: ['stories/**', 'eval/**']
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Validate fast-reply corpus
+        run: python3 eval/fast-replies/check.py
