@@ -1,52 +1,39 @@
 # Engineering Approach — Sandbox Driven Development
 
-Статус: target approach / draft · 30.09.2026. Основание: планирование implementation после архитектуры v0.4. Это новая текущая спецификация; прежние неопубликованные draft не используются как принятые правила.
+Статус: согласованный подход к разработке · 30.09.2026. Конкретная реализация сред подтверждается отдельными прогонами.
 
-Разработка должна позволять AI-агенту самостоятельно пройти от требования до проверяемого результата в воспроизводимой среде. Каждая новая вертикальная функция включает sandbox способ запуска, positive scenario, controlled failure и наблюдаемый результат. Если sandbox можно реализовать, его реализация входит в работу, а не остаётся внешним условием «когда-нибудь дадут доступ».
+## Концепция
 
-Sandbox — среда разработки/проверки. Agent clean room — runtime граница доступа каждого Agent Run. Sandbox VM может запускать много clean rooms; эти термины не взаимозаменяемы. Production данные/credentials не должны быть fixture. Реальные test-account smokes дополняют emulator tests и проверяют расхождение, а не заменяют воспроизводимую проверку.
+AI-агент должен самостоятельно пройти от требования до проверяемого результата в воспроизводимой среде: развернуть зависимости, выполнить работу, проверить поведение и собрать доказательства. Требование и способ его проверки готовятся вместе. Если необходимый sandbox можно построить, его создание входит в задачу; ручное вмешательство пользователя не должно быть постоянным условием разработки.
 
-## Практика
+Sandbox Driven Development означает проверку полного рабочего пути и контролируемых сбоев до подключения живых пользователей. Эмуляторы дают повторяемые ошибки; настоящие test-account прогоны проверяют свойства провайдера. Каждый результат явно указывает, что проверено, а что ещё неизвестно. Локальный PASS не называется проверкой облачной эксплуатации.
 
-| Компонент | Sandbox | Acceptance / известный пробел |
-|---|---|---|
-| Runner | Имеющаяся VM, отдельные roots/config + fake engine adapter, затем real OpenCode | setup/teardown, cancel tree, limits, restart, logs. Готовая реализация Runner ещё не подтверждена |
-| LLM/model gateway | Deterministic response/fault fixtures + free-only live profile | schema/timeouts/429/auth/usage; provider квота не означает unlimited runs |
-| API | Внешний CLI/client, test keys/scopes, durable store | duplicate/reconnect/replay/cancel/result; без GTD/TG/Web |
-| Object storage | S3-compatible fixture, отдельный R2 bucket для cloud smoke | direct transfer, CORS, expiry, multipart/resume, export/cleanup |
-| Web/Cloudflare | Отдельные Workers/origins и bindings D1/KV/R2, deployment manifest | user workflow и errors; lifecycle test ресурсов ещё нужно реализовать |
-| Telegram | Update/delivery emulator, затем separate test bot/chat | bot fixture проверяет contract; real smoke проверяет provider/webhook delivery |
-| MCP | stdio/remote server fixtures, scoped handler bindings | handshake/readiness/tool invocation/cleanup, effect receipts |
-| HH/CRM | Provider emulators, sanitized recorded contracts; безопасный test account при наличии | API differences и auth expiry; доступность provider sandbox не предполагается |
-| GTD/schedule | Virtual clock, synthetic CI/wait/input | opt-in, deadlines, no LLM sleeping/polling, outbox replay |
-| Error Watcher | Registered errors/storm fixtures, fake issue/report sinks | profile/reply context, suppression expiry/reopen/self-loop |
-| RU/EU workers | Two-worker fixtures до подключения существующих workers | placement/capabilities/fencing; data residency decision отдельно |
+Sandbox — среда разработки. Agent clean room — граница доступа конкретного запуска. Одна sandbox VM может запускать несколько clean rooms. Работающий сервис, его credentials, webhook и пользовательские данные сохраняются отдельно.
 
-## Правила приёмки
+## Общие правила
 
-1. Reproducible setup manifest содержит software versions, config refs, resource namespaces и teardown. Secrets — refs/bindings; не значения в Project.
-2. Реальный vertical slice проходит тот же публичный contract, что внешний клиент. Tests не обходят API через внутренний вызов и затем не называют это external workflow.
-3. Errors и main events выполняют [Observability contract](OBSERVABILITY-AND-ERROR-CONTRACT.md). TTL cleanup проверяется ускоренным clock, active state/outbox не стирается.
-4. Негативные scenarios задаются fault injection, а не надеждой на случайный сбой бесплатной модели. Live runs имеют budget/concurrency/deadline caps, paid fallback off.
-5. Evidence: pinned commit/PR, setup/config version, sanitized transcript, Task/Run IDs, artifact manifest/hash и cleanup/recovery outcome.
-6. План development сейчас ведётся в [Implementation and Integration Plan](IMPLEMENTATION-AND-INTEGRATION-PLAN.md) и [Sandbox Plan](SANDBOX-PLAN.md). GitHub Project отложен; никакая development board не является authoritative runtime task/plan state. Issue создаётся в implementation repo при выборе работы; архитектура остаётся reference.
-7. Existing VM сперва sandbox, позже может стать production после clean promotion; отдельный sandbox воспроизводится из manifest. Promotion не означает оставление test tenants и credentials в production.
-8. Если sandbox сейчас отсутствует, отмечаем gap: owner, construction task, fidelity limitation и acceptance. Только технически недоступный provider режим требует alternative emulator + явного unsupported declaration.
+1. Каждый work item имеет воспроизводимый setup/run/evidence/teardown с pinned source/software/config versions и isolated resource namespace. Test fixture означает подготовленный сценарий, а не обязательный mock.
+2. Приёмка включает положительный путь и релевантный controlled failure. Затронутый клиентский контракт проверяется снаружи; внутренний вызов не выдаётся за внешний API workflow.
+3. Общая схема логов и retention — [Observability](OBSERVABILITY-AND-ERROR-CONTRACT.md); обязательные проверки конкретного этапа — [Sandbox Plan](SANDBOX-PLAN.md). Evidence содержит sanitized transcript, IDs, версии, manifest/hash и исход recovery/cleanup.
+4. Реальные вызовы ограничены по времени, concurrency, диску и бюджету; free-only профиль не означает unlimited runs. Негативные сценарии не зависят от случайной ошибки бесплатной модели.
+5. Секреты передаются bindings/refs и не входят в исходники, manifests для публикации или журналы. Недоступная необязательная capability объявляется явно; отсутствие обязательной — даёт диагностируемый readiness outcome.
+6. Автономная среда включает bootstrap без ручных исправлений. Config конкретного хоста отделён от общего release; безопасные defaults не включают боевые расписания и доставку на новой VM.
+7. Пробел sandbox описывается как construction task с ограничениями fidelity и ожидаемым доказательством. Не обещаем поддержку provider sandbox, если её нет.
+8. Promotion — отдельный проверяемый переход: test bindings/data не становятся production. Повтор setup не должен менять личность машины или включать вторую доставку.
 
-Implementation начинаем с Runner/VM, затем API и artifacts, потом gateways/MCP/fast replies; GTD добавляется после основного сквозного потока. Gate/Watcher развиваются по готовности contracts, не становятся обязательной зависимостью standalone API.
+## Стадия 0: вход в любой репозиторий
 
-## Источники для transfer fixtures
+Общий development baseline покрывает все участвующие репозитории через тонкие профили: check/fix/verify, context build и logs. Docs-only repo не получает application build.
 
-[Cloudflare R2 signed URLs](https://developers.cloudflare.com/r2/api/s3/presigned-urls/) и [upload objects](https://developers.cloudflare.com/r2/objects/upload-objects/) описывают direct object transfer; [CORS](https://developers.cloudflare.com/r2/buckets/cors/) — browser требования. Выбранный wire protocol и конкретные limits закрепляются implementation contract; здесь не обещается переносимость каждого backend без adapter.
+AutoFix начинает с механических исправлений, затем допускает bounded LLM/OpenCode patch и повторную проверку. Самостоятельные merge/deploy и GTD для контроля самого AutoFix не входят в этот подход.
 
-## Стадия 0 для всех репозиториев
+Context compression — компактная карта repo и task-specific brief со ссылками на полные исходники, pinned revision и invalidation. Исходники не удаляются. Entry points, contracts, команды проверки и ограничения сохраняются; secrets/generated logs исключаются. Недостаточный brief раскрывается до исходного источника.
 
-До первой implementation iteration настраиваем общий AutoFix/context compression workflow с тонкими профилями каждого repo. AutoFix сначала делает deterministic mechanical fixes, затем при необходимости bounded LLM/OpenCode diagnosis/patch; повторная проверка обязательна, merge/deploy не автоматические. Не создавать GTD для контроля самого AutoFix.
+## Где практика и план
 
-Context compression — compact repo map + task-specific bundle/brief с full-source refs, pinned source revision и cache invalidation. Это рабочая трактовка запроса владельца, не удаление исходников. Entry points, contracts, dependencies/check commands и constraints сохраняются; secrets/generated/log payload исключаются. Agent раскрывает источник при недостатке brief. Новый repo получает тот же onboarding; docs-only profile не обязан проходить application build.
+- [Sandbox Plan](SANDBOX-PLAN.md) — методы, controlled failures, stage-specific logs checks и уроки VM2.
+- [Implementation and Integration Plan](IMPLEMENTATION-AND-INTEGRATION-PLAN.md) — зависимости и порядок работ; этот документ не содержит второй календарь реализации.
+- [ARCHITECTURE](ARCHITECTURE.md) — ownership, связь Workflow/Runner/диска и критерии перехода.
+- Runnable setup/teardown и fixtures — в соответствующем implementation repo.
 
-**Каждая iteration имеет собственный Logs acceptance:** какие transitions/errors публикуются, source/scope/Task/Run/reply correlation, retention/TTL и positive/controlled failure fixtures. Каждая implementation карточка ссылается на этот набор и прикладывает sanitized transcript; общая ссылка на logging policy без проверки конкретного этапа недостаточна. AutoFix пишет before/after checks, attempt/rule/version и patch refs; context builder — source version, included/excluded manifest, size/budget и build errors.
-
-## Практический companion и live compatibility
-
-[Sandbox Plan](SANDBOX-PLAN.md) объясняет fixture как подготовленный воспроизводимый сценарий; mock не обязателен. Реальный engine/API vertical slice и provider smoke отдельно от controlled fake failures. [Integration Plan](IMPLEMENTATION-AND-INTEGRATION-PLAN.md) сохраняет текущий live service: новая реализация параллельно, isolated data/endpoints, затем отдельный pilot/cohort cutover с rollback. Ни старые репозитории, ни действующие production deployment сейчас не удаляются/заменяются.
+GitHub Project/issue-план не является runtime Task Store или GTD. Общие правила находятся здесь; карточки содержат специфическую приёмку и ссылки, а не копии этих правил.
