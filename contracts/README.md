@@ -111,3 +111,12 @@ ValidationResult: validator id/version, target artifact/run, verdict (pass/fail/
 3. Зафиксировать C06/C07 для доменных сервисов и credentials.
 4. Уточнить C08 для фактического LLM Ledger и budget enforcement.
 5. По каждому контракту оформить schema + compatibility + deterministic consumer/provider tests. Пока это архитектурное предложение, не задача на немедленный рефакторинг.
+
+
+## Тип исполнения в контрактах
+
+Job definition содержит обязательный jobType: deterministic-job, llm-recipe-job или ai-agent-job; Run ссылается на definition/version. [Матрица требований](../TERMINOLOGY.md#типы-job--решение-владельца-30092026).
+
+C04: Agent Runner/Agent clean room обслуживают ai-agent-job; deterministic-job исполняется программным worker, llm-recipe-job — recipe executor/LLM gateway. Это логические роли, не требование трёх новых deploy. Общие admission/ownership/budget принадлежат control plane.
+
+C06/C07: recipe executor не выдаёт модели tools или пользовательские credentials; модель видит только подготовленный input. C08: recipe объявляет input/output, validation и разрешённые вызовы; ai-agent-job может выполнять LLM calls внутри агентского цикла. Model output не считается авторизованной командой. Изменение типа — отдельное согласованное execution, а не скрытый fallback.

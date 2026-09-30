@@ -51,3 +51,33 @@ OpenLineage — модель наблюдаемости происхождени
 - [Facets & Extensibility](https://openlineage.io/docs/spec/facets/)
 
 Документация при проверке показывала версию 1.53.0; production schema/version следует pin отдельно при интеграции.
+
+## Типы Job — решение владельца, 30.09.2026
+
+Job остаётся общей сущностью OpenLineage, но в Trained Assist имеет обязательный `jobType`. Термины: **deterministic-job**, **llm-recipe-job**, **ai-agent-job**. Recipe — написание слова «рецепт»; это отдельный тип исполнения, не агент с отключёнными по умолчанию инструментами.
+
+| Тип | Исполнение | Доступ к данным и действиям | Контроль результата | Среда |
+|---|---|---|---|---|
+| deterministic-job | Заранее заданный алгоритм/обычный код | Только явно разрешённые входы, API и ресурсы; произвольной постановки новых действий нет | Программные assertions, ошибки и retry policy | Обычный worker с ограниченными правами |
+| llm-recipe-job | Заданный recipe: подготовленный input → объявленные LLM вызовы → проверенный output | Нет tools, filesystem/browser/shell и самостоятельного чтения пользовательских данных; вход готовит доверенный код | Schema/content validation; bounded retry при неверном ответе | LLM client/gateway, без Agent clean room |
+| ai-agent-job | Агентский цикл с выбором следующих действий и разрешёнными tools | Может читать/писать разрешённые данные и запускать действия в рамках policy | Проверки artifacts/effects, supervision, stop, ownership и acceptance | Agent Runner + Agent clean room |
+
+**Job type описывает режим исполнения и authority, а не гарантирует математическую детерминированность.** Deterministic-job может обращаться к внешнему API, времени или базе; при одинаковом input такой код не всегда выдаёт одинаковый output. Его последовательность действий задаётся программой.
+
+LLM recipe может ошибиться, превысить timeout, вернуть неверный JSON или неверный смысл. Это требует validation/budget/retries, но не выдачи прав агента. Recipe может включать несколько заранее заданных LLM вызовов и программных проверок; модель не выбирает новые источники данных или tools.
+
+### Инварианты границы
+
+1. Тип фиксируется доверенным Job definition/host policy. Prompt или модель не могут повысить jobType либо выдать себе capabilities.
+2. llm-recipe-job получает только материализованный разрешённый input; provider-native browsing/tool execution также выключены. Выбор документов выполняется отдельно доверенным кодом или отдельным ai-agent-job.
+3. Ответ LLM — данные. Его нельзя автоматически исполнять как shell, SQL или произвольную команду. Downstream действие имеет отдельный контракт, validation и authority.
+4. Переход recipe → agent создаёт отдельный явно разрешённый Job/Run с новой policy, cost class и clean room; retry не повышает тип незаметно.
+5. Agent clean room обязательна для ai-agent-job по целевой архитектуре. Deterministic/recipe workers всё равно имеют tenant scoping, минимальные credentials и ограничения ресурсов. Если deterministic-job исполняет недоверенный пользовательский код, ему нужна отдельная изоляция исполнения; название типа не разрешает запуск с широкими правами.
+6. Каждый тип использует Run lifecycle, lineage inputs/outputs, budget и failure taxonomy. Требования к supervision, mutation retries и validation зависят от типа.
+7. Playbook/Task может объединять все три типа: agent выбирает кандидатов → recipe оценивает подготовленные резюме → deterministic код сохраняет оценки.
+
+### OpenLineage projection
+
+Наш jobType — расширение Trained Assist, не стандартные значения OpenLineage. При экспорте можно использовать custom Job facet с проектным prefix и versioned schema; конкретную schema утвердить отдельно. Не подменять им OpenLineage processingType (BATCH/STREAMING/SERVICE): это другая ось классификации.
+
+Общий Job остаётся допустимым названием родовой сущности, но спецификации исполнения и диаграммы показывают конкретный jobType. Agent Run — только Run ai-agent-job; для остальных используются deterministic run / recipe run либо Run с явным jobType.
