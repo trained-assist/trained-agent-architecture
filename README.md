@@ -4,7 +4,9 @@
 
 ## Текущая архитектура
 
-- [ARCHITECTURE v0.6](ARCHITECTURE.md) — три схемы: сервисы/география; одна задача с результатом пользователю; GTD/playbook и внешние интеграции. IDs, ownership, миграционные границы и открытые решения.
+- [ARCHITECTURE v0.7](ARCHITECTURE.md) — ключевые решения на первом экране; база состояния задач и движок исполнения за Workflow Port; разговорная сессия; что берём из текущего прода (с вердиктами); IDs, ownership, переход и открытые решения.
+- [DECISIONS](DECISIONS.md) — журнал решений владельца по датам.
+- Ревью v0.6: [MiMo](ARCHITECTURE_mimo_review_2026-09-30.md), [Claude](ARCHITECTURE_claude_2026-09-30_1926.md).
 - [Task Router and MCP](TASK-ROUTER-AND-MCP.md) — архитектура отдельного Router, быстрый reply-or-route, эскалация, context policy, роли MCP и сверка текущего pipeline.
 - [Model Gateway and Costs](MODEL-GATEWAY-AND-COSTS.md) — model ladder, бюджет, Ledger и correlation расходов; цены отдельно от общей схемы.
 - [External Integration Gate](EXTERNAL-INTEGRATION-GATE.md) — отдельный repo, provider APIs/webhooks, transport adapters и extraction boundary.
