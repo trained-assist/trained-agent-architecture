@@ -2,6 +2,10 @@
 
 Статус: отдельный architecture draft · 30.09.2026. A10 / INV-10 / INV-11 общей архитектуры. Здесь model selection и accounting; выбор Job type описан в [Task Router](TASK-ROUTER-AND-MCP.md).
 
+## Принятая граница эскалации
+
+Автоматический агентский путь сейчас заканчивается на OpenCode. Автоэскалация OpenCode → Claude Code/Codex вне текущей модели. OpenCode считается недорогим целевым executor, но реальный provider usage, concurrency и budget caps учитываются. GTD не регистрируется повсеместно ради accounting: task/run attribution обязательна и без gtdId.
+
 ## Ответственность
 
 Task Router выбирает тип исполнения. Model Gateway/Ladder выбирает допустимый provider/model по recipe, quality/region/budget/readiness. Ledger сохраняет usage/cost attribution. Executor сообщает фактический outcome и provider refs.
