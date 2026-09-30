@@ -23,6 +23,7 @@ python3 tools/repo-context/map.py
 
 1. Прочитать [ARCHITECTURE](ARCHITECTURE.md): границы, ownership, инварианты и условия перехода с живого сервиса.
 2. Понять, какую ценность и кому даёт этап — [истории](stories/README.md) (ценность и шаги для человека, API-клиента, оператора). Выбрать карточку в [плане реализации и интеграции](IMPLEMENTATION-AND-INTEGRATION-PLAN.md), проверить зависимости и текущий порядок работ. Номера I/P — идентификаторы, не требование выполнять всё последовательно.
+   Нулевой исследовательский этап R00: [вопросы, инструменты и VM-пилоты](TOOLING-RESEARCH-AND-VM-PILOTS.md). Перед добавлением зависимости проверить её evidence/решение; весь tooling backlog читать перед каждой карточкой не требуется.
 3. Прочитать [Engineering Approach](ENGINEERING-APPROACH.md) и нужный рецепт из [Sandbox Plan](SANDBOX-PLAN.md). Подготовка отсутствующего sandbox входит в работу.
 4. Открыть только относящиеся к карточке контракты и локальные спецификации ниже.
 5. Создать issue/PR в implementation repo; приложить воспроизводимый запуск, controlled failure, scoped logs и evidence приёмки.
@@ -39,6 +40,7 @@ python3 tools/repo-context/map.py
 | [Engineering Approach](ENGINEERING-APPROACH.md) | Концепция Sandbox Driven Development и общие правила разработки |
 | [Acceptance Checklist](ACCEPTANCE-CHECKLIST.md) | Что проверить и каким доказательством, чтобы принять карточку, этап I00–I10 или переход когорты. Не план |
 | [Sandbox Plan](SANDBOX-PLAN.md) | Практические среды, сценарии сбоев, пробелы и logs checks по этапам; «Блокеры полного прохода» I00–I10 |
+| [Tooling Research / R00](TOOLING-RESEARCH-AND-VM-PILOTS.md) | Вопросы по всем карточкам, shortlist инструментов и измеряемые VM-пилоты; кандидаты не равны принятому stack |
 | [Sandbox Bindings и Credentials](SANDBOX-BINDINGS-AND-CREDENTIALS.md) | Где лежит каждый ключ/токен/binding, владелец и процедура получения; чего не хватает. Значений секретов нет |
 | [Contracts](contracts/README.md) | Межкомпонентные обязательства; wire API имеет собственный статус согласования |
 | [Observability](OBSERVABILITY-AND-ERROR-CONTRACT.md) | Общая схема ошибок/событий, scope и retention |

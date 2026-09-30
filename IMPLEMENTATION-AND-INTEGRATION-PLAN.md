@@ -1,6 +1,6 @@
 # План реализации и интеграции Trained Assist
 
-Draft v0.3 · 30.09.2026. Это рабочий документ implementation/integration; GitHub Project отложен по решению владельца. Это не runtime GTD/checklist. Документ задаёт план, а не запускает инфраструктуру. Уже выполненные прогоны учитываются по ссылкам и границам evidence; migrations и production переключения требуют отдельной приёмки.
+Draft v0.4 · 30.09.2026. Это рабочий документ implementation/integration; GitHub Project отложен по решению владельца. Это не runtime GTD/checklist. Документ задаёт план, а не запускает инфраструктуру. Уже выполненные прогоны учитываются по ссылкам и границам evidence; migrations и production переключения требуют отдельной приёмки.
 
 ## Решение владельца: новая реализация параллельно живому сервису
 
@@ -27,7 +27,7 @@ IDs и credentials старой/новой системы связываются
 
 ## Review исходного предложения
 
-Стадия 0: AutoFix + сжатие context всех репозиториев + обязательный observability baseline. Карточки исходного плана сохранены с прежними IDs. Актуальная последовательность ниже согласована с ARCHITECTURE §11: первый интеграционный сценарий control plane — разговорная сессия; самостоятельный Runner/API развивается параллельно. Номер Stage не задаёт жёсткую очередь. Добавлены Gate/Watcher и promotion как последующие самостоятельные этапы.
+Нулевой исследовательский этап R00: обзор готовых инструментов по всем карточкам и измеряемые VM-пилоты до выбора затронутых зависимостей. Затем I00: AutoFix + сжатие context всех репозиториев + обязательный observability baseline. Карточки исходного плана сохранены с прежними IDs. Актуальная последовательность ниже согласована с ARCHITECTURE §11: первый интеграционный сценарий control plane — разговорная сессия; самостоятельный Runner/API развивается параллельно. Номер Stage не задаёт жёсткую очередь. Добавлены Gate/Watcher и promotion как последующие самостоятельные этапы.
 
 Уточнения:
 - I02 разделена на I02A API lifecycle и I02B artifact transfer; это две приёмки одной второй итерации.
@@ -51,12 +51,12 @@ IDs и credentials старой/новой системы связываются
 
 Предлагаемый organization project: **Trained Assist — Implementation / Sandbox First**.
 
-- Work items Z01–Z03 и P01–P30; будущий Project может представить их draft items. Issue в implementation repo создаётся/привязывается при выборе задачи в работу, без преждевременного потока 33 issues.
+- Work items R01–R03, Z01–Z03 и P01–P30; будущий Project может представить их draft items. Issue в implementation repo создаётся/привязывается при выборе задачи в работу, без преждевременного потока issues. Старые 33 IDs сохранены; исследовательские карточки добавлены отдельно.
 - Status: Draft, Ready, In progress, Verification, Blocked, Done. Done требует acceptance evidence.
-- Поля: Stage (Ixx), Component/target repo, Depends on, Sandbox, Acceptance evidence, Architecture links, Risk, Decision needed.
+- Поля: Stage (R00/Ixx), Component/target repo, Depends on, Sandbox, Acceptance evidence, Architecture links, Risk, Decision needed.
 - Views: Iteration board; dependency table; sandbox gaps; acceptance/review; later rollout.
 - Stage — milestone grouping. Календарные sprint dates/estimates не выдумываем до первого measured cycle.
-- Начальный Ready только Z01; остальные Draft. P02/P03 становятся Ready по готовности environment/setup contract. Это release readiness, не runtime gtdState.
+- Начальный Ready: R01 и Z01; остальные Draft. Первичный doc screening R01 подготовлен; host inventory/выбор партии ещё нужны. P02/P03 становятся Ready по готовности environment/setup contract. Это release readiness, не runtime gtdState.
 - GitHub Project не источник Run/task state; execution receipts/logs остаются в платформе.
 
 Draft items могут иметь title/body/custom fields; Project API и draft items описаны в [GitHub Projects documentation](https://docs.github.com/en/issues/planning-and-tracking-with-projects/automating-your-project/using-the-api-to-manage-projects). GitHub Project отложен: текущий рабочий план — этот документ и Sandbox Plan. Draft IDs Z01–Z03/P01–P30 сохраняются, чтобы позже перенести план без перенумерации.
@@ -65,6 +65,7 @@ Draft items могут иметь title/body/custom fields; Project API и draft
 
 Источник целевых границ — [ARCHITECTURE §9/§11](ARCHITECTURE.md). Ниже единственный рабочий порядок плана; старые номера I/P сохраняются для ссылок.
 
+0. R00: сразу обзор вопросов по всем этапам, затем небольшие партии VM-пилотов перед соответствующими зависимостями. [Список кандидатов и протокол](TOOLING-RESEARCH-AND-VM-PILOTS.md). R01 и I00 inventory можно делать параллельно; выбор runtime-зависимости требует R02/R03 по ней, но поздние tooling-пилоты не блокируют весь старт.
 1. I00: общий development baseline. Учесть уроки VM2 в P01/P03; прошлый bootstrap существующего агента не закрывает карточки нового Runner.
 2. До реализации control plane: закончить P-DB (локальное сравнение выполнено; cloud recovery/timers/deploy smoke остаётся), определить схему Task Store и контракт conversation/project/audience.
 3. Первый интеграционный slice: новый control plane + Web, пять уточнений с рестартом и сохранением контекста (P10/P12 плюс нужные части P02/P05/P06). Для него достаточно bounded default route; полный MCP/fast path не prerequisite.
@@ -78,6 +79,7 @@ Draft items могут иметь title/body/custom fields; Project API и draft
 
 | Stage | Результат | Зависимости |
 |---|---|---|
+| R00 | Обзор tooling по всем карточкам, VM-пилоты и решения по измеренной пользе | Нет для обзора; VM/bindings и baseline для конкретной партии. Без глобального ожидания всего списка |
 | I00 | AutoFix, context compression и logs baseline для всех repo | Нет; перечислить participating repos |
 | I01 | Agent Runner на существующей sandbox VM | I00 accepted; VM существует по сообщению владельца |
 | I02A | Внешний Serverless Agent API | I01 accepted |
@@ -117,6 +119,51 @@ Integration Gate и Error Watcher — самостоятельные repos.
 Ни одна карточка не требует предварительно создать repo для каждого логического прямоугольника.
 
 ## Implementation work items
+
+### R00 — нулевой этап: исследование готовых инструментов
+
+Цель: найти лёгкие заменяемые решения до написания собственной инфраструктуры; проверить пользу, dependencies, license и overhead на VM. Полный вопросный обзор — сразу, VM-проверки — партиями перед затронутыми карточками. Backlog: [Tooling Research and VM Pilots](TOOLING-RESEARCH-AND-VM-PILOTS.md).
+
+**Logs acceptance (R00):** [Sandbox Plan — проверки по Stage](SANDBOX-PLAN.md#логи-обязательны-для-каждой-итерации); ошибки/события пилота проходят общий Observability contract. Список названий или успешная установка не закрывают исследование.
+
+#### R01 — Вопросы, coverage и отбор партии
+
+Planning readiness: Ready · Stage: R00
+Component/target repo: этот architecture repo; host inventory/recipe — implementation tooling/Runner repo
+Depends on: Нет; inventory Z01 можно делать параллельно
+Sandbox: read-only host preflight, synthetic data, новый experiment namespace.
+
+Работа: сопоставить вопросы всем Z01–Z03/P01–P30; изучить official docs, current implementation и альтернативу без нового tool. Первичный shortlist T01–T19 подготовлен; уточнить версии, license, prerequisites, bindings и resource caps. Отделить dev/CI-only tools, shared host services и per-Run dependencies. P-DB/Repomix evidence повторно использовать в его scope.
+
+Acceptance: coverage всех карточек, у кандидата test/reject criterion и evidence status; первая партия имеет baseline, scoped namespace и проверенные prerequisites. Private данные на VM не используются как fixtures и не удаляются ради clean setup.
+
+Logs acceptance: screening source/version refs, pilot correlation и sanitized preflight/errors; unknown prerequisites обозначены явно.
+
+#### R02 — Воспроизводимые VM-пилоты по партиям
+
+Planning readiness: Draft · Stage: R00
+Component/target repo: affected implementation repo; результаты связаны с research backlog
+Depends on: R01 по выбранной партии; доступ и bindings этой партии
+Sandbox: existing VM, synthetic principals, отдельные roots/ports/services/resource caps; live cloud smoke отдельно.
+
+Работа: baseline → candidate → fault/restart → measurements → uninstall/rollback. Первая партия — controlled faults/JSON/logs и отдельно OpenShell vs OS baseline. Последующие группы проверяют MCP, API/artifacts, интерфейсы, fast reply, timers/GTD, integrations/watchers и CI/promotion. Не устанавливать весь список одновременно; production units/keys не меняются. Неподдержанное решение можно отклонить до установки с документированной причиной.
+
+Acceptance: transcript VM-прогона каждого включённого кандидата, measured cold/warm start/CPU/RAM/disk, positive/fault/rollback outcomes и сохранные данные. Эмулятор не выдаётся за Cloudflare recovery, R2 auth/CORS или Telegram delivery. Непроверенное остаётся pending.
+
+Logs acceptance: tool/version/pilotId, profile/task/run refs при исполнении, resource observations и controlled failure; redaction/TTL, sink outage/rotation проверяются в соответствующем пилоте.
+
+#### R03 — Решение и привязка к реализации
+
+Planning readiness: Draft · Stage: R00
+Component/target repo: этот repo + target implementation repo
+Depends on: R02 по соответствующей партии; обоснованный screening rejection не требует установки
+Sandbox: evidence R02 и uninstall/замена на baseline.
+
+Работа: записать accepted/rejected/deferred/pending с причиной и scope; accepted версии закрепить в recipe/lockfile и affected card, существенное архитектурное решение — в DECISIONS. При равной пользе оставить минимальный baseline. Dev-only dependencies не переносить в Agent Clean Room.
+
+Acceptance: решение основано на внешнем контракте и измерениях, extension points и rollback известны; выбор не создаёт нового владельца Task state или mandatory GTD. До добавления зависимости её R03 закрыт; дальние pending пилоты не тормозят независимые карточки.
+
+Logs acceptance: decision/evidence/version refs без private logs/ключей; rejected/deferred/pending не обозначены VM PASS.
 
 ### I00 — AutoFix, сжатие контекста и observability baseline для всех репозиториев
 

@@ -51,6 +51,7 @@ Host-manifest хранит различающиеся параметры маш�
 
 | Stage | Что запускаем | Контролируемые сбои/края | Ожидаемый результат |
 |---|---|---|---|
+| R00 | Baseline и отдельный tooling candidate в новом namespace | Relevant fault/restart, resource cap, uninstall/rollback | Transcript, measured overhead и решение; непроверенное остаётся pending |
 | I00 | Fixture repo + isolated snapshots всех participating repos | Intentional lint/schema issue, clean повтор, stale/missing context | Bounded AutoFix/verify и source-pinned map с source refs; нет production merge |
 | I01 | Настоящий OpenCode/Runner на existing sandbox VM | Fake engine start failure, child hanging, provider timeout, stop/restart | Observed Run lifecycle, correct scoped logs, no cross-profile access, cleanup |
 | I02A | Новый API + внешний test client | Duplicate submit/conflict, reconnect, crash API/worker, late event | Durable receipt/result и replay по sequence, один dispatch owner |
@@ -65,6 +66,8 @@ Host-manifest хранит различающиеся параметры маш�
 | I10 | Staged deployment + two-worker simulation, later existing workers | Drain/failover/late output, rollback, incompatible mapping | No double dispatch; original live tasks stay with old owner; pinned config |
 
 Стадия I00 охватывает все участвующие repos и onboarding новых. Docs-only repo использует profile проверки Markdown/schema/context, а не application build. Общие scripts/config reusable; в repo тонкие settings. AutoFix имеет attempt cap и verify, не автоматические merge/deploy/GTD.
+
+Вопросы, shortlist и протокол нулевого исследовательского этапа — [R00 / Tooling Research](TOOLING-RESEARCH-AND-VM-PILOTS.md). Все темы обзора покрываем сразу; инструменты тестируем партиями перед соответствующим выбором. Host collector учитывается один раз, per-Run dependency — на каждый Run; dev/CI tools не устанавливаются в каждую clean room. Private данные на VM требуют нового experiment namespace без удаления существующих roots.
 
 ## Sandbox methods и gaps
 
@@ -99,7 +102,7 @@ Host-manifest хранит различающиеся параметры маш�
 
 ### Инфраструктурные блокеры, которые снимаются работой
 
-5. **VM2 не является чистой sandbox-VM.** Ресурсов достаточно (4 CPU, 8 ГБ RAM, 96 ГБ диска), node/git/rsync на месте, но движков `opencode`/`claude`/`codex` нет, а на машине лежит копия реального профиля и `agent-data` с durable-tasks. Это одновременно блокер I01 (P01–P03) и нарушение границы «в sandbox нет private профилей». Рекомендация: объявить VM2 sandbox, очистить до пустого namespace, поставить движок, выдать sandbox-подмножество ключей. Действие обратимо и не затрагивает прод.
+5. **VM2 не является чистой sandbox-VM.** Ресурсов достаточно (4 CPU, 8 ГБ RAM, 96 ГБ диска), node/git/rsync на месте, но движков `opencode`/`claude`/`codex` нет, а на машине лежит копия реального профиля и `agent-data` с durable-tasks. Это одновременно блокер I01 (P01–P03) и нарушение границы «в sandbox нет private профилей». Для пилотов создать новый пустой experiment namespace, поставить нужный движок в его scope и выдать sandbox-подмножество ключей. Существующие private профили/agent-data сохраняются вне эксперимента и недоступны ему; очистка этих данных не входит в setup. Достаточность OS boundary проверяется отдельно.
 6. **Free-LLM нельзя эмулировать внешним сервисом.** Бесплатный уровень OpenCode Zen/Go работает только изнутри клиента opencode, прямой HTTP возвращает `FreeTierError`. Значит «fixed response/fault provider» — наш собственный локальный stub (это construction item, не препятствие), а реальный free-smoke требует установленного движка на sandbox-машине. Детерминированные тесты I00–I04, I07, I09 не должны зависеть от этого пула: лимит там структурный.
 7. **В новых репозиториях нет CI и staging.** По решению владельца от 16.09 merge требует зелёных CI и staging на актуальной версии PR. `ai-agent-runner` содержит только README и draft ARCHITECTURE, каталога `.github` нет. Это блокер первой же карточки I01: шаблон проверок готовится вместе с первым PR, а не после него.
 8. **Управляющий слой выбран, но не проверен на живом аккаунте.** Пилот `pilots/p-db` рекомендует Cloudflare Workflows + D1 при условии трёх проверок на настоящем аккаунте: продолжение инстанса после kill -9, срабатывание `sleep` и таймаута ожидания, деплой новой версии во время ожидания. Если проверка не проходит — запасной вариант DBOS + Postgres. От этого решения зависят P04–P09, P22, P23 и I10, поэтому решать его нужно на I02A, а не на I07.
@@ -108,7 +111,7 @@ Host-manifest хранит различающиеся параметры маш�
 ### Риски, а не блокеры
 
 10. **Объём — greenfield шести сервисов при запрете импорта внутренностей старого core.** Runner, API, передача артефактов, Web-адаптер, TG-адаптер, Router, Integration Gate, Error Watcher. Это дублирование с намеренной ценой: новая реализация не знает старых скрытых контрактов. План не является оценкой сроков.
-11. **Трекер отложен.** GitHub Project не создан, 33 work item существуют только в документе. Риск потери карточек между сессиями реальный; лечится заведением issues в implementation-репозитории с полями Stage / Depends on / Sandbox / Acceptance evidence, как уже описано в плане.
+11. **Трекер отложен.** GitHub Project не создан, 36 work items (R01–R03 + прежние 33) существуют только в документе. Риск потери карточек между сессиями реальный; лечится заведением issues в implementation-репозитории с полями Stage / Depends on / Sandbox / Acceptance evidence, как уже описано в плане.
 12. **PR неизменяем, каждая карточка — отдельный PR** с зелёными CI и staging. Это длинный хвост, а не препятствие; но он делает «пройти всё подряд за одну сессию» физически невозможным — нужна постановка по карточкам, а не один большой заход.
 
 ## Логи обязательны для каждой итерации
@@ -117,6 +120,7 @@ Host-manifest хранит различающиеся параметры маш�
 
 | Stage | Специальные logs checks |
 |---|---|
+| R00 | pilotId/tool/version/source refs, baseline/candidate measurements, controlled errors и decision/evidence refs. При Run сохраняются profile/task/run refs. Redaction, bounded logs и cleanup; непроверенное не обозначено VM PASS. |
 | I00 | AutoFix: check/fix before-after, rule ID, tool/version, attempt count, patch/PR refs и residual failure. Context compression: source commit/catalog version, included/omitted paths, byte/token budget и build errors; secrets excluded. Проверить no-change повтор и synthetic failed check. |
 | I01 | Run start/exit/cancel/process-tree/heartbeat/recovery, profile/task/run/engine/provider refs, structured errors и cleanup. Intentional failed startup/timeout обязаны оставлять диагностируемую запись. |
 | I02A | Request receipt/idempotency/auth scope, dispatch/run state, event sequence/replay, reconnect/cancel и client-visible outcome. Profile/principal сохраняется и без folder; secret/API key не логируется. |
@@ -130,7 +134,7 @@ Host-manifest хранит различающиеся параметры маш�
 | I09 | errorEvent/incident/sourceTask/diagnosticTask, fingerprint/count, mute/reopen/expiry, diagnosis attempts/report/issue receipts и self-loop guard. Suppressed events агрегируются с TTL, не исчезают без trace. |
 | I10 | Release/config/worker/region/ownerGeneration, promotion/cohort/rollback, fencing/drain/failover и retention health. Smoke evidence коррелирует API/Web/TG task/run IDs; prod/sandbox различимы. |
 
-Каждый work item Z01–Z03/P01–P30 ссылается на свой stage и содержит log acceptance. Done требует transcript/evidence; нельзя ограничиться обещанием «у нас есть console.log».
+Каждый work item R01–R03/Z01–Z03/P01–P30 ссылается на свой stage и содержит log acceptance. Done требует transcript/evidence; нельзя ограничиться обещанием «у нас есть console.log».
 
 ## Слои проверки и скорость
 

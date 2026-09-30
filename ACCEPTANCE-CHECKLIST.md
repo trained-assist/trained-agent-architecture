@@ -109,6 +109,16 @@ Draft v0.1 · 30.09.2026. Это не план.
 Сами logs checks — строка этапа в [SANDBOX-PLAN](SANDBOX-PLAN.md#логи-обязательны-для-каждой-итерации).
 Этап закрыт, когда его истории и ловушки прошли в песочнице ([stories/README](stories/README.md)).
 
+### R00 — исследование инструментов (R01–R03)
+
+Кандидаты и полный протокол — [Tooling Research](TOOLING-RESEARCH-AND-VM-PILOTS.md). Здесь только проверка приёмки, без второго списка инструментов.
+
+- [ ] AC-400 · R01: все Z01–Z03/P01–P30 имеют вопрос, baseline и candidate либо обоснованное отсутствие новой зависимости; для первой партии проверены prerequisites/namespace/caps. Доказательство: coverage + host preflight. Источник: R01.
+- [ ] AC-401 · R02: включённый кандидат проверен на VM: positive/fault/restart/rollback, pinned version и измеренные ресурсы. Доказательство: transcript + measurements. Источник: R02; Tooling Research.
+- [ ] AC-402 · R02: private roots/production units не изменены; логи scoped/redacted; emulator не объявлен live cloud PASS. Доказательство: namespace/logs/fidelity declaration. Источник: R02; Sandbox Plan R00.
+- [ ] AC-403 · R03: accepted/rejected/deferred/pending записаны с причиной и evidence; accepted зависимость связана с target card/recipe. Доказательство: decision. Источник: R03.
+- [ ] AC-404 · R03: dev-only tools не стали per-Run dependency; rollback сохраняет данные и API contract, mandatory GTD/новый Task owner не появился. Доказательство: dependency inventory + rollback transcript. Источник: R03; Tooling Research.
+
 ### I00 — baseline репозиториев (Z01–Z03)
 
 Истории: DEV-01, DEV-02. Ловушки: PR-29.

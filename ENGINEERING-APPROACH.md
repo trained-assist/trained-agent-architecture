@@ -23,6 +23,8 @@ Sandbox — среда разработки. Agent clean room — граница
 
 ## Стадия 0: вход в любой репозиторий
 
+Перед выбором новых зависимостей выполняем [нулевой исследовательский этап R00](TOOLING-RESEARCH-AND-VM-PILOTS.md): вопрос → minimal baseline → VM-пилот → измерения → решение. Обзор покрывает весь план, проверки выполняются партиями; dev/CI tool не переносится в каждый Agent Run. Установка без доказанной пользы, resource budget и заменяемости не считается приёмкой.
+
 Общий development baseline покрывает все участвующие репозитории через тонкие профили: check/fix/verify, context build и logs. Docs-only repo не получает application build.
 
 AutoFix начинает с механических исправлений, затем допускает bounded LLM/OpenCode patch и повторную проверку. Самостоятельные merge/deploy и GTD для контроля самого AutoFix не входят в этот подход.
