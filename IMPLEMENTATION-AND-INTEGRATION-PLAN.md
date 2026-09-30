@@ -201,6 +201,8 @@ Sandbox: воспроизводимый сценарий соответству�
 
 Acceptance: Каждый failure воспроизводим; logging failure bounded; scope/replyContext и TTL cleanup проверяются. Автоматический paid fallback выключен.
 
+Уточнение владельца 30.09.2026: Сетевой partition при продолжающем работать engine: connection_lost/report, отсутствие автоматического нового Run; выход процесса не удаляет volume. Отдельно моделировать потерю самого диска.
+
 Logs acceptance: пройти stage-specific checks выше и общий Observability contract; ссылка на sanitized log transcript обязательна в evidence.
 
 Evidence: pinned PR/commit, setup/config refs, sandbox transcript и IDs. Применяются общие observability/retention требования.
@@ -253,6 +255,8 @@ Sandbox: воспроизводимый сценарий соответству�
 
 Acceptance: Принятый request не исчезает после restart; повтор не запускает две копии; клиент узнаёт failed/unknown/cancelled через status. Полностью проходит без Telegram/Web.
 
+Уточнение владельца 30.09.2026: Reconnect/replay без rerun; авторизованный сигнал на следующую попытку с дополнительными инструкциями; сверка и stop/отзыв прав прежнего процесса до нового запуска. Повтор сигнала дедуплицируется, userTaskId сохраняется, runId меняется.
+
 Logs acceptance: пройти stage-specific checks выше и общий Observability contract; ссылка на sanitized log transcript обязательна в evidence.
 
 Evidence: pinned PR/commit, setup/config refs, sandbox transcript и IDs. Применяются общие observability/retention требования.
@@ -274,6 +278,8 @@ Sandbox: воспроизводимый сценарий соответству�
 Работа: artifactId, bytes/hash/MIME, scope, createdByRun, immutable version; export local files → object storage → committed manifest. Input snapshot и output delta/ref.
 
 Acceptance: Run создал HTML/source/files; no-profile client скачал точные bytes. Cleanup не удаляет единственную копию при export failure; partial manifest объявлен явно.
+
+Уточнение владельца 30.09.2026: Execution/finalizing разделены; тяжёлый локальный файл, crash/restart export и повтор commit не запускают engine. Export progress/ошибка доступны клиенту; sole copy не удаляется до подтверждённого сохранения.
 
 Logs acceptance: пройти stage-specific checks выше и общий Observability contract; ссылка на sanitized log transcript обязательна в evidence.
 
@@ -304,6 +310,8 @@ Sandbox: воспроизводимый сценарий соответству�
 Работа: Text+artifact refs пользователя или одноразовый input; snapshot version, разрешённый output destination, commit/export ACK и retention.
 
 Acceptance: Два writers не перезаписывают молча одну версию; path traversal/escaping export отвергнут; no-profile и folder modes работают. Граница cleaned after durable export проверена.
+
+Уточнение владельца 30.09.2026: Workspace/volume task-scoped и переживает процесс; следующая разрешённая попытка видит прежние файлы/checkpoints через новую clean room. Старые процессы/секреты не наследуются. Cleanup отдельно, retention/квоты явны.
 
 Logs acceptance: пройти stage-specific checks выше и общий Observability contract; ссылка на sanitized log transcript обязательна в evidence.
 
@@ -676,6 +684,8 @@ Sandbox: воспроизводимый сценарий соответству�
 
 Acceptance: Нет double execution после failover; OpenCode region по provider constraints; Codex/Claude вне RU при разрешённом explicit profile; storage residency утверждается отдельно.
 
+Уточнение владельца 30.09.2026: Partition не означает failover/rerun: ждать восстановления либо явного сигнала. До перехода на другой worker исключить записи прежнего владельца; проверить доступность сохранённых данных с нового worker и отдельно потерю volume.
+
 Logs acceptance: пройти stage-specific checks выше и общий Observability contract; ссылка на sanitized log transcript обязательна в evidence.
 
 Evidence: pinned PR/commit, setup/config refs, sandbox transcript и IDs. Применяются общие observability/retention требования.
@@ -703,3 +713,11 @@ Evidence: pinned PR/commit, setup/config refs, sandbox transcript и IDs. При
 Стадия 0 — prerequisite implementation. AutoFix/context compression применяются ко всем репозиториям через общий reusable workflow и repo-specific profile, без центрального mega-build. Для нового repo — тот же onboarding. Requirements по logs теперь явно указаны у каждой итерации и карточки; Done без diagnostic evidence невозможен.
 
 Связанный документ: [SANDBOX-PLAN.md](SANDBOX-PLAN.md). При расхождении прежних proposal о замене live core действует правило параллельной новой реализации из этого документа.
+
+## Уточнение: потеря связи и lifecycle рабочих данных — 30.09.2026
+
+Применяется к существующим карточкам, без изменения порядка итераций. Нормативная граница — [ARCHITECTURE §4.6](ARCHITECTURE.md#46-связка-workflow--runner--рабочие-данные); Runner и [Serverless API](SERVERLESS-AGENT-API.md) согласованы с ней.
+
+Workflow/control plane хранит управляющее состояние вне VM и принимает решения о запуске; Runner исполняет и финализирует. Connection_lost — неизвестный исход, уведомление и ожидание связи/явного сигнала, без автоматического rerun по heartbeat/lease timeout. Смерть процесса не означает потерю диска. Данные задачи переживают Run и доступны следующей разрешённой попытке. После engine exit финализация сохраняет артефакты; её повтор не повторяет исполнение.
+
+Обязательные logs/evidence в затронутых карточках: connection_lost/reconnected, restart signal и его источник, previous/new runId и generation, workspace/volume refs, manifest/checkpoint versions, finalization/export progress/commit/error, cleanup decision. Секреты и signed URLs не логируются. Retention-классы задаются отдельно для рабочих данных, результатов и журналов; timeout не стирает единственную копию молча.
