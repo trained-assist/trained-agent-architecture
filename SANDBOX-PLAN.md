@@ -29,6 +29,24 @@ Sandbox имеет свои users/keys, endpoints, data roots, storage bindings 
 - Limits: bounded retries/runtime/concurrency/storage; free-only provider profile и запрет paid fallback.
 - Review: тест проверяет внешний контракт, а не просто вызывает внутреннюю функцию и сравнивает её с собой.
 
+
+## Уроки пробного запуска VM2
+
+Источник: [VM2 wave 0](https://instant-publish.trainedassist.store/p/vm2-wave0-done), 29.09.2026, отчёт о существующем агенте на commit `c25092b`. Это внешнее evidence: здесь запуск повторно не проверен. По отчёту сервис стартовал, локальный health отвечал, внешний порт был закрыт; cron role=off и Telegram delivery не включены. Это bootstrap/liveness evidence, не прохождение нового ai-agent-runner, API, isolation или engine end-to-end acceptance. Следующий шаг — сверить актуальное состояние; решения Q-D/Q-E/Q-F в #1808 и исправление setup #1879 указаны как незавершённые на дату отчёта.
+
+| Наблюдение в отчёте | Требование к новому setup | Проверка |
+|---|---|---|
+| Node не устанавливается, unit жёстко использует другой путь; ручной симлинк после 203/EXEC | Runtime устанавливается/обнаруживается с pinned версией, путь валидируется до unit start | Чистая VM → setup → service start без ручной правки; wrong/missing binary диагностируется |
+| setup клонирует только core; 8 соседних domain repos пришлось добавить вручную | Declared dependency manifest, pinned revisions и component modes; standalone Runner не зависит от всех доменов | Minimal Runner без доменов; enabled domain устанавливается и проверяет readiness; missing dependency не маскируется |
+| Без TELEGRAM_BOT_TOKEN crash-loop; инструкция только про GCP secrets неприменима Contabo | Env-manifest с required/optional bindings по роли; secret backend configurable; preflight перед start | Standalone без bot token работает; required key missing даёт bounded readiness error; placeholder не считается рабочим ключом |
+| Unit наследует VM_NAME и primary cron role первой VM | Host-manifest отдельно от общего release: workerId, region, roots, endpoints, roles, configVersion и refs secrets | Две VM имеют разные identity; новый host по умолчанию schedule/delivery off; повтор setup не включает их |
+| Порт слушает все interfaces, но firewall блокирует снаружи | Явный ingress policy с внутренней/внешней проверкой, не вывод из bind address | Local health доступен; внешний порт недоступен согласно policy; trusted control-plane ingress проверяется отдельно |
+| В отчёте настроены SSH keys, password auth off, fail2ban; часы UTC | Host bootstrap описывает настройки доступа и единое время логов | Проверяем заявленные свойства; не копируем адреса, ключи или пароли в публичные manifests |
+
+Host-manifest хранит различающиеся параметры машин; release/setup остаётся общим. Env-manifest определяет bindings, а не публичные значения секретов. Liveness (`alive`) не означает готовность engine/provider/tools; readiness показывает capabilities и причины blocked. Без модельных ключей автономная приёмка использует controlled provider fixture; настоящий engine/provider smoke остаётся отдельным неподтверждённым этапом.
+
+Предыдущие ручные действия превращаются в reproducible setup и negative checks P01/P03. Не копировать VM1 bot identity/боевой token или public delivery route, чтобы «завести VM2»; подключение выполняется позже по единому ingress/delivery ownership. Роль off проверяется также отсутствием фактических schedules/delivery.
+
 ## Итерации: что и как проверяем
 
 | Stage | Что запускаем | Контролируемые сбои/края | Ожидаемый результат |
@@ -37,7 +55,7 @@ Sandbox имеет свои users/keys, endpoints, data roots, storage bindings 
 | I01 | Настоящий OpenCode/Runner на existing sandbox VM | Fake engine start failure, child hanging, provider timeout, stop/restart | Observed Run lifecycle, correct scoped logs, no cross-profile access, cleanup |
 | I02A | Новый API + внешний test client | Duplicate submit/conflict, reconnect, crash API/worker, late event | Durable receipt/result и replay по sequence, один dispatch owner |
 | I02B | Runner files + separate object store + client download | Interrupted multipart, expired URL, hash mismatch, export fail, conflicting version | Manifest и точные bytes клиента; cleanup после export ACK |
-| I03 | Новый Web adapter + TG emulator, затем separate test bot | Dedup, batch/media, invalid key, delivery failed, Web reconnect | Полный возврат результата и known profile/channel; old production untouched |
+| I03 | Первый Web conversation slice; затем TG emulator и separate test bot | Пять уточнений и restart между 3-м/4-м; затем dedup, batch/media, invalid key, delivery failed, Web reconnect | Контекст сохранён, latency/cost измерены; полный возврат результата и known profile/channel; old production untouched |
 | I04 | Real local MCP fixture + scoped fake domain/remote servers | Startup/handshake/tool timeout, missing binding, effect unknown | Действительный tool invoke и receipt, не только method listed |
 | I05 | Router + fixed recipe + actual API user flow | URL quoted vs live research, invalid JSON, auth/budget missing | Template/LLM/OpenCode путь правильный; one continuation owner |
 | I06 | Versioned catalog + labelled sanitized corpus | Missing email/login, stale brief/cache, wrong profile, mid-input constraint | Readiness/inputs не выдуманы; measured one-/two-stage comparison |
@@ -68,14 +86,7 @@ Sandbox имеет свои users/keys, endpoints, data roots, storage bindings 
 
 ## Логи обязательны для каждой итерации
 
-Общий baseline по [Observability contract](OBSERVABILITY-AND-ERROR-CONTRACT.md):
-
-1. Registered source/service/release/environment и schema version.
-2. Для user-scoped error — trusted tenant/profile, task/run/operation IDs когда известны; channel/destinationRef при наличии. Для global error — explicit platform scope.
-3. Structured error code/outcome/safeSummary; raw details по private ref без secrets/полных signed URLs.
-4. Основные lifecycle transitions и sequence/causation; bounded delivery/replay/spool policy.
-5. Retention class и TTL: active checkpoint/outbox не удаляется по таймеру; verbose logs не хранятся бессрочно.
-6. Positive и intentional failure оставляют читаемый sanitized transcript. Отсутствие нужной записи — failed acceptance даже при хорошем финальном ответе.
+Общий envelope, scope, delivery и TTL определяются [Observability contract](OBSERVABILITY-AND-ERROR-CONTRACT.md). Ниже только дополнительные checks каждого этапа; карточки плана ссылаются на эту таблицу. Positive/controlled failure evidence обязательно по [Engineering Approach](ENGINEERING-APPROACH.md).
 
 | Stage | Специальные logs checks |
 |---|---|
