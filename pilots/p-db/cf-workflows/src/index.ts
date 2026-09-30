@@ -3,12 +3,15 @@ import { NonRetryableError } from 'cloudflare:workflows';
 import { TaskStore, FencedError } from './taskstore';
 import { CfWorkflowPort, cfStepCtx } from './port';
 import { pilotPlan, type PlanParams } from './plan';
+import { StoreDO, doD1 } from './do-store';
 
-interface Env { DB: D1Database; WF: Workflow; VERSION?: string; PILOT_KEY?: string }
+export { StoreDO };
+
+interface Env { DB?: D1Database; STORE?: DurableObjectNamespace<StoreDO>; WF: Workflow; VERSION?: string; PILOT_KEY?: string }
 
 export class TaskWorkflow extends WorkflowEntrypoint<Env, PlanParams> {
   async run(event: WorkflowEvent<PlanParams>, step: WorkflowStep) {
-    const store = new TaskStore(this.env.DB);
+    const store = new TaskStore(db(this.env));
     try {
       // codeVersion is read on every (re)play, so a resumed instance reports the code it finished on.
       return await pilotPlan(cfStepCtx(step), store, { ...event.payload, codeVersion: this.env.VERSION ?? 'local' });
@@ -19,6 +22,8 @@ export class TaskWorkflow extends WorkflowEntrypoint<Env, PlanParams> {
   }
 }
 
+const db = (env: Env) => env.DB ?? doD1(env.STORE!);
+
 const json = (x: unknown, status = 200) =>
   new Response(JSON.stringify(x, null, 1), { status, headers: { 'content-type': 'application/json' } });
 
@@ -27,7 +32,7 @@ export default {
     const url = new URL(req.url);
     // Real-account runs (run-cf.sh) set PILOT_KEY: the workers.dev URL is public while the test runs.
     if (env.PILOT_KEY && req.headers.get('x-pilot-key') !== env.PILOT_KEY) return json({ error: 'forbidden' }, 403);
-    const store = new TaskStore(env.DB);
+    const store = new TaskStore(db(env));
     const port = new CfWorkflowPort(env.WF, store);
     const body: any = req.method === 'POST' ? await req.json().catch(() => ({})) : {};
     const id = body.taskId ?? url.searchParams.get('taskId');
@@ -39,6 +44,9 @@ export default {
         case '/cancel': return json(await port.cancel(id));
         case '/status': return json(await port.status(id));
         case '/recover': return json(await port.recover());
+        case '/sql': // read-only T8 query when the Task Store is not reachable via `wrangler d1`
+          if (!/^\s*select/i.test(body.sql ?? '')) return json({ error: 'select only' }, 400);
+          return json((await db(env).prepare(body.sql).all()).results);
         case '/version': return json({ version: env.VERSION ?? 'local' });
         // T6 helpers: a new attempt owner takes over; a stale executor tries to commit a step.
         case '/bump-generation': return json({ generation: await store.bumpGeneration(id) });

@@ -18,17 +18,18 @@ cleanup() {
   log "== cleanup $NAME"
   $WR delete --name "$NAME" --force >>run-cf.log 2>&1 || log "worker delete failed"
   $WR workflows delete "$WFNAME" >>run-cf.log 2>&1 || true
-  $WR d1 delete "$NAME" -y >>run-cf.log 2>&1 || log "d1 delete failed"
+  [ -n "${DBID:-}" ] && { $WR d1 delete "$NAME" -y >>run-cf.log 2>&1 || log "d1 delete failed"; }
   rm -f "$CFG"
 }
 trap cleanup EXIT
 
 log "== wrangler $($WR --version)"
 DBID=$($WR d1 create "$NAME" 2>&1 | tee -a run-cf.log | grep -oE '[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}' | head -1)
-[ -n "$DBID" ] || { log "FATAL: d1 create failed (token lacks D1 edit?)"; exit 2; }
+if [ -n "$DBID" ]; then BACKEND=d1; STORECFG="\"d1_databases\": [ { \"binding\": \"DB\", \"database_name\": \"$NAME\", \"database_id\": \"$DBID\" } ],"
+else BACKEND=do-sqlite; log "D1 not available to this token -> Task Store on a SQLite Durable Object (same SQL, src/do-store.ts)"
+  STORECFG='"durable_objects": { "bindings": [ { "name": "STORE", "class_name": "StoreDO" } ] }, "migrations": [ { "tag": "v1", "new_sqlite_classes": ["StoreDO"] } ],'; fi
 cat > "$CFG" <<EOF
-{ "name": "$NAME", "main": "src/index.ts", "compatibility_date": "2025-09-01", "workers_dev": true,
-  "d1_databases": [ { "binding": "DB", "database_name": "$NAME", "database_id": "$DBID" } ],
+{ "name": "$NAME", "main": "src/index.ts", "compatibility_date": "2025-09-01", "workers_dev": true, $STORECFG
   "workflows": [ { "name": "$WFNAME", "binding": "WF", "class_name": "TaskWorkflow" } ] }
 EOF
 deploy() { # version
@@ -111,12 +112,13 @@ B=$(brief ut-r6); fx_is "$B" && [ "$(jq -r .ver <<<"$B")" = v2 ] && res R6 PASS 
 # ---- R11 recover() is harmless in prod + one SQL query over the real D1
 REC=$(api POST /recover | jq -c .); sleep 5
 SQL="SELECT id,status,generation,(SELECT json_group_object(name,count) FROM side_effects s WHERE s.task_id=t.id) fx FROM tasks t ORDER BY id"
-ALL=$($WR d1 execute "$NAME" --remote --json --command "$SQL" 2>>run-cf.log | jq -c '.[0].results')
-log "recover -> $REC"; log "all tasks (d1 --remote): $ALL"
+if [ "$BACKEND" = d1 ]; then ALL=$($WR d1 execute "$NAME" --remote --json --command "$SQL" 2>>run-cf.log | jq -c '.[0].results')
+else ALL=$(api POST /sql "$(jq -nc --arg s "$SQL" '{sql:$s}')" | jq -c .); fi
+log "recover -> $REC"; log "all tasks ($BACKEND): $ALL"
 [ "$(jq '[.[]|select(.id=="ut-r1")|.status]|first' <<<"$ALL")" = '"done"' ] && [ "$(brief ut-r1 | jq -c .fx)" = "$ONE" ] \
   && res R11 PASS "recover harmless; SQL ok" || res R11 FAIL "ALL=$ALL"
 
 J='{}'; for k in "${!R[@]}"; do J=$(jq --arg k "$k" --arg r "${R[$k]}" --arg e "${E[$k]}" '.[$k]={result:$r,evidence:$e}' <<<"$J"); done
-jq -n --argjson t "$J" --arg ver "$($WR --version)" --arg run "$RUN" --argjson all "${ALL:-null}" \
-  '{variant:"cf-workflows-d1", mode:"real Cloudflare account", wrangler:$ver, run:$run, tests:$t, tasks:$all}' > results-cf.json
+jq -n --argjson t "$J" --arg ver "$($WR --version)" --arg run "$RUN" --argjson all "${ALL:-null}" --arg backend "$BACKEND" \
+  '{variant:"cf-workflows-d1", mode:"real Cloudflare account", taskStoreBackend:$backend, wrangler:$ver, run:$run, tests:$t, tasks:$all}' > results-cf.json
 log "== RESULTS: $(jq -c '.tests|map_values(.result)' results-cf.json)"
