@@ -478,7 +478,7 @@ Component/target repo: Router eval + observability
 Depends on: P03, P12
 Sandbox: воспроизводимый сценарий соответствующей итерации из [Sandbox Plan](SANDBOX-PLAN.md); он может включать настоящий сервис.
 
-Работа: Sanitized current fast-path errors/requests по read-only extraction; если данных мало, fixtures. Known answer/action/fresh data/middle constraints/attachments; latency, correctness, unnecessary-agent, provider calls.
+Работа: Sanitized current fast-path errors/requests по read-only extraction; если данных мало, fixtures. Стартовый корпус и формат — [stories/FAST-REPLIES.md](stories/FAST-REPLIES.md), данные [eval/fast-replies/](eval/fast-replies/dialogs.v1.jsonl); ловушки маршрутизации — [PROBES](stories/PROBES.md) PR-21…PR-24. Known answer/action/fresh data/middle constraints/attachments; latency, correctness, unnecessary-agent, provider calls.
 
 Acceptance: Corpus versioned, profile data не публикуются; tests воспроизводимы, live free smoke отдельно; collected logs не считаются истинной разметкой без review.
 
