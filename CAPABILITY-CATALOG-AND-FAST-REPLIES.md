@@ -1,6 +1,6 @@
 # Capability Catalog и быстрые ответы
 
-Статус: architecture refinement · 30.09.2026. [Task Router](TASK-ROUTER-AND-MCP.md), [MCP](TASK-ROUTER-AND-MCP.md#5-mcp-несколько-adapters-к-одним-capabilities). Цель — маленький scoped brief для модели и общий contract исполнения для host/agent.
+Статус: актуальная локальная спецификация capability catalog · 30.09.2026.
 
 ## Четыре режима, три Job types
 
