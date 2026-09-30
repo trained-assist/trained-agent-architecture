@@ -2,6 +2,8 @@
 
 Статус: **draft / продолжение Linearization Step · 30.09.2026**. Прорабатываем **одну пользовательскую задачу**. Playbooks, групповые задачи и batch API здесь не проектируем.
 
+**Следующий отдельный слой:** [Playbooks / GTD boundaries](PLAYBOOKS-VS-GETTING-THINGS-DONE-BOUNDARIES.md) добавляет planId/stepId, schedule occurrence и inputRequestId; прежняя модель одной User Task сохраняется. Каждая Task имеет основной web view; чат — notification subscription. Awaiting-user отображается как state=blocked, stage=waiting_input, reason=awaiting_user, со ссылкой на активный Input Request; после ответа разрешённое продолжение возвращает active.
+
 ## 1. Главный ID — userTaskId
 
 **User Task** — одна отслеживаемая работа для пользователя, независимо от того, каким executor она выполнялась и сколько раз эскалировала. **userTaskId** создаётся при durable приёме этой работы и сохраняется до результата, reporting, доставки и окончания retention.
