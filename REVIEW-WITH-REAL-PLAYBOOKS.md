@@ -4,6 +4,12 @@
 
 Термин владельца: **Awaiting user input**. Сквозной контроль: **gtdId**.
 
+## Уточнение модели после review — 30.09.2026
+
+Примеры U/G ниже описывают **зарегистрированные managed executions**, а не обязательность GTD для каждого artifact/cron. После решения владельца GTD opt-in: нужен concrete next-step/acceptance control. Один step с terminal result может пройти без G; справочный playbook также не включает контроль автоматически.
+
+Позднейшая сверка domain code обнаружила HH generic cron action hh_proactive_search: hourly interval поддерживается, default 24h. Это уточняет границы этого artifact-only review; реальное enabled deployment не проверено. [Общая архитектура](ARCHITECTURE.md), [GTD boundaries](PLAYBOOKS-VS-GETTING-THINGS-DONE-BOUNDARIES.md).
+
 ## 1. Что прочитано
 
 11 JSON-playbooks, **132 шага**, пять domain repositories. Engineering Markdown-guides обнаружены, но подробный прогон ниже основан на JSON execution artifacts. Новые ID в примерах условные, не реальные записи production.
@@ -172,7 +178,7 @@ U7/G7/P7 → три шага; при missing HH credential policy даёт block
 
 Если добавляем расписание:
 - scheduleId=SC1 постоянно;
-- occurrence 10:00 → U8/G8, occurrence 11:00 → U9/G9;
+- occurrence 10:00 → U8, occurrence 11:00 → U9; G8/G9 только при explicit completion control;
 - Job definition может быть общей; Runs новые;
 - отключить SC1 ≠ отменить G8;
 - overlap/catch-up/retention задаются отдельно.
@@ -241,7 +247,7 @@ Output → GTD ACK означает: событие записано в durable 
 - [ ] Sales test mutation + crash: effect recorded; cleanup выполняется без дубля создания.
 - [ ] GTD outcome потерял ACK: inbox dedup; ровно одно логическое continuation.
 - [ ] Parent engine закончился: accepted research outcome доступен в web и будит required next step.
-- [ ] HH occurrence новый U/G; launch artifact не falsely заявляет cold search.
+- [ ] HH occurrence новый U; G только при explicit control; launch artifact не falsely заявляет cold search.
 - [ ] CD пустой snapshot даёт domain blocked/empty, а не ошибочный green file check.
 - [ ] Private input/output не становятся публичными через default publish hook.
 
