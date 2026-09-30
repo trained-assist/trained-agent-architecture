@@ -28,7 +28,7 @@ flowchart TD
 | Действие | Семантика |
 |---|---|
 | submit | scoped prompt/input refs, engine policy, limits, output destination, idempotency key → durable accepted receipt |
-| status | queued/starting/running/awaiting_user/succeeded/failed/cancelled и export state |
+| status | queued/starting/running/awaiting_user/finalizing/succeeded/failed/cancelled; connection_lost как отдельное состояние наблюдения, export state |
 | cancel | requested receipt; terminated — отдельное подтверждение |
 | result | outcome, artifact manifest, доступные logs, ошибки экспорта |
 | events | ordered replay с cursor/sequence |
@@ -69,3 +69,11 @@ Control API остаётся небольшим: artifactId/manifest, version/ha
 Manifest публикуется после export commit; partial/failed exports явны. No-profile request всё равно имеет tenant/principal ownership. Auth проверяется при выдаче session; signed URL чувствителен и не пишется в общие logs. Test fixtures проверяют browser CORS, expiry, interrupted transfers, digest mismatch, wrong scope и folder version conflict. Source HTML можно доставить как файл; publishing/serving untrusted page — отдельная capability.
 
 [Cloudflare direct signed URLs](https://developers.cloudflare.com/r2/api/s3/presigned-urls/), [large object upload](https://developers.cloudflare.com/r2/objects/upload-objects/), [browser CORS](https://developers.cloudflare.com/r2/buckets/cors/) — primary sources для выбранного adapter. [Sandbox approach](ENGINEERING-APPROACH.md) включает local storage fixture и separate cloud smoke.
+
+## Потеря связи, повторный запуск и сохранение данных
+
+Правила — [архитектура, раздел 4.6](ARCHITECTURE.md#46-связка-workflow--runner--рабочие-данные). Разрыв API/worker связи не означает failed/stopped и не запускает вторую попытку автоматически. Status/events показывают connection_lost, last observed state и время наблюдения; после восстановления доступен replay.
+
+Повторный запуск требует отдельного авторизованного сигнала, привязанного к userTaskId и ожидаемой попытке/generation, с необязательными дополнительными инструкциями. Повтор submit с прежним idempotency key остаётся чтением прежнего receipt. До нового Run сверяем старый процесс и внешние действия, исключаем дальнейшие записи старого исполнителя. Новый runId сохраняет userTaskId и получает разрешённые workspace/checkpoint/artifact refs.
+
+Рабочий volume переживает процессы; агент может сохранить тяжёлый файл локально. После engine exit Runner завершает export в finalizing. Клиент видит outcome процесса отдельно от export progress/error; обязательный результат становится доступен после commit. Повтор export не повторяет агентскую работу. Единственная копия не удаляется до подтверждённого сохранения; cleanup/retention отдельно. Потеря VM и потеря persistent volume проверяются разными сценариями.
