@@ -1,6 +1,6 @@
 # Архитектура Trained Assist
 
-Версия 0.3 · 30.09.2026 · целевая архитектура, draft. Это схема ответственности, а не утверждение, что все компоненты уже выделены и развёрнуты. Исторические факты, ссылки на код и прежние A01–A13 сохранены в [аудите v0.2](audits/ARCHITECTURE-0.2-CODE-AUDIT.md).
+Версия 0.4 · 30.09.2026 · целевая архитектура, draft. Это схема ответственности, а не утверждение, что все компоненты уже выделены и развёрнуты. Исторические факты, ссылки на код и прежние A01–A13 сохранены в [аудите v0.2](audits/ARCHITECTURE-0.2-CODE-AUDIT.md).
 
 ## Цель и границы
 
@@ -8,7 +8,7 @@
 
 Три вида Job: **deterministic-job**, **llm-recipe-job**, **ai-agent-job**. Job — определение работы; Run — конкретное выполнение. Фиксированный LLM recipe получает подготовленный вход и возвращает результат, без самостоятельного доступа к профилям и инструментам. Agent Runner запускает agent process в **Agent clean room**; clean room требуется агенту, а не каждому Job. Детали соответствия OpenLineage — в [терминологии](TERMINOLOGY.md).
 
-**gtdId** означает, что задача находится под контролем Getting Things Done. Расписание и playbook для этого необязательны. GTD контролирует достижение результата, технический контроль следит за живучестью попыток, playbook задаёт методику. Их нельзя подменять одним бесконечным retry.
+**gtdId** означает, что задача находится под контролем Getting Things Done. Расписание и playbook для этого необязательны. GTD контролирует достижение результата, технический контроль следит за живучестью попыток, playbook задаёт методику. Их нельзя подменять одним бесконечным retry. **GTD выключен по умолчанию.** Он подключается при явной просьбе довести работу до принятого результата либо при конкретном следующем шаге после исполнения: CI/verification после PR, migration gate, внешнее условие. Расписание, длинный Run, error escalation и delegation сами по себе не включают GTD. Короткий terminal результат проходит обычный Output.
 
 ## 1. Общая схема
 
@@ -30,6 +30,11 @@ flowchart TD
   T --> S["Task Journal / Reporting / Storage"]
   D --> S
   C --> S
+  T --> LOG["Registered error / lifecycle sources"]
+  G --> LOG
+  E --> LOG
+  LOG --> WATCH["System Error Watcher"]
+  WATCH -->|"Diagnostic Task API"| T
 ```
 
 Это логические блоки: один блок не обязательно отдельный процесс или репозиторий. Reporting доступен через авторизованный API; стрелка пользователя к нему не означает прямой доступ к базе. География исполнения выбирается политикой движка, провайдера и данных: Claude Code/Codex — вне российской зоны по текущему продуктному требованию; OpenCode — в допустимой зоне с учётом конкретного провайдера. География хранения требует отдельного решения.
@@ -63,7 +68,7 @@ Output принимает результаты и события состоян�
 
 Разговорный запрос по умолчанию получает один полезный bounded LLM recipe «ответь или определи следующий executor». Готовый ответ идёт в Output. Если нужны инструменты и адаптивные действия — Output создаёт typed continuation той же задачи к агенту. Это не новый userTaskId и не ошибка LLM Run. Типизированные команды stop/status, известные доменные задания и callbacks не требуют обязательной LLM-классификации. Подробнее — [Task Router и MCP](TASK-ROUTER-AND-MCP.md).
 
-Эскалация deterministic → LLM → agent допускается политикой, а не любой ошибкой. Отсутствие бюджета, доступа или неопределённый исход внешнего действия требуют соответствующего blocked/reconciliation состояния. «Задача принята» и «агент запущен» — разные события.
+Автоматическая эскалация deterministic → LLM → **OpenCode agent** — текущая целевая policy, с bounded attempts/deadline/capacity. Лестница OpenCode → Claude Code/Codex не рассматривается. Низкая ожидаемая стоимость OpenCode не означает unlimited расход или отмену budget/auth checks. Отсутствие бюджета, доступа или неопределённый исход внешнего действия требуют соответствующего blocked/reconciliation состояния. «Задача принята» и «агент запущен» — разные события.
 
 Reporting — read model по userTaskId: очередь, подготовка, запуск, ошибка, следующий executor, уровень эскалации, ожидание пользователя и итог. Статус вычисляется из durable событий, а не из наличия процесса или сообщения в чате. Доставка пользователю имеет отдельный статус от исполнения.
 
@@ -72,8 +77,10 @@ Reporting — read model по userTaskId: очередь, подготовка, 
 ```mermaid
 flowchart TD
   PB["Playbook: versioned definition + bindings"] --> GTD["GTD Manager"]
-  SC["Schedule / occurrence"] --> GTD
-  AG["Agent: durable delegation"] --> GTD
+  SC["Schedule / occurrence"] --> I
+  AG["Agent: durable delegation"] --> I
+  SC -->|"Explicit next-step control"| GTD
+  AG -->|"Explicit completion control"| GTD
   GTD --> I["Input Task Queue"]
   I --> EX["… исполнение …"]
   EX --> O["Output"]
@@ -87,13 +94,15 @@ flowchart TD
 
 Playbook — переносимый артефакт методики. Execution Plan — конкретизация с bindings; Checklist — представление исполнения. Доменные репозитории хранят методику; GTD хранит контроль конкретной задачи и переходы. Детальные playbooks здесь не дублируются: [границы](PLAYBOOKS-VS-GETTING-THINGS-DONE-BOUNDARIES.md), [проверка реальными playbooks](REVIEW-WITH-REAL-PLAYBOOKS.md).
 
-Каждый запуск расписания получает occurrence ID и отдельный userTaskId; gtdId — собственный контроль этого запуска. Повторный dispatch того же occurrence дедуплицируется. При продолжении той же задачи gtdId сохраняется; самостоятельная дочерняя задача получает свой userTaskId/gtdId и ссылку на родителя.
+Каждый запуск расписания получает occurrence ID и отдельный userTaskId. gtdId создаётся только при отдельном control contract этого запуска; обычный hourly query не требует GTD. Повторный dispatch того же occurrence дедуплицируется. При продолжении той же задачи gtdId сохраняется; самостоятельная дочерняя задача получает свой userTaskId и ссылку на родителя; собственный gtdId — лишь при необходимости контроля.
 
 **Awaiting user input** — durable состояние с awaitingInputId, ожидаемым ответом и правами отвечающего. Оно отражается в Web, с возможным уведомлением в чат. Run можно завершить после сохранения checkpoint; ответ возобновляет работу новым Run. Не предполагается, что каждый engine уже поддерживает универсальное восстановление. Время ожидания не должно расходовать токены пустым polling.
 
-Агент может заказать независимую задачу через платформенный API: ограниченный principal, бюджет, идемпотентный запрос и correlation к родителю. Принятая задача живёт после смерти родительского процесса. Это отличается от локального subagent, привязанного к engine. Требует ли любая такая задача GTD — открытое решение; durable submission само по себе обязательно.
+Агент может заказать независимую задачу через платформенный API: ограниченный principal, бюджет, идемпотентный запрос и correlation к родителю. Принятая задача живёт после смерти родительского процесса. Это отличается от локального subagent, привязанного к engine. GTD для простой delegation не требуется; durable submission и техническое восстановление обязательны независимо.
 
 ### External Integration Gate
+
+**Решение: отдельный репозиторий**, предлагаемое имя trained-assist-integration-gate. Спецификация и extraction boundary — [External Integration Gate](EXTERNAL-INTEGRATION-GATE.md); transport/provider adapters выделяются, бизнес-методики остаются доменными.
 
 Gate выполняет исходящие обращения и принимает события **в контексте разрешённой интеграции пользователя**. Он разрешает integrationBindingId в provider/account/scopes, а не доверяет произвольному userId, указанному моделью. Доменные adapters знают API HeadHunter/CRM; общая оболочка отвечает за auth boundary, входящий inbox, дедупликацию и delivery receipts.
 
@@ -124,6 +133,7 @@ Gate выполняет исходящие обращения и принима�
 | externalOperationRef | ID операции у провайдера, для reconciliation | Gate/domain |
 | parentUserTaskId / parentRunId | Причина независимой дочерней задачи | Scoped lineage |
 | traceId / spanId | Технический distributed tracing, не бизнес-задача | Observability |
+| errorEventId / incidentId / suppressionId | Ошибка, группа дефекта, scoped подавление; diagnostic Task отдельна от source Task | Observability/Watcher, scoped reports |
 | providerCallId | Одна попытка вызова модели, связана с runId и расходом | Ledger/Model Gateway |
 
 userTaskId, gtdId при наличии, tenant/profile context и causation прокидываются через Input → Router → executor → Output → GTD/Reporting/delivery. ID не являются секретом и не дают права читать задачу. Повторы API используют отдельный idempotency key. У стабильного gtdId нет магического свойства «не терять»: его обеспечивает durable inbox/outbox и восстановление незавершённых переходов.
@@ -144,9 +154,11 @@ userTaskId, gtdId при наличии, tenant/profile context и causation п�
 | trained-assist-agent | Текущее legacy core; источник извлекаемых модулей, тонкая сборка/совместимость после миграции |
 | trained-assist-llm-ladder | Model selection/provider gateway; не выбор типа Job |
 | Task Queue/Journal/Reporting — граница предложена | Input/Output state, handoffs, task API, delivery outbox; отдельный repo ещё не выбран |
-| GTD Manager — граница предложена | Контроль результата, plan/schedule/wait/delegation; отдельный repo ещё не выбран |
-| External Integration Gate — модуль, repo пока не решён | Общий auth/inbox/receipts; API-specific adapters остаются доменными |
+| GTD Manager — граница предложена | Опциональные next-step/acceptance control records; не обязательный producer расписания/delegation |
+| trained-assist-integration-gate — отдельный repo выбран, имя предложено | Provider API/webhook adapters, bindings, inbox/receipts; domain rules/playbooks остаются доменными |
 | Credential Broker / Storage — модули, размещение не выбрано | Scoped credentials, snapshots, artifacts; не подразумевается repo на каждый модуль |
+| trained-assist-error-watcher — отдельный подключаемый repo выбран, имя предложено | Error sources → incidents → bounded LLM/OpenCode diagnosis → workaround/issue/report |
+| Serverless API adapter в ai-agent-runner | Ключи/scopes/quotas, durable submit/status/result/callback; без обязательного GTD/frontend |
 | Общие contracts/schema — пакет либо каталог | Versioned envelopes и совместимость; без бизнес-логики |
 
 Проверенные доменные репозитории: software-engineering-playbooks, trained-assist-hh-skill, trained-assist-sales-skill, trained-assist-documents-skill, trained-assist-marketing-skill. Freelance в прочитанном inventory — playbook в documents-skill, а не доказанный отдельный repo. Speech/search и будущие домены требуют отдельного inventory. Точный inventory и происхождение артефактов — в [review](REVIEW-WITH-REAL-PLAYBOOKS.md) и [scenarios](scenarios/README.md). Общая архитектура не переносит их playbooks в core.
@@ -161,6 +173,16 @@ Credentials имеют shared/platform, private/user и replaceable-default scop
 
 Стоимость, бюджет, model ladder и Ledger вынесены в [Model Gateway and Costs](MODEL-GATEWAY-AND-COSTS.md). В основном документе сохраняется только обязательная correlation расходов с задачей и Run.
 
+### Ошибки, события и автономная диагностика
+
+**Обязательный контракт всех модулей:** structured error events, зарегистрированный source, profile context пользовательской ошибки, channel/destinationRef при наличии, task/run correlation и retention policy. Основные lifecycle events обязательны вторым приоритетом; verbose/native logs отдельно. Один физический backend не требуется.
+
+[Observability contract](OBSERVABILITY-AND-ERROR-CONTRACT.md) определяет поля, registry, replay, TTL и sandbox acceptance. Platform errors без одного пользователя имеют явный scope, а не fake profile. Watcher не читает произвольные raw logs с догадками об адресате.
+
+[System Error Watcher](SYSTEM-ERROR-WATCHER.md) — подключаемый сервис. Он группирует шторм до LLM, поддерживает scoped permanent/timed suppression, отправляет diagnostic Task через Task API и получает outcome через Output. Diagnostic failure не рекурсивно расследует себя. Workaround/issue/report не требуют GTD; проверка последующего repair PR может потребовать.
+
+[Serverless Agent API](SERVERLESS-AGENT-API.md) — отдельный клиентский сценарий Runner. Ключи/scopes дают право запускать изолированный ai-agent-job и получить status/result без всей продуктовой инфраструктуры. API admission не смешивается с provider Integration Gate; обязательны небольшой durable receipt/result слой и technical lifecycle, GTD/frontend/playbooks необязательны.
+
 ## Что подтверждено сейчас и что меняем
 
 | Область | Текущая находка | Целевая граница |
@@ -168,7 +190,7 @@ Credentials имеют shared/platform, private/user и replaceable-default scop
 | Быстрый ответ | Core input-router P1 shadow classifier: head/tail по 400 символов при длинном вводе, timeout 4s; mixed quick runner/delivery | Один полезный reply-or-route recipe, полноценный контекст/refs, решения вне TG |
 | Изоляция | T0 optional, Unix slots/ACL/env allowlist; исключения Codex/cwd, persistent HOME, MCP service user | Проверяемый lifecycle clean room без скрытых исключений |
 | GTD/расписание | Существуют cron и контроль в core, session/chat coupling | Отдельные task/control IDs и Web task views |
-| HH cold search | Есть per-vacancy generic cron action hh_proactive_search; 1h поддерживается, default 24h | Schedule occurrence → контролируемая задача; методика вне core |
+| HH cold search | Есть per-vacancy generic cron action hh_proactive_search; 1h поддерживается, default 24h | Schedule occurrence → Task; GTD только при следующем контролируемом шаге; методика вне core |
 | Реальное включение HH | Код не доказывает включённые jobs на VM | Проверить runtime отдельно; не объявлять «раз в час уже работает у всех» |
 | Ledger | Сбор стоимости — существующий элемент; полнота всех путей не доказана | Все provider calls/attempts связаны с Job/Run/task |
 
@@ -178,15 +200,14 @@ Credentials имеют shared/platform, private/user и replaceable-default scop
 
 A01–A13 сохраняют прежние значения из [audit](audits/ARCHITECTURE-0.2-CODE-AUDIT.md); эпики не перенумеровываются. Для новой работы добавлять конкретный контракт и владельца из таблицы выше. C01–C09 остаются ссылками, но старое слово Orchestrator раскладывается по новым владельцам в [контрактах](contracts/README.md).
 
-INV-01–INV-13 остаются индексом прежних проверок. **Уточнение INV-03:** прежнее правило ограничивает одну интерактивную execution в Telegram lane и writers Web-сессии; оно не запрещает параллельные фоновые задачи. В целевой модели чат не владеет фоновой задачей. Интерактивная политика совместимости сохраняется при миграции до явного переключения. INV-14: managed outcome доставляется GTD через durable inbox с gtdId. INV-15: Awaiting user input видим в Web и не требует живого Agent Run.
+INV-01–INV-13 остаются индексом прежних проверок. **Уточнение INV-03:** прежнее правило ограничивает одну интерактивную execution в Telegram lane и writers Web-сессии; оно не запрещает параллельные фоновые задачи. В целевой модели чат не владеет фоновой задачей. Интерактивная политика совместимости сохраняется при миграции до явного переключения. INV-14: managed outcome доставляется GTD через durable inbox с gtdId. INV-15: Awaiting user input видим в Web и не требует живого Agent Run. INV-16: GTD opt-in с явным следующим контролем и bounded progression, без контроля самого себя. INV-17: каждый модуль публикует structured errors и основные events с scope/correlation/TTL.
 
 Миграция не должна удалять работающие старые пути до проверки нового сквозного сценария: приём → результат → Web/чат, stop/supplement, повтор после сбоя, бюджетный отказ, external callback и ожидание ответа. Исторические копии [сценариев](scenarios/README.md) — evidence, а не автоматически новые требования.
 
 ## Открытые решения
 
-- Создавать gtdId для всех задач по умолчанию или только для явно контролируемых/длительных?
-- External Gate сейчас выделять в repo или сначала сделать модулем с доменными adapters?
-- Какие лимиты разрешают автоматическую дорогостоящую эскалацию, а когда требуется согласие пользователя?
 - Где хранятся профили, artifacts и journal для RU/EU и допустимы ли трансграничные snapshots?
 - Достаточен ли приватный Web task view всем пользователям API, и как выдаётся доступ?
 - Какие фактические gaps Ledger и latency baseline подтвердит следующий runtime audit?
+
+Решения 30.09.2026: GTD selective opt-in; Integration Gate и Error Watcher — самостоятельные repos; автоматический конечный агент эскалации — OpenCode. Имена новых repos ещё предложения. TTL в observability и конкретные budget limits ещё draft.
