@@ -1,6 +1,6 @@
 # External Integration Gate
 
-Статус: architecture draft · 30.09.2026. **Решение владельца: отдельный репозиторий.** Предлагаемое имя: trained-assist-integration-gate. Репозиторий и перенос кода пока не созданы этой спецификацией.
+Статус: актуальная спецификация External Integration Gate · 30.09.2026. Предлагаемое имя: trained-assist-integration-gate. Репозиторий и перенос кода пока не созданы этой спецификацией.
 
 ## Граница
 
