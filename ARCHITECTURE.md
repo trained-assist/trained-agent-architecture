@@ -1,6 +1,6 @@
 # Архитектура Trained Assist
 
-Версия 0.4 · 30.09.2026 · целевая архитектура, draft. Это схема ответственности, а не утверждение, что все компоненты уже выделены и развёрнуты. Исторические факты, ссылки на код и прежние A01–A13 сохранены в [аудите v0.2](audits/ARCHITECTURE-0.2-CODE-AUDIT.md).
+Версия 0.5 · 30.09.2026 · целевая архитектура, draft. Это схема ответственности, а не утверждение, что все компоненты уже выделены и развёрнуты. Исторические факты, ссылки на код и прежние A01–A13 сохранены в [аудите v0.2](audits/ARCHITECTURE-0.2-CODE-AUDIT.md).
 
 ## Цель и границы
 
@@ -182,6 +182,16 @@ Credentials имеют shared/platform, private/user и replaceable-default scop
 [System Error Watcher](SYSTEM-ERROR-WATCHER.md) — подключаемый сервис. Он группирует шторм до LLM, поддерживает scoped permanent/timed suppression, отправляет diagnostic Task через Task API и получает outcome через Output. Diagnostic failure не рекурсивно расследует себя. Workaround/issue/report не требуют GTD; проверка последующего repair PR может потребовать.
 
 [Serverless Agent API](SERVERLESS-AGENT-API.md) — отдельный клиентский сценарий Runner. Ключи/scopes дают право запускать изолированный ai-agent-job и получить status/result без всей продуктовой инфраструктуры. API admission не смешивается с provider Integration Gate; обязательны небольшой durable receipt/result слой и technical lifecycle, GTD/frontend/playbooks необязательны.
+
+## Engineering и начало implementation
+
+[Sandbox Driven Development](ENGINEERING-APPROACH.md) — обязательная практика разработки: reproducible setup, controlled failures, scoped errors/events, TTL и acceptance evidence. Existing VM сначала sandbox, позже clean promotion; отдельный sandbox воспроизводится. Run isolation проверяется внутри development sandbox, это разные границы.
+
+Порядок вертикальных приёмок: Runner/VM → external API lifecycle → artifacts/workspace → Web/TG → MCP → fast replies → compact capabilities → opt-in GTD/schedules/playbooks. Integration Gate/Watcher подключаются по готовности contracts; они не обязательны standalone Runner. Изменяемый implementation plan ведётся в GitHub Projects, не в runtime GTD и не в git status checklist.
+
+[Capability Catalog](CAPABILITY-CATALOG-AND-FAST-REPLIES.md): template/deterministic/llm/agent — execution modes, Job types остаются три. Scoped brief имеет required inputs, readiness/bindings, versions и supportedModes. One-call reply-or-route и two-stage selection/reply сравниваются на corpus; не вводим обязательных двух LLM на каждый вопрос. URL/keyword features не означают agent для каждой ссылки.
+
+Артефактная доставка: control API принимает/возвращает manifest, IDs/status и ограниченные metadata; bytes идут в object storage по scoped upload/download sessions, multipart/resume для больших input. Состояние export отдельно от Run outcome; cleanup только после durable persistence. No-profile API task поддерживается с explicit tenant/principal binding.
 
 ## Что подтверждено сейчас и что меняем
 
