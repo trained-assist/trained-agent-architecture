@@ -64,7 +64,7 @@ Output не обязан помнить весь running task в своей оч
 | Поле | Примеры / смысл |
 |---|---|
 | state | active, blocked, succeeded, failed, cancelled |
-| stage | collecting, preparing, queued, handing_off, running, evaluating, waiting_followup, finished |
+| stage | collecting, preparing, queued, handing_off, running, evaluating, waiting_input, waiting_followup, finished |
 | currentExecutionType | deterministic, llm_recipe, ai_agent; null до выбора |
 | currentPurpose | primary, diagnosis, repair, retry, escalation |
 | escalationDepth | 0 — исходная работа; увеличивается при переходе к новому типу решения, а не при каждом retry |

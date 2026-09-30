@@ -12,7 +12,7 @@
 
 В core: src/agent-isolation.js (slot leases, ACL gates, env allowlist), src/runner/engine-isolation.js (spawn glue), run tokens/MCP bridge, локальные task queue и runners. Изоляция T0 опциональна; Codex и cwd вне профиля оставляют только allowlist/bridge, без run-as. Профиль/.agent-home постоянный. MCP servers работают как service user. Это не полный ephemeral clean room lifecycle и не самостоятельный межмашинный runtime API.
 
-Git worktree из software-engineering-playbooks — изоляция изменений кода. Его lifecycle не заменяет OS boundary агента. Текущие исходники и ограничения закреплены ссылками в [ARCHITECTURE.md](../ARCHITECTURE.md).
+Git worktree из software-engineering-playbooks — изоляция изменений кода. Его lifecycle не заменяет OS boundary агента. Текущие исходники и ограничения закреплены ссылками в [Code baseline](../audits/CODE-BASELINE.md).
 
 ## Рекомендация по репозиторию
 
