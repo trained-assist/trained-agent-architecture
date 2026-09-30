@@ -150,7 +150,7 @@ operationId имеет scope «caller + operation kind + logical operation». Н
 
 Первый ACK содержит userTaskId, чтобы после обновления страницы web мог запросить status. Gateway сохраняет mapping своего client request/native update к userTaskId: если ответ потерялся, повтор вернёт прежний ID.
 
-Для work под GTD к каждой границе выше добавляется gtdId. ResultEnvelope не может его потерять; Output отправляет outcome в durable GTD inbox и сохраняет receipt. Retries/handoff оставляют gtdId; independent child и новая scheduled occurrence получают новый control record. Существование gtdId не равно active control — gtdState хранится отдельно.
+Для work под GTD к каждой границе выше добавляется gtdId. ResultEnvelope не может его потерять; Output отправляет outcome в durable GTD inbox и сохраняет receipt. Retries/handoff оставляют gtdId; independent child и новая scheduled occurrence получают собственный userTaskId; новый control record создаётся только при explicit GTD opt-in. Существование gtdId не равно active control — gtdState хранится отдельно.
 
 ## 8. Reporting API и пример snapshot
 
@@ -225,3 +225,9 @@ Journal — небольшой shared operational module, не новый биз
 - [ ] Следующий hourly запуск получает новый userTaskId.
 
 Сначала доводим этот lifecycle одной задачи. Playbook/group/batch layer будет следующей абстракцией и не участвует в этой модели.
+
+## Уточнение 30.09.2026: opt-in контроль и error context
+
+GTD не добавляется ко всем задачам. Cron, delegation, длинный Run и эскалация ошибки сами по себе не создают gtdId; explicit next-step/acceptance control создаёт его. [Общая v0.4](ARCHITECTURE.md).
+
+[Error contract](OBSERVABILITY-AND-ERROR-CONTRACT.md) обязателен: profile scope, channel/destinationRef если известны, source/task/run IDs. [Watcher](SYSTEM-ERROR-WATCHER.md) создаёт отдельный diagnosticUserTaskId с incidentId/sourceUserTaskId; исходная ошибка не переименовывается в успешную диагностику. Serverless client receipt однозначно mapped к userTaskId, даже без Web UI.
