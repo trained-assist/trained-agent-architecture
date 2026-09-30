@@ -4,7 +4,7 @@
 
 ## Текущая архитектура
 
-- [ARCHITECTURE v0.4](ARCHITECTURE.md) — три схемы: сервисы/география; одна задача с результатом пользователю; GTD/playbook и внешние интеграции. IDs, ownership, миграционные границы и открытые решения.
+- [ARCHITECTURE v0.5](ARCHITECTURE.md) — три схемы: сервисы/география; одна задача с результатом пользователю; GTD/playbook и внешние интеграции. IDs, ownership, миграционные границы и открытые решения.
 - [Task Router and MCP](TASK-ROUTER-AND-MCP.md) — архитектура отдельного Router, быстрый reply-or-route, эскалация, context policy, роли MCP и сверка текущего pipeline.
 - [Model Gateway and Costs](MODEL-GATEWAY-AND-COSTS.md) — model ladder, бюджет, Ledger и correlation расходов; цены отдельно от общей схемы.
 - [External Integration Gate](EXTERNAL-INTEGRATION-GATE.md) — отдельный repo, provider APIs/webhooks, transport adapters и extraction boundary.
@@ -18,6 +18,11 @@
 - [Agent Runner](runtime/EXECUTION-RUNTIME.md) — clean room lifecycle и граница [ai-agent-runner](https://github.com/trained-assist/ai-agent-runner).
 - [Терминология и OpenLineage](TERMINOLOGY.md) — Job/Run/Dataset и наши типы Job.
 - [Пользовательские сценарии](scenarios/README.md) — исходные копии с provenance; копирование не меняет runtime readers.
+
+- [Engineering Approach — Sandbox Driven Development](ENGINEERING-APPROACH.md) — воспроизводимая среда, fault fixtures, free-only smoke и acceptance.
+- [Capability Catalog and Fast Replies](CAPABILITY-CATALOG-AND-FAST-REPLIES.md) — четыре режима, scoped brief, required-input UX и сравнение одного/двух LLM этапов.
+
+Implementation plan ведётся отдельно в GitHub Projects; runtime GTD не является development board.
 
 ## История и evidence
 
