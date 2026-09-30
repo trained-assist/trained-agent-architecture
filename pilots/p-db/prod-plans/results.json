@@ -1,0 +1,325 @@
+{
+  "variant": "prod-plans",
+  "source": "trained-assist-agent origin/main 0894ac5",
+  "config": {
+    "DURABLE_KICK_DEBOUNCE_MS": "3000 (prod default)",
+    "DURABLE_WAIT_TICK_MS": "30000 (prod default)",
+    "fast": {
+      "PILOT_FULL_TICK_FIRST_MS": "500",
+      "PILOT_FULL_TICK_MS": "2000"
+    },
+    "prodlike": {
+      "PILOT_FULL_TICK_FIRST_MS": "500",
+      "PILOT_FULL_TICK_MS": "300000"
+    }
+  },
+  "tests": {
+    "T1": {
+      "verdict": "PASS",
+      "status": "done",
+      "steps": [
+        "prepare:done",
+        "run:done",
+        "wait:done",
+        "apply:done",
+        "finalize:done"
+      ],
+      "counters": {
+        "prepare": 1,
+        "run": 1,
+        "apply": 1,
+        "finalize": 1
+      },
+      "idempotentStart": {
+        "instance": "ut-pilot-1",
+        "created": false,
+        "status": "active"
+      },
+      "signalReply": "ok",
+      "kickSeen": true
+    },
+    "T2": {
+      "verdict": "PASS",
+      "atKill": {
+        "wait": {
+          "status": "pending",
+          "attempts": 0,
+          "executions": 0
+        },
+        "counters": {
+          "prepare": 1,
+          "run": 1,
+          "apply": 0,
+          "finalize": 0
+        }
+      },
+      "afterRestart": {
+        "counters": {
+          "prepare": 1,
+          "run": 1,
+          "apply": 0,
+          "finalize": 0
+        },
+        "wait": "parked",
+        "boot": "BOOT pid=173152 requeued=0"
+      },
+      "note": "step 3 had not started at kill (0 executions); after restart the positional claim resumes at step 3"
+    },
+    "T3": {
+      "verdict": "PASS",
+      "liveExecutorsWhileWaiting": 0,
+      "storeWhileWaiting": {
+        "task_status": "active",
+        "item_status": "waiting",
+        "awaiting_user": true,
+        "deadline_at": "2026-10-01T17:33:03.649Z"
+      },
+      "final": "done"
+    },
+    "T5": {
+      "verdict": "PASS",
+      "counters": {
+        "prepare": 1,
+        "run": 1,
+        "apply": 1,
+        "finalize": 1
+      },
+      "signal1": "accepted",
+      "signal2": "accepted (overwrites woken_at/wake_message, last-writer-wins)",
+      "signalAfterDone": "item is not waiting (status=done)",
+      "waitExecutions": [
+        {
+          "id": "exec-830e1e88-1790789583637-16487e",
+          "status": "waiting",
+          "attempt_number": 1
+        },
+        {
+          "id": "exec-830e1e88-1790789585940-3ba920",
+          "status": "success",
+          "attempt_number": 1
+        }
+      ]
+    },
+    "T4": {
+      "verdict": "FAIL",
+      "earlySignal": "item is not waiting (status=pending)",
+      "afterReachingWait": {
+        "stillParked": true,
+        "apply": 0,
+        "wake_message": null
+      },
+      "senderRetry": "accepted",
+      "finalAfterRetry": "done"
+    },
+    "T7": {
+      "verdict": "PASS",
+      "cancel": "cancelled",
+      "signalAfterCancel": "accepted by wakeItem (item still waiting)",
+      "counters": {
+        "prepare": 1,
+        "run": 1,
+        "apply": 0,
+        "finalize": 0
+      },
+      "executionsBefore": 3,
+      "executionsAfter": 3,
+      "waitItem": "waiting"
+    },
+    "T6": {
+      "verdict": "FAIL",
+      "requeued": 1,
+      "sameItem": true,
+      "before": {
+        "revision": 7,
+        "rows": [
+          {
+            "title": "prepare",
+            "status": "running",
+            "attempt_count": 2,
+            "last_execution_id": null,
+            "execs": "[{\"id\":\"exec-A\",\"status\":\"running\"},{\"id\":\"exec-B\",\"status\":\"running\"}]"
+          },
+          {
+            "title": "run",
+            "status": "pending",
+            "attempt_count": 0,
+            "last_execution_id": null,
+            "execs": "[]"
+          }
+        ]
+      },
+      "after": {
+        "revision": 9,
+        "rows": [
+          {
+            "title": "prepare",
+            "status": "done",
+            "attempt_count": 2,
+            "last_execution_id": "exec-A",
+            "execs": "[{\"id\":\"exec-A\",\"status\":\"success\"},{\"id\":\"exec-B\",\"status\":\"running\"}]"
+          },
+          {
+            "title": "run",
+            "status": "pending",
+            "attempt_count": 0,
+            "last_execution_id": null,
+            "execs": "[]"
+          }
+        ]
+      },
+      "staleAccepted": true,
+      "fencingCols": []
+    },
+    "T8": {
+      "verdict": "PASS",
+      "sql": "SELECT t.id, t.status, t.revision,\n  (SELECT json_group_array(json_object('pos', position, 'step', title, 'status', status, 'attempts', attempt_count, 'wait', json_extract(wait_json, '$.resolved')))\n     FROM (SELECT * FROM task_items WHERE task_id = t.id ORDER BY position)) AS steps,\n  (SELECT json_group_array(json_object('exec', eid, 'step', title, 'status', estatus, 'attempt', attempt_number, 'at', started_at))\n     FROM (SELECT e.id eid, i.title, e.status estatus, e.attempt_number, e.started_at FROM executions e JOIN task_items i ON i.id = e.task_item_id\n           WHERE e.task_id = t.id ORDER BY e.started_at, e.rowid)) AS history\nFROM durable_tasks t WHERE t.id = ?",
+      "params": [
+        "ut-pilot-2"
+      ],
+      "row": {
+        "id": "ut-pilot-2",
+        "status": "done",
+        "revision": 21,
+        "steps": [
+          {
+            "pos": 0,
+            "step": "prepare",
+            "status": "done",
+            "attempts": 1,
+            "wait": null
+          },
+          {
+            "pos": 1,
+            "step": "run",
+            "status": "done",
+            "attempts": 1,
+            "wait": null
+          },
+          {
+            "pos": 2,
+            "step": "wait",
+            "status": "done",
+            "attempts": 1,
+            "wait": "woken"
+          },
+          {
+            "pos": 3,
+            "step": "apply",
+            "status": "done",
+            "attempts": 1,
+            "wait": null
+          },
+          {
+            "pos": 4,
+            "step": "finalize",
+            "status": "done",
+            "attempts": 1,
+            "wait": null
+          }
+        ],
+        "history": [
+          {
+            "exec": "exec-049bfbba-1790789581389-baa114",
+            "step": "prepare",
+            "status": "success",
+            "attempt": 1,
+            "at": 1790789581397
+          },
+          {
+            "exec": "exec-2d8f3f89-1790789582888-a7396d",
+            "step": "run",
+            "status": "success",
+            "attempt": 1,
+            "at": 1790789582891
+          },
+          {
+            "exec": "exec-830e1e88-1790789583637-16487e",
+            "step": "wait",
+            "status": "waiting",
+            "attempt": 1,
+            "at": 1790789583644
+          },
+          {
+            "exec": "exec-830e1e88-1790789585940-3ba920",
+            "step": "wait",
+            "status": "success",
+            "attempt": 1,
+            "at": 1790789585946
+          },
+          {
+            "exec": "exec-4f2d4df8-1790789587441-3058be",
+            "step": "apply",
+            "status": "success",
+            "attempt": 1,
+            "at": 1790789587443
+          },
+          {
+            "exec": "exec-2ef00e35-1790789588959-a2e189",
+            "step": "finalize",
+            "status": "success",
+            "attempt": 1,
+            "at": 1790789588960
+          }
+        ]
+      }
+    }
+  },
+  "metrics": {
+    "t1_wall_ms_total": 16125,
+    "t1_wall_ms_excluding_1s_pause": 15125,
+    "signal_to_step4_ms_live_executor": 5015,
+    "executor_rss_kb_while_waiting": 63728,
+    "signal_to_step4_ms_executor_down_then_restarted": 2257,
+    "live_executors_at_end": 0,
+    "adapter_loc": {
+      "port.js": 64,
+      "steps.js runtime": 65,
+      "executor.js": 34,
+      "note": "non-blank non-comment; prod modules reused unchanged"
+    }
+  },
+  "evidence": {
+    "ownerLock": {
+      "secondExecutor": {
+        "code": 3,
+        "sig": null
+      },
+      "log": "2026-09-30T17:33:00.619Z OWNER_LOCK_REFUSED EXECUTION_OWNER_BUSY Another agent server owns this data directory; refusing recovery"
+    },
+    "T2b_kill_inside_step": {
+      "boot": "BOOT pid=173248 requeued=1",
+      "counters": {
+        "prepare": 1,
+        "run": 2,
+        "apply": 0,
+        "finalize": 0
+      },
+      "runExecutions": [
+        {
+          "id": "exec-4cb0e4f3-1790789591176-a80999",
+          "status": "interrupted",
+          "attempt_number": 1
+        },
+        {
+          "id": "exec-4cb0e4f3-1790789591906-c9763a",
+          "status": "success",
+          "attempt_number": 2
+        }
+      ],
+      "note": "at-least-once: a step killed between its side effect and settle is re-executed (no idempotency key / step-result memo before settle)"
+    },
+    "t6_log": [
+      "[gtd-durable] item done: 28e4ea1f",
+      ""
+    ]
+  },
+  "gaps": [
+    "step = LLM run + DURABLE: text marker, no deterministic step fn / structured result",
+    "no step-result memo or idempotency key: kill between side effect and settle re-executes (T2b run=2)",
+    "no owner/lease/generation on attempts: stale settle accepted (T6); only host-level execution-owner.sqlite lock",
+    "no signal inbox / event type / dedup: early signal rejected and lost (T4); duplicate wake overwrites",
+    "no awaiting_input task status; no append-only event table",
+    "cancel via task_update leaves item waiting and wakeable",
+    "restart latency: first wait tick 30s / full tick 2min after boot"
+  ]
+}

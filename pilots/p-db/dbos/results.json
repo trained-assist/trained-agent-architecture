@@ -1,0 +1,347 @@
+{
+  "variant": "dbos",
+  "engine": "@dbos-inc/dbos-sdk 5.2.11",
+  "postgres": "PostgreSQL 18.4 on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 7.5.0-3ubuntu1~18.04) 7.5.0, 64-bit",
+  "tests": {
+    "T1": {
+      "result": "PASS",
+      "evidence": {
+        "status": {
+          "engine": "SUCCESS",
+          "task": {
+            "status": "done",
+            "generation": 1,
+            "current_step": "finalize",
+            "result": {
+              "answer": "да"
+            }
+          }
+        },
+        "steps": [
+          "prepare",
+          "run",
+          "wait",
+          "apply",
+          "finalize"
+        ],
+        "counters": {
+          "prepare": 1,
+          "run": 1,
+          "apply": 1
+        },
+        "second_start_returned": "ut-pilot-1",
+        "t1_wall_ms": 1362,
+        "signal_to_step4_ms": 35
+      }
+    },
+    "T4": {
+      "result": "PASS",
+      "evidence": {
+        "state_when_signalled": {
+          "task": "pending",
+          "engine": "ENQUEUED"
+        },
+        "signal_event_before_wait_step": true,
+        "counters": {
+          "prepare": 1,
+          "run": 1,
+          "apply": 1
+        },
+        "final": {
+          "engine": "SUCCESS",
+          "task": {
+            "status": "done",
+            "generation": 1,
+            "current_step": "finalize",
+            "result": {
+              "answer": "да"
+            }
+          }
+        },
+        "send_to_nonexistent_workflow": "rejected: DBOSNonExistentWorkflowError: Sent to non-existent destination workflow UUID: ut-pilot-nonexistent"
+      }
+    },
+    "T2": {
+      "result": "PASS",
+      "evidence": {
+        "after_crash": {
+          "counters": {
+            "prepare": 1,
+            "run": 1
+          },
+          "steps": [
+            "prepare",
+            "run"
+          ],
+          "task": "running",
+          "engine": "PENDING"
+        },
+        "after_restart": {
+          "counters": {
+            "prepare": 1,
+            "run": 1
+          },
+          "steps": [
+            "prepare",
+            "run",
+            "wait"
+          ],
+          "generation": 2
+        },
+        "recovery_attempts": 2,
+        "final": {
+          "engine": "SUCCESS",
+          "task": {
+            "status": "done",
+            "generation": 3,
+            "current_step": "finalize",
+            "result": {
+              "answer": "да"
+            }
+          }
+        }
+      }
+    },
+    "T3": {
+      "result": "PASS",
+      "evidence": {
+        "executor_processes_during_wait": 0,
+        "task_status_while_dead": {
+          "engine": "PENDING",
+          "task": {
+            "status": "awaiting_input",
+            "generation": 2,
+            "current_step": "wait",
+            "result": null
+          }
+        },
+        "executor_rss_kb_while_waiting": 95380,
+        "postgres_while_executor_alive": {
+          "processes": 17,
+          "rss_kb_sum": 255276,
+          "pss_kb_sum": 57980
+        },
+        "postgres_while_executor_dead": {
+          "processes": 11,
+          "rss_kb_sum": 136368,
+          "pss_kb_sum": 47130
+        },
+        "restart_to_done_ms": 1087
+      }
+    },
+    "T5": {
+      "result": "PASS",
+      "evidence": {
+        "messages_persisted_after_3_sends": 2,
+        "counters": {
+          "prepare": 1,
+          "run": 1,
+          "apply": 1
+        },
+        "applied_payload": {
+          "answer": "да"
+        },
+        "notifications_after_done": [
+          {
+            "message_uuid": "reply-2::ut-pilot-2",
+            "consumed": true
+          },
+          {
+            "message_uuid": "reply-2-other::ut-pilot-2",
+            "consumed": false
+          }
+        ],
+        "steps": [
+          "prepare",
+          "run",
+          "wait",
+          "apply",
+          "finalize"
+        ]
+      }
+    },
+    "T6": {
+      "result": "PASS",
+      "evidence": {
+        "live_task": {
+          "stale_generation": 1,
+          "rejection": "stale write rejected for ut-pilot-6: attempt generation=1, current=2, status=awaiting_input",
+          "state_unchanged": true
+        },
+        "finished_task": {
+          "stale_generation": 1,
+          "rejection": "stale write rejected for ut-pilot-2: attempt generation=1, current=3, status=done"
+        }
+      }
+    },
+    "T7": {
+      "result": "PASS",
+      "evidence": {
+        "status": {
+          "engine": "CANCELLED",
+          "task": {
+            "status": "cancelled",
+            "generation": 2,
+            "current_step": "wait",
+            "result": null
+          }
+        },
+        "counters": {
+          "prepare": 1,
+          "run": 1
+        },
+        "step_or_claim_events_after_cancel": 0,
+        "steps": [
+          "prepare",
+          "run",
+          "wait"
+        ]
+      }
+    },
+    "T8": {
+      "result": "PASS",
+      "evidence": {
+        "sql": "SELECT t.id, t.status, t.generation, t.result, json_agg(json_build_object('g', e.generation, 'kind', e.kind, 'step', e.step, 'at', to_char(e.created_at,'HH24:MI:SS.MS')) ORDER BY e.id) AS history FROM tasks t JOIN task_events e ON e.task_id = t.id WHERE t.id = $1 GROUP BY t.id",
+        "row": {
+          "id": "ut-pilot-2",
+          "status": "done",
+          "generation": 3,
+          "result": {
+            "answer": "да"
+          },
+          "history": [
+            {
+              "g": 1,
+              "kind": "claim",
+              "step": null,
+              "at": "20:32:53.932"
+            },
+            {
+              "g": 1,
+              "kind": "step_done",
+              "step": "prepare",
+              "at": "20:32:53.954"
+            },
+            {
+              "g": 1,
+              "kind": "step_done",
+              "step": "run",
+              "at": "20:32:53.976"
+            },
+            {
+              "g": 2,
+              "kind": "claim",
+              "step": null,
+              "at": "20:32:55.201"
+            },
+            {
+              "g": 2,
+              "kind": "step_done",
+              "step": "wait",
+              "at": "20:32:55.225"
+            },
+            {
+              "g": null,
+              "kind": "signal",
+              "step": "user_reply",
+              "at": "20:32:56.355"
+            },
+            {
+              "g": null,
+              "kind": "signal",
+              "step": "user_reply",
+              "at": "20:32:56.360"
+            },
+            {
+              "g": null,
+              "kind": "signal",
+              "step": "user_reply",
+              "at": "20:32:56.363"
+            },
+            {
+              "g": 3,
+              "kind": "claim",
+              "step": null,
+              "at": "20:32:57.384"
+            },
+            {
+              "g": 3,
+              "kind": "step_done",
+              "step": "apply",
+              "at": "20:32:57.427"
+            },
+            {
+              "g": 3,
+              "kind": "step_done",
+              "step": "finalize",
+              "at": "20:32:57.443"
+            }
+          ]
+        }
+      }
+    }
+  },
+  "metrics": {
+    "t1_wall_ms": 1362,
+    "signal_to_step4_ms_db": 35,
+    "signal_to_step4_ms_poll": 56,
+    "executor_rss_kb_waiting": 95380,
+    "postgres_mem": {
+      "processes": 11,
+      "rss_kb_sum": 136368,
+      "pss_kb_sum": 47130
+    },
+    "restart_to_done_ms": 1087,
+    "dbos_steps_t2": [
+      "prepare",
+      "run",
+      "wait",
+      "DBOS.recv",
+      "DBOS.sleep",
+      "apply",
+      "finalize"
+    ],
+    "dbos_system_tables": [
+      "application_versions",
+      "dbos_migrations",
+      "event_dispatch_kv",
+      "notifications",
+      "operation_outputs",
+      "queues",
+      "streams",
+      "workflow_events",
+      "workflow_events_history",
+      "workflow_input",
+      "workflow_output",
+      "workflow_schedules",
+      "workflow_status"
+    ],
+    "executor_count_used": 6,
+    "adapter_loc": {
+      "src/port.ts": 48,
+      "src/taskstore.ts": 83,
+      "src/workflow.ts": 47,
+      "src/executor.ts": 14
+    },
+    "moving_parts": [
+      "Postgres (Task Store tables + dbos system schema, one DB)",
+      "executor node process(es) with DBOS library"
+    ],
+    "verified_locally": [
+      "T1-T8 as in tests",
+      "kill -9 recovery on relaunch (same executorID=local)",
+      "send before recv persisted",
+      "send idempotencyKey dedup",
+      "cancelWorkflow survives restart",
+      "sendInTransaction atomic with Task Store journal",
+      "RSS"
+    ],
+    "from_docs_only": [
+      "multi-VM recovery of a dead executor (needs Conductor or manual recoverPendingWorkflows by executorID)",
+      "app version upgrade with pending workflows",
+      "recv timeout firing after 24h while executor down",
+      "Conductor pricing/licence",
+      "transactional steps via datasource packages (exactly-once DB writes)"
+    ]
+  }
+}

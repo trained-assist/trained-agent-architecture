@@ -1,0 +1,238 @@
+{
+  "variant": "restate",
+  "restate_server": "restate-server 1.7.12",
+  "sdk": "1.17.2",
+  "tests": {
+    "T1": {
+      "result": "PASS",
+      "evidence": {
+        "start1": {
+          "invocationId": "inv_16LaXuwmJHpJ6yxJcmF0mT4xkHJTexieaY",
+          "status": "Accepted"
+        },
+        "start2_same_key": {
+          "invocationId": "inv_16LaXuwmJHpJ6yxJcmF0mT4xkHJTexieaY",
+          "status": "PreviouslyAccepted"
+        },
+        "signal": {
+          "accepted": true
+        },
+        "steps": [
+          "prepare",
+          "run",
+          "wait",
+          "apply",
+          "finalize"
+        ],
+        "status": "done",
+        "counters": {
+          "prepare": 1,
+          "run": 1,
+          "apply": 1
+        },
+        "engine_output": {
+          "answer": "да",
+          "applied": true
+        },
+        "wall_ms": 489,
+        "signal_to_apply_ms": 87
+      }
+    },
+    "T2": {
+      "result": "PASS",
+      "evidence": {
+        "afterCrash": {
+          "exit": {
+            "code": null,
+            "sig": "SIGKILL"
+          },
+          "counters": {
+            "prepare": 1,
+            "run": 1,
+            "apply": 0
+          },
+          "steps": [
+            "prepare",
+            "run"
+          ],
+          "status": "running"
+        },
+        "afterRestart": {
+          "counters": {
+            "prepare": 1,
+            "run": 1,
+            "apply": 1
+          },
+          "steps": [
+            "prepare",
+            "run",
+            "wait",
+            "apply",
+            "finalize"
+          ],
+          "status": "done",
+          "attempts": [
+            {
+              "gen": 1,
+              "owner": "pid:172179"
+            },
+            {
+              "gen": 2,
+              "owner": "pid:172225"
+            }
+          ]
+        }
+      }
+    },
+    "T3": {
+      "result": "PASS",
+      "evidence": {
+        "server_rss_kb_waiting": 169516,
+        "service_rss_kb_waiting_idle": 79376,
+        "engine_status_while_waiting": "suspended",
+        "executor_alive_during_wait": false,
+        "server_rss_kb_after_restart_waiting": 148600,
+        "status_1500ms_after_signal_executor_down": "awaiting_input",
+        "signal_to_done_ms_incl_executor_boot": 3157,
+        "signal_send": {
+          "invocationId": "inv_13UgelXovmco5uw8vQuoC6SEYsHrOou8q5",
+          "status": "Accepted"
+        },
+        "counters": {
+          "prepare": 1,
+          "run": 1,
+          "apply": 1
+        },
+        "status": "done"
+      }
+    },
+    "T4": {
+      "result": "PASS",
+      "evidence": {
+        "signal": {
+          "accepted": true
+        },
+        "steps_when_signal_sent": [
+          "prepare"
+        ],
+        "wait_step_reached_ms_after_signal": 2915,
+        "counters": {
+          "prepare": 1,
+          "run": 1,
+          "apply": 1
+        },
+        "status": "done"
+      }
+    },
+    "T5": {
+      "result": "PASS",
+      "evidence": {
+        "signal1": {
+          "accepted": true
+        },
+        "signal2_concurrent": {
+          "accepted": false,
+          "reason": "promise was already completed"
+        },
+        "signal3_after_done": {
+          "accepted": false,
+          "reason": "promise was already completed"
+        },
+        "counters": {
+          "prepare": 1,
+          "run": 1,
+          "apply": 1
+        },
+        "result": "{\"answer\":\"да\",\"applied\":true}"
+      }
+    },
+    "T6": {
+      "result": "PASS",
+      "evidence": {
+        "stale_write_ut2": {
+          "staleGen": 1,
+          "currentGen": 2,
+          "verdict": {
+            "ok": false,
+            "reason": "stale generation 1 != 2"
+          }
+        },
+        "state_unchanged": true,
+        "zombie_write_ut6": {
+          "gen_before_resume": 1,
+          "gen_after_resume": 2,
+          "verdict": {
+            "ok": false,
+            "reason": "stale generation 1 != 2"
+          },
+          "status": "done"
+        }
+      }
+    },
+    "T7": {
+      "result": "PASS",
+      "evidence": {
+        "cancel_http": 202,
+        "signal_after_cancel": {
+          "accepted": true
+        },
+        "start_again_same_key": {
+          "invocationId": "inv_1khTqSFshRZe5YAeJ0U864Mb2bVR6Cp4a6",
+          "status": "PreviouslyAccepted"
+        },
+        "engine": {
+          "id": "inv_1khTqSFshRZe5YAeJ0U864Mb2bVR6Cp4a6",
+          "status": "completed",
+          "completion_result": "failure",
+          "journal_size": 13
+        },
+        "counters": {
+          "prepare": 1,
+          "run": 1,
+          "apply": 0
+        },
+        "status": "cancelled",
+        "steps": [
+          "prepare",
+          "run",
+          "wait"
+        ]
+      }
+    },
+    "T8": {
+      "result": "PASS",
+      "evidence": {
+        "sql": "SELECT t.id, t.status, t.generation, t.result_json, (SELECT json_group_array(json_object('seq',e.seq,'kind',e.kind,'step',e.step,'gen',e.generation)) FROM task_events e WHERE e.task_id=t.id) AS history FROM tasks t WHERE t.id = ?",
+        "row": {
+          "id": "ut-pilot-2",
+          "status": "done",
+          "generation": 2,
+          "result_json": "{\"answer\":\"да\",\"applied\":true}",
+          "history": "[{\"seq\":8,\"kind\":\"attempt_claimed\",\"step\":null,\"gen\":1},{\"seq\":9,\"kind\":\"step_done\",\"step\":\"prepare\",\"gen\":1},{\"seq\":10,\"kind\":\"step_done\",\"step\":\"run\",\"gen\":1},{\"seq\":11,\"kind\":\"attempt_claimed\",\"step\":null,\"gen\":2},{\"seq\":12,\"kind\":\"step_done\",\"step\":\"wait\",\"gen\":2},{\"seq\":13,\"kind\":\"signal\",\"step\":\"wait\",\"gen\":2},{\"seq\":14,\"kind\":\"step_done\",\"step\":\"apply\",\"gen\":2},{\"seq\":15,\"kind\":\"step_done\",\"step\":\"finalize\",\"gen\":2},{\"seq\":39,\"kind\":\"fencing_rejected\",\"step\":\"apply\",\"gen\":1}]"
+        }
+      }
+    }
+  },
+  "metrics": {
+    "server_cold_start_ms": 504,
+    "t1_wall_ms": 489,
+    "signal_to_step4_ms": 87,
+    "server_rss_kb_waiting": 169516,
+    "service_rss_kb_idle": 79376,
+    "restate_data_kb": 156908,
+    "taskstore_kb": 4,
+    "server_rss_kb_end": 176340,
+    "service_rss_kb_end": 67828,
+    "adapter_loc": {
+      "port.js": 46,
+      "taskstore.js": 79,
+      "service.js": 69
+    },
+    "moving_parts": [
+      "restate-server (single binary, embeds RocksDB + log + metadata)",
+      "executor node process (SDK endpoint)",
+      "Task Store SQLite file"
+    ]
+  },
+  "summary": "8/8 PASS"
+}

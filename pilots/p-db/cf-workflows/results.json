@@ -1,0 +1,142 @@
+{
+  "variant": "cf-workflows-d1",
+  "mode": "local (wrangler dev / miniflare), no Cloudflare account",
+  "wrangler": "4.145.0",
+  "tests": {
+    "T1": "PASS",
+    "T2": "PASS",
+    "T3": "PASS",
+    "T4": "PASS",
+    "T5": "PASS",
+    "T6": "PASS",
+    "T7": "PASS",
+    "T8": "PASS"
+  },
+  "notes": {
+    "T2_auto_resume_after_kill9_without_trigger": "no",
+    "T2_T3_resume_trigger": "local engine re-runs an interrupted instance only when it receives an event (signal or Port.recover __wake); no timer/alarm wake after kill -9"
+  },
+  "metrics": {
+    "t1_wall_ms": 708,
+    "signal_to_apply_ms": 163,
+    "signal_to_apply_after_cold_restart_ms": 151,
+    "rss_alive_total_kb": 557432,
+    "rss_alive_workerd_kb": 235716,
+    "dev_ready_ms": [
+      3248,
+      2220,
+      2289
+    ],
+    "adapter_loc": 238,
+    "moving_parts_local": 3,
+    "moving_parts_prod": "Worker + Workflows + D1 (all managed)"
+  },
+  "evidence": {
+    "T2": {
+      "status": "done",
+      "gen": 1,
+      "fx": {
+        "apply": 1,
+        "prepare": 1,
+        "run": 1
+      },
+      "engine": "complete",
+      "steps": [
+        "prepare",
+        "run",
+        "wait",
+        "apply",
+        "finalize"
+      ]
+    },
+    "T3": {
+      "status": "done",
+      "gen": 1,
+      "fx": {
+        "apply": 1,
+        "prepare": 1,
+        "run": 1
+      },
+      "engine": "complete",
+      "steps": [
+        "prepare",
+        "run",
+        "wait",
+        "apply",
+        "finalize"
+      ]
+    },
+    "T4": {
+      "status": "done",
+      "gen": 1,
+      "fx": {
+        "apply": 1,
+        "prepare": 1,
+        "run": 1
+      },
+      "engine": "complete",
+      "steps": [
+        "prepare",
+        "run",
+        "wait",
+        "apply",
+        "finalize"
+      ]
+    },
+    "T5": {
+      "status": "done",
+      "gen": 1,
+      "fx": {
+        "apply": 1,
+        "prepare": 1,
+        "run": 1
+      },
+      "engine": "complete",
+      "steps": [
+        "prepare",
+        "run",
+        "wait",
+        "apply",
+        "finalize"
+      ]
+    },
+    "T6_stale_write": {
+      "rejected": true,
+      "error": "fenced: task ut-pilot-6 step apply gen 1 != current 2"
+    },
+    "T6_after_signal": {
+      "status": "awaiting_input",
+      "gen": 2,
+      "fx": {
+        "prepare": 1,
+        "run": 1
+      },
+      "engine": "errored",
+      "steps": [
+        "prepare",
+        "run"
+      ]
+    },
+    "T7": {
+      "status": "cancelled",
+      "gen": 2,
+      "fx": {
+        "prepare": 1,
+        "run": 1
+      },
+      "engine": "terminated",
+      "steps": [
+        "prepare",
+        "run"
+      ]
+    },
+    "T8": {
+      "id": "ut-pilot-2",
+      "status": "done",
+      "generation": 1,
+      "result_json": "{\"answer\":\"да\",\"ok\":true}",
+      "side_effects": "{\"apply\":1,\"prepare\":1,\"run\":1}",
+      "history": "[{\"kind\":\"status\",\"step\":\"start\",\"at\":1790789593973},{\"kind\":\"step_done\",\"step\":\"prepare\",\"at\":1790789594009},{\"kind\":\"step_done\",\"step\":\"run\",\"at\":1790789594045},{\"kind\":\"status\",\"step\":\"wait\",\"at\":1790789607611},{\"kind\":\"signal\",\"step\":\"user_reply\",\"at\":1790789607787},{\"kind\":\"step_done\",\"step\":\"wait\",\"at\":1790789607924},{\"kind\":\"step_done\",\"step\":\"apply\",\"at\":1790789607954},{\"kind\":\"step_done\",\"step\":\"finalize\",\"at\":1790789608005}]"
+    }
+  }
+}

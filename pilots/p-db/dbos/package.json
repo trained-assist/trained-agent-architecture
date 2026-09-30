@@ -1,0 +1,13 @@
+{
+  "name": "p-db-dbos",
+  "private": true,
+  "type": "commonjs",
+  "scripts": { "pilot": "./run.sh" },
+  "dependencies": {
+    "@dbos-inc/dbos-sdk": "^5.2.11",
+    "embedded-postgres": "^18.4.0-beta.17",
+    "pg": "^8.23.1",
+    "tsx": "^4.23.15",
+    "typescript": "^7.0.2"
+  }
+}

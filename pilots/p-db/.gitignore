@@ -1,0 +1,7 @@
+node_modules/
+.wrangler/
+*.db
+*.db-*
+pgdata/
+bin/
+*.log

@@ -1,0 +1,7 @@
+node_modules/
+bin/
+restate-data/
+*.log
+*.db
+*.db-*
+crash-*.done
