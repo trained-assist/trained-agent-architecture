@@ -1,0 +1,2 @@
+{ "name": "p-db-cf-workflows", "private": true, "type": "module",
+  "devDependencies": { "wrangler": "latest" } }
