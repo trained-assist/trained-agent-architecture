@@ -1,6 +1,6 @@
 # Trained Agent Architecture
 
-Общая архитектура Trained Assist, границы репозиториев и сквозные контракты. Статус: draft · 30.09.2026. Целевая схема отделена от подтверждённого текущего кода.
+Общая архитектура Trained Assist, границы репозиториев и сквозные контракты. Статус: актуальная целевая модель · 30.09.2026. Целевая схема отделена от подтверждённого текущего кода.
 
 ## Текущая архитектура
 
@@ -29,11 +29,10 @@
 
 GitHub Project пока отложен. Production и старые репозитории сохраняются; runtime GTD не является development board.
 
-## История и evidence
+## Проверка реализации
 
-- [Аудит архитектуры v0.2](audits/ARCHITECTURE-0.2-CODE-AUDIT.md) — прежние факты, source revisions, A01–A13 и инварианты.
-- [Linearization Step](LINEARIZATION-STEP.md) — итерация линейного Input → Router → executor → Output → user flow.
-- [Brainstorm: core и репозитории](BRAINSTORM-CORE-AND-REPOSITORIES.md) — ранние варианты; controller/conversation идеи не заменяют текущую v0.6.
+- [Code baseline](audits/CODE-BASELINE.md) — факты и ограничения существующего кода с pinned sources; без альтернативной архитектуры.
+- [Review with real playbooks](REVIEW-WITH-REAL-PLAYBOOKS.md) — проверка выбранной модели реальными доменными артефактами.
 
 ## Как привязывать работу
 
