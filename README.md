@@ -36,6 +36,7 @@ python3 tools/repo-context/map.py
 | [ARCHITECTURE](ARCHITECTURE.md) | Целевая модель, принятые границы, IDs и инварианты |
 | [Implementation and Integration Plan](IMPLEMENTATION-AND-INTEGRATION-PLAN.md) | Порядок, зависимости, scope и специфическая приёмка карточек |
 | [Migration Plan](MIGRATION-PLAN.md) | Какие репозитории создаём и когда, этапы M0–M6, рубильник по профилям, перенос данных, откат и вывод старой системы |
+| [Agent launch and data persistence](AGENT-RUNNER-DATA-PERSISTENCE-IMPLEMENTATION.md) | Имплементация шагов 1–2: запуск агента с сохранением данных — протокол materialize/persist/sweep, целостность, блокировки, маппинг legacy |
 | [Engineering Approach](ENGINEERING-APPROACH.md) | Концепция Sandbox Driven Development и общие правила разработки |
 | [Sandbox Plan](SANDBOX-PLAN.md) | Практические среды, сценарии сбоев, пробелы и logs checks по этапам |
 | [Contracts](contracts/README.md) | Межкомпонентные обязательства; wire API имеет собственный статус согласования |
@@ -48,7 +49,7 @@ python3 tools/repo-context/map.py
 
 | Работа | Документы |
 |---|---|
-| Runner, API и файлы | [Runtime boundary](runtime/EXECUTION-RUNTIME.md), [Runner repo](https://github.com/trained-assist/ai-agent-runner), [Serverless API](SERVERLESS-AGENT-API.md); lifecycle данных — ARCHITECTURE §4.6 |
+| Runner, API и файлы | [Runtime boundary](runtime/EXECUTION-RUNTIME.md), [Runner repo](https://github.com/trained-assist/ai-agent-runner), [Serverless API](SERVERLESS-AGENT-API.md), [Запуск и сохранение данных](AGENT-RUNNER-DATA-PERSISTENCE-IMPLEMENTATION.md); lifecycle данных — ARCHITECTURE §4.6 |
 | Router, MCP и быстрые ответы | [Router/MCP](TASK-ROUTER-AND-MCP.md), [Capability Catalog](CAPABILITY-CATALOG-AND-FAST-REPLIES.md). Router сначала модуль control plane |
 | Статусы, IDs и пользовательский ввод | [ID и Reporting](USER-TASK-IDS-AND-REPORTING.md), [Run conflict](scenarios/interaction/run-conflict-explicit-choice.md), [Scenarios](scenarios/README.md) |
 | Планы, расписание и GTD | [Boundaries](PLAYBOOKS-VS-GETTING-THINGS-DONE-BOUNDARIES.md). GTD opt-in |
@@ -63,6 +64,7 @@ python3 tools/repo-context/map.py
 
 - [P-DB comparison](pilots/p-db/COMPARISON.md) — выбор пары база/движок; локальный PASS не заменяет cloud smoke.
 - [Code baseline](audits/CODE-BASELINE.md) — pinned факты текущего кода.
+- [Legacy learnings 30.09](audits/LEGACY-LEARNINGS-TRAINED-ASSIST-AGENT-2026-09-30.md) — что из действующей системы уже построено, проверено в проде и переносится (M2-контур, замеры, решения владельца).
 - [User stories audit](audits/USER-STORIES-CONSISTENCY-AUDIT-2026-09-30.md).
 - [Real playbooks review](REVIEW-WITH-REAL-PLAYBOOKS.md) — виртуальная проверка модели.
 - Ревью прежней архитектуры: [Claude](ARCHITECTURE_claude_2026-09-30_1926.md), [MiMo](ARCHITECTURE_mimo_review_2026-09-30.md). Это история обоснования, не альтернативные текущие архитектуры.
