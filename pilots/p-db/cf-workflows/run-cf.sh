@@ -107,7 +107,10 @@ NB=$(deploy v2); log "deployed v2 ($NB) version endpoint: $(api GET /version | j
 wait_until ut-r6 "$AWAIT" 300; log "r6 after sleep on v2: $(brief ut-r6)"
 
 for id in r2 r2b r2c r3 r4 r5 r6; do log "signal $id -> $(signal ut-$id | jq -c .)"; done
-for id in r2 r2b r2c r3 r4 r5 r6; do wait_until ut-$id "$DONE" 120; done
+for id in r2 r2b r2c r3 r4 r5 r6; do wait_until ut-$id "$DONE" 420; done
+# signal -> step 'apply' latency per task (run 3 hinted at minutes for instances that sat idle)
+for id in r1 r2 r2b r2c r3 r4 r5 r6 r7 r8; do S=$(hist_at ut-$id signal user_reply); A=$(hist_at ut-$id step_done apply)
+  [ "$S" != null ] && [ "$A" != null ] && log "LAT $id signal->apply=$(( A - S ))ms" || log "LAT $id n/a S=$S A=$A"; done
 OK2=0; B2=""; for id in r2 r2b r2c; do B=$(brief ut-$id); B2="$B2 $id=$B"; fx_is "$B" && OK2=$((OK2+1)) \
   || log "$id stuck, full status: $(st ut-$id | jq -c '{engine, history:(.taskStore.history|fromjson? // [])}')"; done
 [ $OK2 = 3 ] && res R2 PASS "3/3 resumed after 90s sleep without trigger;$B2" || res R2 FAIL "$OK2/3 done;$B2"
