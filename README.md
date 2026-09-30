@@ -4,13 +4,17 @@
 
 ## Текущая архитектура
 
-- [ARCHITECTURE v0.3](ARCHITECTURE.md) — три схемы: сервисы/география; одна задача с результатом пользователю; GTD/playbook и внешние интеграции. IDs, ownership, миграционные границы и открытые решения.
+- [ARCHITECTURE v0.4](ARCHITECTURE.md) — три схемы: сервисы/география; одна задача с результатом пользователю; GTD/playbook и внешние интеграции. IDs, ownership, миграционные границы и открытые решения.
 - [Task Router and MCP](TASK-ROUTER-AND-MCP.md) — архитектура отдельного Router, быстрый reply-or-route, эскалация, context policy, роли MCP и сверка текущего pipeline.
 - [Model Gateway and Costs](MODEL-GATEWAY-AND-COSTS.md) — model ladder, бюджет, Ledger и correlation расходов; цены отдельно от общей схемы.
+- [External Integration Gate](EXTERNAL-INTEGRATION-GATE.md) — отдельный repo, provider APIs/webhooks, transport adapters и extraction boundary.
+- [System Error Watcher](SYSTEM-ERROR-WATCHER.md) — подключаемый repo, incidents, suppression, LLM/OpenCode diagnosis и report.
+- [Serverless Agent API](SERVERLESS-AGENT-API.md) — isolated runs по ключам/scopes без обязательных GTD/frontend/playbooks.
+- [Observability и error contract](OBSERVABILITY-AND-ERROR-CONTRACT.md) — обязательные profile/correlation/reply context, registered sources, lifecycle events, TTL и sandbox acceptance.
 - [User Task: ID и Reporting](USER-TASK-IDS-AND-REPORTING.md) — сквозной userTaskId и справочная по статусу.
 - [Playbooks vs Getting Things Done Boundaries](PLAYBOOKS-VS-GETTING-THINGS-DONE-BOUNDARIES.md) — методика, plan, контроль, расписание, Awaiting user input и delegation.
 - [Review with real playbooks](REVIEW-WITH-REAL-PLAYBOOKS.md) — виртуальный прогон 11 артефактов / 132 шагов, IDs, waits, effects и gaps.
-- [Контракты](contracts/README.md) — C01–C11; распределение прежнего Orchestrator по новым владельцам.
+- [Контракты](contracts/README.md) — C01–C13; распределение прежнего Orchestrator по новым владельцам.
 - [Agent Runner](runtime/EXECUTION-RUNTIME.md) — clean room lifecycle и граница [ai-agent-runner](https://github.com/trained-assist/ai-agent-runner).
 - [Терминология и OpenLineage](TERMINOLOGY.md) — Job/Run/Dataset и наши типы Job.
 - [Пользовательские сценарии](scenarios/README.md) — исходные копии с provenance; копирование не меняет runtime readers.
