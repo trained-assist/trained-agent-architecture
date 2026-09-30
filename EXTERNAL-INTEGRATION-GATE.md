@@ -4,6 +4,8 @@
 
 ## Граница
 
+Все ошибки и основные события выполняют [Observability contract](OBSERVABILITY-AND-ERROR-CONTRACT.md): зарегистрированный source, trusted profile для user-scoped operations, известный channel/destinationRef, IDs и retention. Async callbacks сохраняют correlation из bindings.
+
 Gate связывает платформу с API и событиями внешних сервисов от имени разрешённого пользователя/организации: исходящие операции, входящие webhook, subscriptions, polling и delivery receipts. Он не маршрутизирует Job types, не запускает Agent Runner и не контролирует достижение цели.
 
 С нашей стороны — небольшой versioned API. С внешней стороны — много provider adapters с разными lifecycle. Их изменения могут проходить независимо от core. Adapter protocol/connectivity живёт в Gate; recruiting/sales rules, prompts, playbooks и domain state остаются в доменном репозитории. Если домен уже содержит API adapter, извлекаем transport слой с совместимостью, не создаём две реализации.
