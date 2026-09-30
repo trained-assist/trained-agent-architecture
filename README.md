@@ -4,6 +4,8 @@
 
 ## Разделы
 
+- [Playbooks vs Getting Things Done Boundaries](PLAYBOOKS-VS-GETTING-THINGS-DONE-BOUNDARIES.md) — отдельный brainstorm: методика/plan/checklist, расписание, web view, ожидание пользователя и durable agent delegation.
+
 - [User Task: ID и Reporting](USER-TASK-IDS-AND-REPORTING.md) — один сквозной userTaskId, внутренние IDs, история эскалации и справочная по состоянию; пока без playbooks и групп задач.
 
 - [Linearization Step — текущая итерация brainstorm](LINEARIZATION-STEP.md) — Input → Router → три типа executor → Output → Report to User → Gateway → пользователь; одна обратная связь для follow-up.
