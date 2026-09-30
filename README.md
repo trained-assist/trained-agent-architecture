@@ -22,7 +22,7 @@ python3 tools/repo-context/map.py
 ## Начать разработку
 
 1. Прочитать [ARCHITECTURE](ARCHITECTURE.md): границы, ownership, инварианты и условия перехода с живого сервиса.
-2. Выбрать карточку в [плане реализации и интеграции](IMPLEMENTATION-AND-INTEGRATION-PLAN.md), проверить зависимости и текущий порядок работ. Номера I/P — идентификаторы, не требование выполнять всё последовательно.
+2. Понять, какую ценность и кому даёт этап — [истории](stories/README.md) (ценность и шаги для человека, API-клиента, оператора). Выбрать карточку в [плане реализации и интеграции](IMPLEMENTATION-AND-INTEGRATION-PLAN.md), проверить зависимости и текущий порядок работ. Номера I/P — идентификаторы, не требование выполнять всё последовательно.
 3. Прочитать [Engineering Approach](ENGINEERING-APPROACH.md) и нужный рецепт из [Sandbox Plan](SANDBOX-PLAN.md). Подготовка отсутствующего sandbox входит в работу.
 4. Открыть только относящиеся к карточке контракты и локальные спецификации ниже.
 5. Создать issue/PR в implementation repo; приложить воспроизводимый запуск, controlled failure, scoped logs и evidence приёмки.
@@ -34,6 +34,7 @@ python3 tools/repo-context/map.py
 | Документ | За что отвечает |
 |---|---|
 | [ARCHITECTURE](ARCHITECTURE.md) | Целевая модель, принятые границы, IDs и инварианты |
+| [Stories](stories/README.md) | Истории: кто, ценность, шаги, «готово, когда», на каком этапе рождаются |
 | [Implementation and Integration Plan](IMPLEMENTATION-AND-INTEGRATION-PLAN.md) | Порядок, зависимости, scope и специфическая приёмка карточек |
 | [Engineering Approach](ENGINEERING-APPROACH.md) | Концепция Sandbox Driven Development и общие правила разработки |
 | [Sandbox Plan](SANDBOX-PLAN.md) | Практические среды, сценарии сбоев, пробелы и logs checks по этапам; «Блокеры полного прохода» I00–I10 |
@@ -50,7 +51,7 @@ python3 tools/repo-context/map.py
 |---|---|
 | Runner, API и файлы | [Runtime boundary](runtime/EXECUTION-RUNTIME.md), [Runner repo](https://github.com/trained-assist/ai-agent-runner), [Serverless API](SERVERLESS-AGENT-API.md); lifecycle данных — ARCHITECTURE §4.6 |
 | Router, MCP и быстрые ответы | [Router/MCP](TASK-ROUTER-AND-MCP.md), [Capability Catalog](CAPABILITY-CATALOG-AND-FAST-REPLIES.md). Router сначала модуль control plane |
-| Статусы, IDs и пользовательский ввод | [ID и Reporting](USER-TASK-IDS-AND-REPORTING.md), [Run conflict](scenarios/interaction/run-conflict-explicit-choice.md), [Scenarios](scenarios/README.md) |
+| Статусы, IDs и пользовательский ввод | [ID и Reporting](USER-TASK-IDS-AND-REPORTING.md), [Run conflict](scenarios/interaction/run-conflict-explicit-choice.md), [Stories](stories/README.md), [старые сценарии](scenarios/README.md) |
 | Планы, расписание и GTD | [Boundaries](PLAYBOOKS-VS-GETTING-THINGS-DONE-BOUNDARIES.md). GTD opt-in |
 | Provider-интеграции | [External Integration Gate](EXTERNAL-INTEGRATION-GATE.md) |
 | Ошибки и диагностика | [System Error Watcher](SYSTEM-ERROR-WATCHER.md), общий Observability contract |
@@ -76,4 +77,4 @@ python3 tools/repo-context/map.py
 
 ## Как привязывать работу
 
-В issue указывать карточку плана, architecture_blocks (Axx), contracts (Cxx), invariants (INV-xx), нужные сценарии и evidence. Код, runnable recipes и локальные тесты живут в implementation repo; здесь — межкомпонентная модель и навигация. Статусы выполнения ведутся в issues/трекере. GitHub Project пока отложен.
+В issue указывать карточку плана, ID историй (U-/API-/OPS-…), architecture_blocks (Axx), contracts (Cxx), invariants (INV-xx), нужные сценарии и evidence. Код, runnable recipes и локальные тесты живут в implementation repo; здесь — межкомпонентная модель и навигация. Статусы выполнения ведутся в issues/трекере. GitHub Project пока отложен.
