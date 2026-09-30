@@ -4,6 +4,8 @@
 
 ## Разделы
 
+- [Brainstorm: core и границы репозиториев](BRAINSTORM-CORE-AND-REPOSITORIES.md) — обсуждаем Conversation Service, Task Router, Task Queue, Execution Controller, MCP и распределение state; предложения не утверждены.
+
 - [Терминология и OpenLineage](TERMINOLOGY.md) — Job, Run, Dataset, Facets и границы нашей инфраструктуры.
 
 - [Целевая архитектура бэкенда](ARCHITECTURE.md) — блоки A01–A13, инварианты INV-01–INV-13, факты и открытые решения.
