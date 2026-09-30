@@ -38,3 +38,11 @@ Implementation начинаем с Runner/VM, затем API и artifacts, по�
 ## Источники для transfer fixtures
 
 [Cloudflare R2 signed URLs](https://developers.cloudflare.com/r2/api/s3/presigned-urls/) и [upload objects](https://developers.cloudflare.com/r2/objects/upload-objects/) описывают direct object transfer; [CORS](https://developers.cloudflare.com/r2/buckets/cors/) — browser требования. Выбранный wire protocol и конкретные limits закрепляются implementation contract; здесь не обещается переносимость каждого backend без adapter.
+
+## Стадия 0 для всех репозиториев
+
+До первой implementation iteration настраиваем общий AutoFix/context compression workflow с тонкими профилями каждого repo. AutoFix сначала делает deterministic mechanical fixes, затем при необходимости bounded LLM/OpenCode diagnosis/patch; повторная проверка обязательна, merge/deploy не автоматические. Не создавать GTD для контроля самого AutoFix.
+
+Context compression — compact repo map + task-specific bundle/brief с full-source refs, pinned source revision и cache invalidation. Это рабочая трактовка запроса владельца, не удаление исходников. Entry points, contracts, dependencies/check commands и constraints сохраняются; secrets/generated/log payload исключаются. Agent раскрывает источник при недостатке brief. Новый repo получает тот же onboarding; docs-only profile не обязан проходить application build.
+
+**Каждая iteration имеет собственный Logs acceptance:** какие transitions/errors публикуются, source/scope/Task/Run/reply correlation, retention/TTL и positive/controlled failure fixtures. Каждая implementation карточка ссылается на этот набор и прикладывает sanitized transcript; общая ссылка на logging policy без проверки конкретного этапа недостаточна. AutoFix пишет before/after checks, attempt/rule/version и patch refs; context builder — source version, included/excluded manifest, size/budget и build errors.
