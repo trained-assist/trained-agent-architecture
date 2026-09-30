@@ -99,6 +99,8 @@ Card-level зависимости имеют приоритет над milestone
 
 Карточка добавляет только специфический outcome, зависимости и evidence. Done требует positive/controlled failure, читаемые scoped logs, pinned versions и воспроизводимый transcript; affected API/recovery/cleanup/compatibility проверяются согласно её scope.
 
+Перечень проверок и доказательств приёмки по карточкам, этапам, инвариантам и ловушкам — [Acceptance Checklist](ACCEPTANCE-CHECKLIST.md). Порядок работ остаётся только в этом плане.
+
 ## Sandbox и требования к логам
 
 Конкретные окружения, значение test fixture, принудительные сбои и logging acceptance каждой итерации вынесены в [Sandbox Plan](SANDBOX-PLAN.md). Каждая карточка ниже сохраняет свой обязательный logging gate. Нельзя объявить её Done только по успешному ответу агента.
