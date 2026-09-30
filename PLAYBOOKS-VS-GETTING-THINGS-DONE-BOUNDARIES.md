@@ -213,7 +213,7 @@ Approval связывается с конкретным action payload/digest/sc
 
 Для Claude → OpenCode поддерживаем обычный ai-agent-job через общий submission API и Agent Runner. Агент передаёт goal/input refs, desired executor hint и результат-контракт. Host policy разрешает capabilities, engine/region/budget. Дочерний агент не наследует все credentials/permissions автоматически.
 
-**GTD не обязателен как бизнес-план для одиночной делегации.** Но обязателен durable admission: проверка доступа, dedup, бюджет, lifecycle ownership и запись task до ACK. Его можно реализовать в GTD submission module без создания Execution Plan.
+**GTD не обязателен как бизнес-план для одиночной делегации.** Но обязателен durable admission: проверка доступа, dedup, бюджет, lifecycle ownership и запись task до ACK. Admission реализуется Task Submission API независимо от GTD; у простой delegation нет control loop.
 
 После durable acceptance родитель вправе закончить Run. Результат ребёнка всегда сохраняется в Output/Reporting, а не только в stdin живого родителя. Если нужен следующий шаг после ребёнка, зависимость регистрируется до выхода родителя; GTD создаёт continuation с новым Run, когда outcome ребёнка принят.
 
