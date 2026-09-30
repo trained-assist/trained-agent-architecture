@@ -1,6 +1,6 @@
 # Архитектура Trained Assist
 
-Версия 0.6 · 30.09.2026 · целевая архитектура, draft. Это схема ответственности, а не утверждение, что все компоненты уже выделены и развёрнуты. Исторические факты, ссылки на код и прежние A01–A13 сохранены в [аудите v0.2](audits/ARCHITECTURE-0.2-CODE-AUDIT.md).
+Версия 0.6 · 30.09.2026 · актуальная согласованная целевая архитектура. Это схема ответственности, а не утверждение, что все компоненты уже выделены и развёрнуты. Проверенные факты и ссылки на исходники вынесены в [Code baseline](audits/CODE-BASELINE.md). Блоки A01–A13 и инварианты определены ниже в этом документе.
 
 ## Цель и границы
 
@@ -204,13 +204,45 @@ Credentials имеют shared/platform, private/user и replaceable-default scop
 | Реальное включение HH | Код не доказывает включённые jobs на VM | Проверить runtime отдельно; не объявлять «раз в час уже работает у всех» |
 | Ledger | Сбор стоимости — существующий элемент; полнота всех путей не доказана | Все provider calls/attempts связаны с Job/Run/task |
 
-Свежая сверка: [core input-router](https://github.com/trained-assist/trained-assist-agent/blob/bbc0b91e503e65ede3adc0a87abf9bba59a1ad25/src/input-router.js), [TG preflight](https://github.com/trained-assist/trained-assist-tg-bot/blob/b3b703fa3271a3b739bcf315ebf7d247a33c7dc7/src/intake-preflight.js), [HH cron](https://github.com/trained-assist/trained-assist-hh-skill/blob/0a45af2e1173e3d2172f0d025fdd3f7fc100c2f4/src/hh-cold-search-cron.js). Прежний audit сохраняет ограничения и исходные evidence; новые целевые границы не являются утверждением о текущем коде.
+Свежая сверка: [core input-router](https://github.com/trained-assist/trained-assist-agent/blob/bbc0b91e503e65ede3adc0a87abf9bba59a1ad25/src/input-router.js), [TG preflight](https://github.com/trained-assist/trained-assist-tg-bot/blob/b3b703fa3271a3b739bcf315ebf7d247a33c7dc7/src/intake-preflight.js), [HH cron](https://github.com/trained-assist/trained-assist-hh-skill/blob/0a45af2e1173e3d2172f0d025fdd3f7fc100c2f4/src/hh-cold-search-cron.js). Code baseline сохраняет ограничения и исходные evidence; целевые границы не являются утверждением о текущем коде.
 
 ## Совместимость эпиков и инварианты
 
-A01–A13 сохраняют прежние значения из [audit](audits/ARCHITECTURE-0.2-CODE-AUDIT.md); эпики не перенумеровываются. Для новой работы добавлять конкретный контракт и владельца из таблицы выше. C01–C09 остаются ссылками, но старое слово Orchestrator раскладывается по новым владельцам в [контрактах](contracts/README.md).
+Эпики используют устойчивые IDs блоков; номер не меняется при выделении репозитория. Конкретный owner и acceptance указываются вместе с контрактом из [contracts](contracts/README.md).
 
-INV-01–INV-13 остаются индексом прежних проверок. **Уточнение INV-03:** прежнее правило ограничивает одну интерактивную execution в Telegram lane и writers Web-сессии; оно не запрещает параллельные фоновые задачи. В целевой модели чат не владеет фоновой задачей. Интерактивная политика совместимости сохраняется при миграции до явного переключения. INV-14: managed outcome доставляется GTD через durable inbox с gtdId. INV-15: Awaiting user input видим в Web и не требует живого Agent Run. INV-16: GTD opt-in с явным следующим контролем и bounded progression, без контроля самого себя. INV-17: каждый модуль публикует structured errors и основные events с scope/correlation/TTL.
+| ID | Блок |
+|---|---|
+| A01 | Каналы и приём |
+| A02 | Durable orchestration |
+| A03 | Изоляция |
+| A04 | Постоянные данные и временная среда |
+| A05 | Артефакты и экспорт |
+| A06 | Региональный placement |
+| A07 | Техническое восстановление |
+| A08 | Outcome control / GTD |
+| A09 | Playbooks и quality gates |
+| A10 | Стоимость и routing моделей |
+| A11 | Журналы |
+| A12 | Credentials |
+| A13 | Эксплуатация |
+
+- **INV-01:** профиль пользователя, сессия, задача, попытка, worker и clean room имеют разные идентификаторы.
+- **INV-02:** один авторитетный владелец попытки; поздний результат прежнего владельца не меняет актуальное состояние.
+- **INV-03:** одна интерактивная execution в Telegram lane; Web сериализует writers одной session. Фоновые задачи не принадлежат чату и могут работать параллельно. При переходе сохраняем интерактивную compatibility policy.
+- **INV-04:** параллельные runs одного проекта не получают глобальный profile lock; конфликты решаются по изменяемым ресурсам/версиям.
+- **INV-05:** выбор движка и каждый fallback проходят placement policy; Claude/Codex не запускаются в RU.
+- **INV-06:** отказ нужной границы изоляции не приводит к незаявленному запуску с более широкими правами.
+- **INV-07:** внешняя мутация с неизвестным исходом не повторяется вслепую.
+- **INV-08:** USER_STOP прекращает автоматическое возобновление остановленной работы на всех уровнях.
+- **INV-09:** результат сохраняется до удаления clean room; доставка имеет отдельные retries.
+- **INV-10:** каждый расход привязывается к task/run/step и источнику; неизвестная стоимость помечается unknown, а не zero.
+- **INV-11:** общий budget учитывает технические retries, GTD continuation и проверки качества.
+- **INV-12:** credentials выдаются по явным scopes и правилам приоритета; журнал не содержит значения секретов.
+- **INV-13:** артефакт имеет стабильную ссылку/id, ownership и integrity metadata; временный URL не является его идентичностью.
+- **INV-14:** managed outcome доставляется GTD через durable inbox с gtdId.
+- **INV-15:** Awaiting user input видим в Web и не требует живого Agent Run.
+- **INV-16:** GTD opt-in с явным следующим контролем и bounded progression, без контроля самого себя.
+- **INV-17:** каждый модуль публикует structured errors и основные events с scope/correlation/TTL.
 
 Миграция не должна удалять работающие старые пути до проверки нового сквозного сценария: приём → результат → Web/чат, stop/supplement, повтор после сбоя, бюджетный отказ, external callback и ожидание ответа. Исторические копии [сценариев](scenarios/README.md) — evidence, а не автоматически новые требования.
 
