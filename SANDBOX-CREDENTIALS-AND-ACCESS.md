@@ -19,7 +19,8 @@ Draft v1 · 30.09.2026. Companion к [SANDBOX-PLAN.md](SANDBOX-PLAN.md): инв�
 | GitHub Actions secrets (`VM_SSH_KEY`, `TELEGRAM_BOT_TOKEN`, …) | репозиторий trained-assist-agent → Settings → Secrets | `gh secret list --repo trained-assist/trained-assist-agent` | ✅ |
 | Cloudflare (Workers/KV/D1/R2, зона) | wrangler OAuth локально; `CF_API_TOKEN` — в GH secrets (tg-bot, llm-ladder) | `npx wrangler whoami` | ⚠️ права на **создание** R2-бакета не проверены |
 | Прод-секреты (токен боевого бота, OpenRouter, OpenCode Go, …) | GCP Secret Manager, тот же проект; продовые env на GCP VM | `gcloud secrets list / versions access` | ✅ — **на sandbox-VM не класть** (см. правила) |
-| Ключи моделей: 1× OpenCode Go + 2× OpenRouter для sandbox | кабинеты провайдеров — создать может только владелец аккаунта | вручную в кабинете | ❌ не созданы — главный блокер |
+| LLM для sandbox (`service-llm` → llm-ladder) | GCP SM `LLM_LADDER_TOKEN`; на sandbox-VM продублирован в env + файл `$AGENT_TOKENS_DIR/llm-ladder/token` (mode 600) | POST `/v1/chat/completions` у `https://llm-ladder.trainedassist.store`, `model: deepseek` (основная лестница) или `free-ladder` (free-only профиль, без paid fallback) | ✅ проверено вызовом **из sandbox-VM** 2026-09-30 — обе модели отвечают |
+| ~~Ключи моделей: 1× OpenCode Go + 2× OpenRouter для sandbox~~ | **не нужны** — все service-LLM-вызовы идут через llm-ladder (собственные ключи лестницы у воркера) | — | ✅ снято с повестки 2026-09-30 (решение владельца: лестница работает) |
 | Решения Q-D/Q-E/Q-F (что едет с профилем, бэкенд архивов, P4-роутинг бота) | issue #1808 (trained-assist-agent) | `gh issue view 1808` | ⏳ открытые — без них боевые секреты на вторую VM не ставим |
 | Известные дыры `scripts/setup.sh` (Node, скил-репо, секреты, пер-хост identity) | issue #1879 (trained-assist-agent) | `gh issue view 1879` | ⏳ открытые |
 
@@ -34,6 +35,8 @@ Draft v1 · 30.09.2026. Companion к [SANDBOX-PLAN.md](SANDBOX-PLAN.md): инв�
   + `node scripts/check-env-sync.js` (запускается в CI).
 - **SSH**: одна ключ-пара на машину, отдельные файлы на каждой стороне (см. таблицу),
   никаких паролей.
+- **LLM**: sandbox не хранит собственных ключей моделей — только общий токен llm-ladder;
+  различение вызовов идёт по заголовкам `x-ladder-app` / `x-ladder-run` (worker пишет их в D1).
 
 ## Правила безопасности sandbox
 
