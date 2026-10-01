@@ -1,0 +1,14 @@
+{
+  // Cloud smoke (issue #87 A1): real Cloudflare account, NEW resources only.
+  // Worker: p-db-a1-cloud-smoke (new name, does not touch any existing worker)
+  // D1:     p-db-a1-taskstore  (created by the harness, id below is not a secret)
+  "name": "p-db-a1-cloud-smoke",
+  "main": "../src/index.ts",
+  "compatibility_date": "2025-09-01",
+  "d1_databases": [
+    { "binding": "DB", "database_name": "p-db-a1-taskstore", "database_id": "06c3d571-d228-4cd4-af2e-3cc5a55eebda" }
+  ],
+  "workflows": [
+    { "name": "task-workflow", "binding": "WF", "class_name": "TaskWorkflow" }
+  ]
+}
