@@ -1,6 +1,6 @@
 # План реализации и интеграции Trained Assist
 
-Draft v0.5 · 01.10.2026. Это документ implementation/integration: долговечная структура плана — решения владельца, путь интеграции, этапы, зависимости, общие правила приёмки, scope репозиториев и риски. Статус карточек и чек-листы ведутся в [Project «Trained Assist — Migration»](https://github.com/orgs/trained-assist/projects/1) и issues. Это не runtime GTD/checklist. Документ задаёт план, а не запускает инфраструктуру. Уже выполненные прогоны учитываются по ссылкам и границам evidence; migrations и production переключения требуют отдельной приёмки.
+Draft v0.6 · 01.10.2026. Это документ implementation/integration: долговечная структура плана — решения владельца, путь интеграции, этапы, зависимости, общие правила приёмки, scope репозиториев и риски. Статус карточек и чек-листы ведутся в [Project «Trained Assist — Migration»](https://github.com/orgs/trained-assist/projects/1) и issues. Это не runtime GTD/checklist. Документ задаёт план, а не запускает инфраструктуру. Уже выполненные прогоны учитываются по ссылкам и границам evidence; migrations и production переключения требуют отдельной приёмки.
 
 ## Решение владельца: новая реализация параллельно живому сервису
 
@@ -45,7 +45,7 @@ IDs и credentials старой/новой системы связываются
 
 Источники: [Architecture](https://github.com/trained-assist/trained-agent-architecture/blob/main/ARCHITECTURE.md), [Runner draft](https://github.com/trained-assist/ai-agent-runner/blob/main/ARCHITECTURE.md), [Router/MCP](https://github.com/trained-assist/trained-agent-architecture/blob/main/TASK-ROUTER-AND-MCP.md), [Observability](https://github.com/trained-assist/trained-agent-architecture/blob/main/OBSERVABILITY-AND-ERROR-CONTRACT.md).
 
-Факт текущего inventory: ai-agent-runner содержит только README и draft ARCHITECTURE, отдельная реализация не готова. Plan не предполагает готовые API/clean room только потому, что они описаны.
+На 01.10.2026 в ai-agent-runner уже смержены lifecycle, standalone API, storage/artifacts и драйвер E2E (PR #1/#3/#4/#5). Это реализованный первый slice, а не полная приёмка clean room или VM deployment. Подробный срез и критический путь — ниже; реализацию отличаем от merge, live evidence и окончательной приёмки.
 
 ## Структура плана и Project
 
@@ -64,13 +64,40 @@ Org Project: **[Trained Assist — Migration](https://github.com/orgs/trained-as
 
 0. R00: сразу обзор вопросов по всем этапам, затем небольшие партии VM-пилотов перед соответствующими зависимостями. [Список кандидатов и протокол](TOOLING-RESEARCH-AND-VM-PILOTS.md). R01 и I00 inventory можно делать параллельно; выбор runtime-зависимости требует R02/R03 по ней, но поздние tooling-пилоты не блокируют весь старт.
 1. I00: общий development baseline. Учесть уроки VM2 в P01/P03; прошлый bootstrap существующего агента не закрывает карточки нового Runner.
-2. До реализации control plane: закончить P-DB (локальное сравнение выполнено; cloud recovery/timers/deploy smoke остаётся), определить [схему Task Store v1](TASK-STORE-SCHEMA-V1.md) и контракт conversation/project/audience.
+2. Предпосылки control plane документированы и проверены: P-DB cloud smoke завершён (PR #93), [схема Task Store v1](TASK-STORE-SCHEMA-V1.md) и [conversation contract](CONVERSATIONAL-SESSION-CONTRACT.md) смержены (#89/#88). Следующая работа — реализовать их в control-plane repo. Защита терминальных состояний (#90) обязательна до приёмки; условия деплоя/пробуждения (#91/#92) входят в release и latency проверки.
 3. Первый интеграционный slice: новый control plane + Web, пять уточнений с рестартом и сохранением контекста (P10/P12 плюс нужные части P02/P05/P06). Для него достаточно bounded default route; полный MCP/fast path не prerequisite.
 4. Параллельно готовить standalone Runner → API → artifacts (P01–P09). Standalone API не зависит от platform GTD/Telegram и не заменяет разговорную приёмку.
 5. Расписание — ранний отдельный пилот после Workflow Port/Task Store (P22), без обязательного GTD. MCP/catalog, fast replies и GTD/playbooks развиваются по своим контрактам после базового slice.
 6. Gate/Watcher — независимые последующие интеграции. Promotion — по проверенным сценариям, а не только по номеру последней итерации.
 
 Это уточнение зависимостей, не переименование 33 карточек и не объявление их выполненными. Для первой интеграции части карточек можно выделять в малые PR; полная карточка Done только после всей её приёмки.
+
+## Срез реализации и критический путь — 01.10.2026, 23:18 МСК
+
+Это датированный audit по main, открытым PR/issues и последним отчётам исполнителей. Он не заменяет статусы Project и не закрывает карточки: merge, положительный отчёт и независимая приёмка — разные факты.
+
+| Репозиторий / направление | Подтверждено | Остаток |
+|---|---|---|
+| architecture / P-DB | Live Cloudflare smoke смержен [#93](https://github.com/trained-assist/trained-agent-architecture/pull/93); схемы и conversation contract — #89/#88 | [#90](https://github.com/trained-assist/trained-agent-architecture/issues/90): позднее событие перезаписывает done; #91/#92: задержки и версии при deploy |
+| ai-agent-runner | PR #1/#3/#4/#5 в main: lifecycle, API, BlobStore/artifacts, E2E harness | [PR #12](https://github.com/trained-assist/ai-agent-runner/pull/12) deployment и [PR #22](https://github.com/trained-assist/ai-agent-runner/pull/22) repository context открыты; [#6](https://github.com/trained-assist/ai-agent-runner/issues/6) reboot fixture теряет /tmp state; [#23](https://github.com/trained-assist/ai-agent-runner/issues/23) profile trace write отсутствует; #7 dogfood не принят |
+| trained-assist-control-plane | Repo создан, ownership/контракты определены | Прикладного кода в main нет: нужны Task Store, Workflow Port, dispatch/results, conversation/reporting |
+| integration-gate / error-watcher | Отдельные repos с README/AGENTS/context tooling | Прикладного кода нет; не являются предпосылкой первого Web slice |
+| vovalikessmoothy-png/ai-agent-run-api | Экспериментальный repo драйверов/job orchestration; PR #2 смержен | Location/stress epic #1 открыт. Это не platform control plane и не замена продуктового API Runner |
+| vovalikessmoothy-png/ai-agent-runs-pool | Экспериментальный dispatch receiver, workflows + README | CI-пул — отдельный трек, не признак готовности Web migration |
+| pr-autofix / engineering playbooks | Выпущен baseline v1.7.5, coverage/CI доработаны | Z01 [#37](https://github.com/trained-assist/trained-agent-architecture/issues/37) не принят: [pr-autofix#39](https://github.com/trained-assist/pr-autofix/issues/39), повторное выделение уже опубликованной ветки, затем корректный construction-task apply и consumer pins |
+| legacy agent / profiles | В #87 отчёты о B1 и D1–D3; C1: шифрование и безопасный push synthetic profile подтверждены последним отчётом | Менеджерская/независимая приёмка C1/M0 ещё не объявлена. Synthetic push не означает миграцию всех живых профилей |
+
+### Ближайший критический путь
+
+1. **Закрыть входную приёмку baseline/M0.** Проверить свежий C1 push report в [#87](https://github.com/trained-assist/trained-agent-architecture/issues/87), оформить приёмку вместо повторного cloud smoke. Для Z01 устранить конкретные остатки #37, а не повторять весь мега-шаг. Существующее правило I00 остаётся; незавершённый rollout tooling на все legacy repos нельзя молча объявить выполненным.
+2. **Начать реализацию нового control plane.** Task Store migrations + атомарные state/event transitions, signal dedup, generation fencing **и guard терминальных состояний** (#90); Workflow Port поверх выбранных Workflows + D1. Проверить ранний ответ, повтор, позднее событие и restart. Документы схемы не заменяют работающую базу.
+3. **Подключить настоящий Runner.** Принять VM deployment/API на persistent paths; воспроизвести reboot после исправления #6. Закрепить idempotent submit, события, cancellation, восстановление чтения и finalization артефактов. Потеря связи не запускает второй Run автоматически; диск и незавершённые uploads сохраняются. #23 — обнаруженный пробел в profile trace, его исправление само по себе не доказывает полный load/save/restore пользовательского workspace.
+4. **Пройти первый Web vertical slice.** Отдельный sandbox Web adapter → control plane → Runner → durable result/reporting → Web. Пять сообщений одной conversation с рестартом посередине, awaited user input, артефакты и единственный delivery owner. Bounded default route достаточен; полный MCP/fast replies/GTD не нужен для этой приёмки.
+5. **Пилот и rollback.** Сверить compatibility scenarios, проверить #91/#92 при deploy, включить разрешённый cohort только для новых задач. Старые выполняет legacy owner. Затем Telegram и последующие возможности по карточкам.
+
+Runner и контрольный слой можно разрабатывать параллельно после входных контрактов. Serverless dogfood, location/CI pool, полноценный Gate/Watcher и расширенный GTD не подменяют первый сквозной Web сценарий и не добавляются как новые обязательные блокеры. Изоляция и credential scope обязательны до допуска реальных пользователей; успешный fake E2E или stress driver не доказывает их.
+
+Названия I00–I10, E0–E7, Pxx и M0/M1 из старых эпиков сосуществуют. Для работы использовать card issue + конкретный acceptance outcome; номера не являются четырьмя последовательными планами. [#87](https://github.com/trained-assist/trained-agent-architecture/issues/87) — подготовительный ускоряющий эпик, не замена полной приёмки P01–P30.
 
 ## Итерации и зависимости
 

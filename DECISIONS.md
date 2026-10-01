@@ -16,4 +16,5 @@
 | 30.09.2026 | Проект определяется на входе до Router; audienceId — измерение доступа и доставки | — | 5.2, 5.4 |
 | 30.09.2026 | Control plane — один новый репозиторий (Input + Router + Output + GTD + Journal как модули) | Отдельный репозиторий на каждый логический блок; вариант MiMo «внутрь trained-assist-agent» | 9 |
 | 30.09.2026 | Новые крупные фичи старого прода — сразу на новых контрактах; первый пилот — расписание (#1489) | — | 10 |
-| 30.09.2026 | Пилот P-DB: рекомендовано Cloudflare Workflows + D1 (условие — проверка на настоящем аккаунте), запасной DBOS + Postgres; Restate исключён. Fencing, идемпотентность сигналов и внешних вызовов — в Task Store при любом движке | Кандидаты Restate/Temporal | 4.5, 13 |
+| 30.09.2026 | Пилот P-DB: условная рекомендация Cloudflare Workflows + D1; запасной DBOS + Postgres, Restate исключён. Условие закрыто решением 01.10 ниже | Кандидаты Restate/Temporal | 4.5, 13 |
+| 01.10.2026 | Live cloud smoke завершён и смержен PR #93: управляющий слой — Cloudflare Workflows + D1. DBOS + Postgres — резерв. До приёмки реализации: terminal-state guard #90, deployment compatibility и wakeup SLO #91/#92. Legacy автоматически не переключается | Ожидание первого cloud smoke | 4.5, 13; pilots/p-db/CLOUD-SMOKE.md |
