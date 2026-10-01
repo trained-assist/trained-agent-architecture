@@ -1,0 +1,1131 @@
+{
+  "generated_by": "pr-autofix v1.7.4",
+  "columns": [
+    "repo",
+    "owner",
+    "type",
+    "profile",
+    "profile_ref",
+    "adapter",
+    "build",
+    "check",
+    "fix",
+    "verify",
+    "context",
+    "logs",
+    "ci_present",
+    "ci_required",
+    "staging_present",
+    "staging_required",
+    "autofix_ref",
+    "readable",
+    "notes"
+  ],
+  "repos": [
+    {
+      "repo": "trained-assist/ai-agent-runner",
+      "owner": "trained-assist",
+      "type": "node",
+      "profile": "node",
+      "profile_ref": "v1.7.4",
+      "adapter": "derived",
+      "build": false,
+      "check": [
+        "node {{devbaseline}} run-derived-check --dir ."
+      ],
+      "fix": {
+        "autofix_callable": ".github/workflows/autofix-callable.yml",
+        "fixer_present": false,
+        "cap": 3,
+        "supported": true
+      },
+      "verify": [
+        "node {{devbaseline}} run-derived-check --dir ."
+      ],
+      "context": {
+        "builder": "external",
+        "entrypoints_present": [
+          "package.json"
+        ]
+      },
+      "logs": {
+        "contract_version": 1,
+        "retention_days": 90
+      },
+      "ci_present": true,
+      "ci_required": null,
+      "staging_present": false,
+      "staging_required": true,
+      "autofix_ref": "v1.7.4",
+      "readable": true,
+      "notes": [
+        "fix: missing — repository has no .github/workflows/autofix-callable.yml",
+        "staging: missing — required but absent",
+        "adapter: derived (package.json present)",
+        "live: branch=main, files=99, workflows=3",
+        "scope: Runner / API / artifact adapters (Scope границ, I00)"
+      ]
+    },
+    {
+      "repo": "trained-assist/call-tips",
+      "owner": "trained-assist",
+      "type": "node",
+      "profile": "node",
+      "profile_ref": "v1.7.4",
+      "adapter": "derived",
+      "build": false,
+      "check": [
+        "node {{devbaseline}} run-derived-check --dir ."
+      ],
+      "fix": {
+        "autofix_callable": ".github/workflows/autofix-callable.yml",
+        "fixer_present": false,
+        "cap": 3,
+        "supported": true
+      },
+      "verify": [
+        "node {{devbaseline}} run-derived-check --dir ."
+      ],
+      "context": {
+        "builder": "external",
+        "entrypoints_present": [
+          "package.json"
+        ]
+      },
+      "logs": {
+        "contract_version": 1,
+        "retention_days": 90
+      },
+      "ci_present": true,
+      "ci_required": null,
+      "staging_present": false,
+      "staging_required": true,
+      "autofix_ref": "v1.7.4",
+      "readable": true,
+      "notes": [
+        "fix: missing — repository has no .github/workflows/autofix-callable.yml",
+        "staging: missing — required but absent",
+        "adapter: derived (package.json present)",
+        "live: branch=master, files=18, workflows=1",
+        "scope: call-tips desktop app; default branch master"
+      ]
+    },
+    {
+      "repo": "trained-assist/call-tips-mac",
+      "owner": "trained-assist",
+      "type": "docs",
+      "profile": "docs",
+      "profile_ref": "v1.7.4",
+      "adapter": "derived",
+      "build": false,
+      "check": [
+        "node {{devbaseline}} check-docs --dir ."
+      ],
+      "fix": {
+        "autofix_callable": null,
+        "fixer_present": false,
+        "cap": 0,
+        "supported": false
+      },
+      "verify": [
+        "node {{devbaseline}} check-docs --dir ."
+      ],
+      "context": {
+        "builder": "external",
+        "entrypoints_present": [
+          "README.md",
+          "CLAUDE.md"
+        ]
+      },
+      "logs": {
+        "contract_version": 1,
+        "retention_days": 90
+      },
+      "ci_present": true,
+      "ci_required": null,
+      "staging_present": false,
+      "staging_required": false,
+      "autofix_ref": null,
+      "readable": true,
+      "notes": [
+        "staging_required=false: docs_only",
+        "fix: unsupported_by_profile (profile docs declares no fixer)",
+        "adapter: derived (no code stack, README.md present)",
+        "live: branch=master, files=32, workflows=1",
+        "scope: call-tips macOS app; default branch master"
+      ]
+    },
+    {
+      "repo": "trained-assist/cloud-auth-bridge",
+      "owner": "trained-assist",
+      "type": "node",
+      "profile": "node",
+      "profile_ref": "v1.7.4",
+      "adapter": "derived",
+      "build": false,
+      "check": [
+        "node {{devbaseline}} run-derived-check --dir ."
+      ],
+      "fix": {
+        "autofix_callable": ".github/workflows/autofix-callable.yml",
+        "fixer_present": false,
+        "cap": 3,
+        "supported": true
+      },
+      "verify": [
+        "node {{devbaseline}} run-derived-check --dir ."
+      ],
+      "context": {
+        "builder": "external",
+        "entrypoints_present": [
+          "package.json"
+        ]
+      },
+      "logs": {
+        "contract_version": 1,
+        "retention_days": 90
+      },
+      "ci_present": true,
+      "ci_required": null,
+      "staging_present": false,
+      "staging_required": true,
+      "autofix_ref": "v1.7.4",
+      "readable": true,
+      "notes": [
+        "fix: missing — repository has no .github/workflows/autofix-callable.yml",
+        "staging: missing — required but absent",
+        "adapter: derived (package.json present)",
+        "live: branch=main, files=31, workflows=1",
+        "scope: cloud auth bridge"
+      ]
+    },
+    {
+      "repo": "trained-assist/pr-autofix",
+      "owner": "trained-assist",
+      "type": "docs",
+      "profile": "docs",
+      "profile_ref": "v1.7.4",
+      "adapter": "derived",
+      "build": false,
+      "check": [
+        "node {{devbaseline}} check-docs --dir ."
+      ],
+      "fix": {
+        "autofix_callable": null,
+        "fixer_present": false,
+        "cap": 0,
+        "supported": false
+      },
+      "verify": [
+        "node {{devbaseline}} check-docs --dir ."
+      ],
+      "context": {
+        "builder": "external",
+        "entrypoints_present": [
+          "README.md",
+          "docs"
+        ]
+      },
+      "logs": {
+        "contract_version": 1,
+        "retention_days": 90
+      },
+      "ci_present": true,
+      "ci_required": null,
+      "staging_present": true,
+      "staging_required": false,
+      "autofix_ref": null,
+      "readable": true,
+      "notes": [
+        "staging_required=false: docs_only",
+        "fix: unsupported_by_profile (profile docs declares no fixer)",
+        "adapter: derived (no code stack, README.md present)",
+        "live: branch=main, files=76, workflows=4",
+        "scope: this repository — owner of the profiles and the CLI"
+      ]
+    },
+    {
+      "repo": "trained-assist/pr-autofix-sandbox",
+      "owner": "trained-assist",
+      "type": "node",
+      "profile": "node",
+      "profile_ref": "v1.7.4",
+      "adapter": "derived",
+      "build": false,
+      "check": [
+        "node {{devbaseline}} run-derived-check --dir ."
+      ],
+      "fix": {
+        "autofix_callable": ".github/workflows/autofix-callable.yml",
+        "fixer_present": false,
+        "cap": 3,
+        "supported": true
+      },
+      "verify": [
+        "node {{devbaseline}} run-derived-check --dir ."
+      ],
+      "context": {
+        "builder": "external",
+        "entrypoints_present": [
+          "package.json"
+        ]
+      },
+      "logs": {
+        "contract_version": 1,
+        "retention_days": 90
+      },
+      "ci_present": true,
+      "ci_required": null,
+      "staging_present": false,
+      "staging_required": true,
+      "autofix_ref": "v1.7.4",
+      "readable": true,
+      "notes": [
+        "fix: missing — repository has no .github/workflows/autofix-callable.yml",
+        "staging: missing — required but absent",
+        "adapter: derived (package.json present)",
+        "live: branch=main, files=10, workflows=1",
+        "scope: sandbox checkout used by pr-autofix rehearsals"
+      ]
+    },
+    {
+      "repo": "trained-assist/software-engineering-playbooks",
+      "owner": "trained-assist",
+      "type": "node",
+      "profile": "node",
+      "profile_ref": "v1.7.4",
+      "adapter": "derived",
+      "build": false,
+      "check": [
+        "node {{devbaseline}} run-derived-check --dir ."
+      ],
+      "fix": {
+        "autofix_callable": ".github/workflows/autofix-callable.yml",
+        "fixer_present": false,
+        "cap": 3,
+        "supported": true
+      },
+      "verify": [
+        "node {{devbaseline}} run-derived-check --dir ."
+      ],
+      "context": {
+        "builder": "external",
+        "entrypoints_present": [
+          "package.json"
+        ]
+      },
+      "logs": {
+        "contract_version": 1,
+        "retention_days": 90
+      },
+      "ci_present": true,
+      "ci_required": null,
+      "staging_present": true,
+      "staging_required": true,
+      "autofix_ref": "v1.7.4",
+      "readable": true,
+      "notes": [
+        "fix: missing — repository has no .github/workflows/autofix-callable.yml",
+        "adapter: derived (package.json present)",
+        "live: branch=main, files=243, workflows=2",
+        "scope: playbook library; installer + setup orchestrator (Z01 owner T10)"
+      ]
+    },
+    {
+      "repo": "trained-assist/trained-agent-architecture",
+      "owner": "trained-assist",
+      "type": "docs",
+      "profile": "docs",
+      "profile_ref": "v1.7.4",
+      "adapter": "derived",
+      "build": false,
+      "check": [
+        "node {{devbaseline}} check-docs --dir ."
+      ],
+      "fix": {
+        "autofix_callable": null,
+        "fixer_present": false,
+        "cap": 0,
+        "supported": false
+      },
+      "verify": [
+        "node {{devbaseline}} check-docs --dir ."
+      ],
+      "context": {
+        "builder": "external",
+        "entrypoints_present": [
+          "README.md",
+          "docs",
+          "AGENTS.md"
+        ]
+      },
+      "logs": {
+        "contract_version": 1,
+        "retention_days": 90
+      },
+      "ci_present": true,
+      "ci_required": null,
+      "staging_present": true,
+      "staging_required": false,
+      "autofix_ref": null,
+      "readable": true,
+      "notes": [
+        "staging_required=false: docs_only",
+        "fix: unsupported_by_profile (profile docs declares no fixer)",
+        "adapter: derived (no code stack, README.md present)",
+        "scope: architecture and plan repository; coverage-table owner (T11)"
+      ]
+    },
+    {
+      "repo": "trained-assist/trained-assist-agent",
+      "owner": "trained-assist",
+      "type": "node",
+      "profile": "node",
+      "profile_ref": "v1.7.4",
+      "adapter": "derived",
+      "build": false,
+      "check": [
+        "node {{devbaseline}} run-derived-check --dir ."
+      ],
+      "fix": {
+        "autofix_callable": ".github/workflows/autofix-callable.yml",
+        "fixer_present": false,
+        "cap": 3,
+        "supported": true
+      },
+      "verify": [
+        "node {{devbaseline}} run-derived-check --dir ."
+      ],
+      "context": {
+        "builder": "external",
+        "entrypoints_present": [
+          "package.json",
+          "src/server.js"
+        ]
+      },
+      "logs": {
+        "contract_version": 1,
+        "retention_days": 90
+      },
+      "ci_present": true,
+      "ci_required": null,
+      "staging_present": true,
+      "staging_required": true,
+      "autofix_ref": "v1.7.4",
+      "readable": true,
+      "notes": [
+        "fix: missing — repository has no .github/workflows/autofix-callable.yml",
+        "adapter: derived (package.json present)",
+        "live: branch=main, files=844, workflows=8",
+        "scope: agent core: runner, sessions, core MCP, web backend"
+      ]
+    },
+    {
+      "repo": "trained-assist/trained-assist-bugs-and-features-pipeline",
+      "owner": "trained-assist",
+      "type": "node",
+      "profile": "node",
+      "profile_ref": "v1.7.4",
+      "adapter": "derived",
+      "build": false,
+      "check": [
+        "node {{devbaseline}} run-derived-check --dir ."
+      ],
+      "fix": {
+        "autofix_callable": ".github/workflows/autofix-callable.yml",
+        "fixer_present": false,
+        "cap": 3,
+        "supported": true
+      },
+      "verify": [
+        "node {{devbaseline}} run-derived-check --dir ."
+      ],
+      "context": {
+        "builder": "external",
+        "entrypoints_present": [
+          "package.json"
+        ]
+      },
+      "logs": {
+        "contract_version": 1,
+        "retention_days": 90
+      },
+      "ci_present": true,
+      "ci_required": null,
+      "staging_present": false,
+      "staging_required": true,
+      "autofix_ref": "v1.7.4",
+      "readable": true,
+      "notes": [
+        "fix: missing — repository has no .github/workflows/autofix-callable.yml",
+        "staging: missing — required but absent",
+        "adapter: derived (package.json present)",
+        "live: branch=main, files=37, workflows=2",
+        "scope: bugs and features pipeline"
+      ]
+    },
+    {
+      "repo": "trained-assist/trained-assist-checklist",
+      "owner": "trained-assist",
+      "type": "docs",
+      "profile": "docs",
+      "profile_ref": "v1.7.4",
+      "adapter": "derived",
+      "build": false,
+      "check": [
+        "node {{devbaseline}} check-docs --dir ."
+      ],
+      "fix": {
+        "autofix_callable": null,
+        "fixer_present": false,
+        "cap": 0,
+        "supported": false
+      },
+      "verify": [
+        "node {{devbaseline}} check-docs --dir ."
+      ],
+      "context": {
+        "builder": "external",
+        "entrypoints_present": [
+          "README.md"
+        ]
+      },
+      "logs": {
+        "contract_version": 1,
+        "retention_days": 90
+      },
+      "ci_present": false,
+      "ci_required": null,
+      "staging_present": false,
+      "staging_required": false,
+      "autofix_ref": null,
+      "readable": true,
+      "notes": [
+        "staging_required=false: docs_only",
+        "fix: unsupported_by_profile (profile docs declares no fixer)",
+        "ci: missing — no workflow in .github/workflows",
+        "adapter: derived (no code stack, README.md present)",
+        "live: branch=main, files=12, workflows=0",
+        "scope: checklist service"
+      ]
+    },
+    {
+      "repo": "trained-assist/trained-assist-control-plane",
+      "owner": "trained-assist",
+      "type": "docs",
+      "profile": "docs",
+      "profile_ref": "v1.7.4",
+      "adapter": "derived",
+      "build": false,
+      "check": [
+        "node {{devbaseline}} check-docs --dir ."
+      ],
+      "fix": {
+        "autofix_callable": null,
+        "fixer_present": false,
+        "cap": 0,
+        "supported": false
+      },
+      "verify": [
+        "node {{devbaseline}} check-docs --dir ."
+      ],
+      "context": {
+        "builder": "external",
+        "entrypoints_present": [
+          "README.md",
+          "AGENTS.md"
+        ]
+      },
+      "logs": {
+        "contract_version": 1,
+        "retention_days": 90
+      },
+      "ci_present": true,
+      "ci_required": null,
+      "staging_present": false,
+      "staging_required": false,
+      "autofix_ref": null,
+      "readable": true,
+      "notes": [
+        "staging_required=false: docs_only",
+        "fix: unsupported_by_profile (profile docs declares no fixer)",
+        "adapter: derived (no code stack, README.md present)",
+        "live: branch=main, files=15, workflows=1",
+        "scope: control plane (new repo 30.09.2026, I08 scope)"
+      ]
+    },
+    {
+      "repo": "trained-assist/trained-assist-documents-skill",
+      "owner": "trained-assist",
+      "type": "node",
+      "profile": "node",
+      "profile_ref": "v1.7.4",
+      "adapter": "derived",
+      "build": false,
+      "check": [
+        "node {{devbaseline}} run-derived-check --dir ."
+      ],
+      "fix": {
+        "autofix_callable": ".github/workflows/autofix-callable.yml",
+        "fixer_present": false,
+        "cap": 3,
+        "supported": true
+      },
+      "verify": [
+        "node {{devbaseline}} run-derived-check --dir ."
+      ],
+      "context": {
+        "builder": "external",
+        "entrypoints_present": [
+          "package.json"
+        ]
+      },
+      "logs": {
+        "contract_version": 1,
+        "retention_days": 90
+      },
+      "ci_present": true,
+      "ci_required": null,
+      "staging_present": false,
+      "staging_required": true,
+      "autofix_ref": "v1.7.4",
+      "readable": true,
+      "notes": [
+        "fix: missing — repository has no .github/workflows/autofix-callable.yml",
+        "staging: missing — required but absent",
+        "adapter: derived (package.json present)",
+        "live: branch=main, files=48, workflows=1",
+        "scope: domain skill: documents"
+      ]
+    },
+    {
+      "repo": "trained-assist/trained-assist-error-watcher",
+      "owner": "trained-assist",
+      "type": "docs",
+      "profile": "docs",
+      "profile_ref": "v1.7.4",
+      "adapter": "derived",
+      "build": false,
+      "check": [
+        "node {{devbaseline}} check-docs --dir ."
+      ],
+      "fix": {
+        "autofix_callable": null,
+        "fixer_present": false,
+        "cap": 0,
+        "supported": false
+      },
+      "verify": [
+        "node {{devbaseline}} check-docs --dir ."
+      ],
+      "context": {
+        "builder": "external",
+        "entrypoints_present": [
+          "README.md",
+          "AGENTS.md"
+        ]
+      },
+      "logs": {
+        "contract_version": 1,
+        "retention_days": 90
+      },
+      "ci_present": true,
+      "ci_required": null,
+      "staging_present": false,
+      "staging_required": false,
+      "autofix_ref": null,
+      "readable": true,
+      "notes": [
+        "staging_required=false: docs_only",
+        "fix: unsupported_by_profile (profile docs declares no fixer)",
+        "adapter: derived (no code stack, README.md present)",
+        "live: branch=main, files=15, workflows=1",
+        "scope: error watcher (new repo 30.09.2026)"
+      ]
+    },
+    {
+      "repo": "trained-assist/trained-assist-free-models-benchmark",
+      "owner": "trained-assist",
+      "type": "docs",
+      "profile": "docs",
+      "profile_ref": "v1.7.4",
+      "adapter": "derived",
+      "build": false,
+      "check": [
+        "node {{devbaseline}} check-docs --dir ."
+      ],
+      "fix": {
+        "autofix_callable": null,
+        "fixer_present": false,
+        "cap": 0,
+        "supported": false
+      },
+      "verify": [
+        "node {{devbaseline}} check-docs --dir ."
+      ],
+      "context": {
+        "builder": "external",
+        "entrypoints_present": [
+          "README.md"
+        ]
+      },
+      "logs": {
+        "contract_version": 1,
+        "retention_days": 90
+      },
+      "ci_present": true,
+      "ci_required": null,
+      "staging_present": false,
+      "staging_required": false,
+      "autofix_ref": null,
+      "readable": true,
+      "notes": [
+        "staging_required=false: docs_only",
+        "fix: unsupported_by_profile (profile docs declares no fixer)",
+        "adapter: derived (no code stack, README.md present)",
+        "live: branch=main, files=45, workflows=3",
+        "scope: free models benchmark"
+      ]
+    },
+    {
+      "repo": "trained-assist/trained-assist-freelance-skill",
+      "owner": "trained-assist",
+      "type": "node",
+      "profile": "node",
+      "profile_ref": "v1.7.4",
+      "adapter": "derived",
+      "build": false,
+      "check": [
+        "node {{devbaseline}} run-derived-check --dir ."
+      ],
+      "fix": {
+        "autofix_callable": ".github/workflows/autofix-callable.yml",
+        "fixer_present": false,
+        "cap": 3,
+        "supported": true
+      },
+      "verify": [
+        "node {{devbaseline}} run-derived-check --dir ."
+      ],
+      "context": {
+        "builder": "external",
+        "entrypoints_present": [
+          "package.json"
+        ]
+      },
+      "logs": {
+        "contract_version": 1,
+        "retention_days": 90
+      },
+      "ci_present": true,
+      "ci_required": null,
+      "staging_present": false,
+      "staging_required": true,
+      "autofix_ref": "v1.7.4",
+      "readable": true,
+      "notes": [
+        "fix: missing — repository has no .github/workflows/autofix-callable.yml",
+        "staging: missing — required but absent",
+        "adapter: derived (package.json present)",
+        "live: branch=main, files=40, workflows=2",
+        "scope: domain skill: freelance"
+      ]
+    },
+    {
+      "repo": "trained-assist/trained-assist-hh-skill",
+      "owner": "trained-assist",
+      "type": "node",
+      "profile": "node",
+      "profile_ref": "v1.7.4",
+      "adapter": "derived",
+      "build": false,
+      "check": [
+        "node {{devbaseline}} run-derived-check --dir ."
+      ],
+      "fix": {
+        "autofix_callable": ".github/workflows/autofix-callable.yml",
+        "fixer_present": false,
+        "cap": 3,
+        "supported": true
+      },
+      "verify": [
+        "node {{devbaseline}} run-derived-check --dir ."
+      ],
+      "context": {
+        "builder": "external",
+        "entrypoints_present": [
+          "package.json"
+        ]
+      },
+      "logs": {
+        "contract_version": 1,
+        "retention_days": 90
+      },
+      "ci_present": true,
+      "ci_required": null,
+      "staging_present": true,
+      "staging_required": true,
+      "autofix_ref": "v1.7.4",
+      "readable": true,
+      "notes": [
+        "fix: missing — repository has no .github/workflows/autofix-callable.yml",
+        "adapter: derived (package.json present)",
+        "live: branch=main, files=182, workflows=4",
+        "scope: domain skill: hh/recruiting"
+      ]
+    },
+    {
+      "repo": "trained-assist/trained-assist-integration-gate",
+      "owner": "trained-assist",
+      "type": "docs",
+      "profile": "docs",
+      "profile_ref": "v1.7.4",
+      "adapter": "derived",
+      "build": false,
+      "check": [
+        "node {{devbaseline}} check-docs --dir ."
+      ],
+      "fix": {
+        "autofix_callable": null,
+        "fixer_present": false,
+        "cap": 0,
+        "supported": false
+      },
+      "verify": [
+        "node {{devbaseline}} check-docs --dir ."
+      ],
+      "context": {
+        "builder": "external",
+        "entrypoints_present": [
+          "README.md",
+          "AGENTS.md"
+        ]
+      },
+      "logs": {
+        "contract_version": 1,
+        "retention_days": 90
+      },
+      "ci_present": true,
+      "ci_required": null,
+      "staging_present": false,
+      "staging_required": false,
+      "autofix_ref": null,
+      "readable": true,
+      "notes": [
+        "staging_required=false: docs_only",
+        "fix: unsupported_by_profile (profile docs declares no fixer)",
+        "adapter: derived (no code stack, README.md present)",
+        "live: branch=main, files=15, workflows=1",
+        "scope: integration gate (new repo 30.09.2026)"
+      ]
+    },
+    {
+      "repo": "trained-assist/trained-assist-llm-ladder",
+      "owner": "trained-assist",
+      "type": "node",
+      "profile": "node",
+      "profile_ref": "v1.7.4",
+      "adapter": "derived",
+      "build": false,
+      "check": [
+        "node {{devbaseline}} run-derived-check --dir ."
+      ],
+      "fix": {
+        "autofix_callable": ".github/workflows/autofix-callable.yml",
+        "fixer_present": false,
+        "cap": 3,
+        "supported": true
+      },
+      "verify": [
+        "node {{devbaseline}} run-derived-check --dir ."
+      ],
+      "context": {
+        "builder": "external",
+        "entrypoints_present": [
+          "package.json",
+          "src/index.js"
+        ]
+      },
+      "logs": {
+        "contract_version": 1,
+        "retention_days": 90
+      },
+      "ci_present": true,
+      "ci_required": null,
+      "staging_present": false,
+      "staging_required": true,
+      "autofix_ref": "v1.7.4",
+      "readable": true,
+      "notes": [
+        "fix: missing — repository has no .github/workflows/autofix-callable.yml",
+        "staging: missing — required but absent",
+        "adapter: derived (package.json present)",
+        "live: branch=main, files=48, workflows=4",
+        "scope: llm-ladder worker"
+      ]
+    },
+    {
+      "repo": "trained-assist/trained-assist-marketing-skill",
+      "owner": "trained-assist",
+      "type": "node",
+      "profile": "node",
+      "profile_ref": "v1.7.4",
+      "adapter": "derived",
+      "build": false,
+      "check": [
+        "node {{devbaseline}} run-derived-check --dir ."
+      ],
+      "fix": {
+        "autofix_callable": ".github/workflows/autofix-callable.yml",
+        "fixer_present": false,
+        "cap": 3,
+        "supported": true
+      },
+      "verify": [
+        "node {{devbaseline}} run-derived-check --dir ."
+      ],
+      "context": {
+        "builder": "external",
+        "entrypoints_present": [
+          "package.json"
+        ]
+      },
+      "logs": {
+        "contract_version": 1,
+        "retention_days": 90
+      },
+      "ci_present": true,
+      "ci_required": null,
+      "staging_present": false,
+      "staging_required": true,
+      "autofix_ref": "v1.7.4",
+      "readable": true,
+      "notes": [
+        "fix: missing — repository has no .github/workflows/autofix-callable.yml",
+        "staging: missing — required but absent",
+        "adapter: derived (package.json present)",
+        "live: branch=main, files=30, workflows=1",
+        "scope: domain skill: marketing / customer development"
+      ]
+    },
+    {
+      "repo": "trained-assist/trained-assist-sales-skill",
+      "owner": "trained-assist",
+      "type": "node",
+      "profile": "node",
+      "profile_ref": "v1.7.4",
+      "adapter": "derived",
+      "build": false,
+      "check": [
+        "node {{devbaseline}} run-derived-check --dir ."
+      ],
+      "fix": {
+        "autofix_callable": ".github/workflows/autofix-callable.yml",
+        "fixer_present": false,
+        "cap": 3,
+        "supported": true
+      },
+      "verify": [
+        "node {{devbaseline}} run-derived-check --dir ."
+      ],
+      "context": {
+        "builder": "external",
+        "entrypoints_present": [
+          "package.json"
+        ]
+      },
+      "logs": {
+        "contract_version": 1,
+        "retention_days": 90
+      },
+      "ci_present": true,
+      "ci_required": null,
+      "staging_present": false,
+      "staging_required": true,
+      "autofix_ref": "v1.7.4",
+      "readable": true,
+      "notes": [
+        "fix: missing — repository has no .github/workflows/autofix-callable.yml",
+        "staging: missing — required but absent",
+        "adapter: derived (package.json present)",
+        "live: branch=main, files=68, workflows=1",
+        "scope: domain skill: sales"
+      ]
+    },
+    {
+      "repo": "trained-assist/trained-assist-search-skill",
+      "owner": "trained-assist",
+      "type": "node",
+      "profile": "node",
+      "profile_ref": "v1.7.4",
+      "adapter": "derived",
+      "build": false,
+      "check": [
+        "node {{devbaseline}} run-derived-check --dir ."
+      ],
+      "fix": {
+        "autofix_callable": ".github/workflows/autofix-callable.yml",
+        "fixer_present": false,
+        "cap": 3,
+        "supported": true
+      },
+      "verify": [
+        "node {{devbaseline}} run-derived-check --dir ."
+      ],
+      "context": {
+        "builder": "external",
+        "entrypoints_present": [
+          "package.json"
+        ]
+      },
+      "logs": {
+        "contract_version": 1,
+        "retention_days": 90
+      },
+      "ci_present": true,
+      "ci_required": null,
+      "staging_present": false,
+      "staging_required": true,
+      "autofix_ref": "v1.7.4",
+      "readable": true,
+      "notes": [
+        "fix: missing — repository has no .github/workflows/autofix-callable.yml",
+        "staging: missing — required but absent",
+        "adapter: derived (package.json present)",
+        "live: branch=main, files=21, workflows=1",
+        "scope: domain skill: search"
+      ]
+    },
+    {
+      "repo": "trained-assist/trained-assist-speech-skill",
+      "owner": "trained-assist",
+      "type": "node",
+      "profile": "node",
+      "profile_ref": "v1.7.4",
+      "adapter": "derived",
+      "build": false,
+      "check": [
+        "node {{devbaseline}} run-derived-check --dir ."
+      ],
+      "fix": {
+        "autofix_callable": ".github/workflows/autofix-callable.yml",
+        "fixer_present": false,
+        "cap": 3,
+        "supported": true
+      },
+      "verify": [
+        "node {{devbaseline}} run-derived-check --dir ."
+      ],
+      "context": {
+        "builder": "external",
+        "entrypoints_present": [
+          "package.json"
+        ]
+      },
+      "logs": {
+        "contract_version": 1,
+        "retention_days": 90
+      },
+      "ci_present": true,
+      "ci_required": null,
+      "staging_present": false,
+      "staging_required": true,
+      "autofix_ref": "v1.7.4",
+      "readable": true,
+      "notes": [
+        "fix: missing — repository has no .github/workflows/autofix-callable.yml",
+        "staging: missing — required but absent",
+        "adapter: derived (package.json present)",
+        "live: branch=main, files=40, workflows=1",
+        "scope: domain skill: speech"
+      ]
+    },
+    {
+      "repo": "trained-assist/trained-assist-tg-bot",
+      "owner": "trained-assist",
+      "type": "node",
+      "profile": "node",
+      "profile_ref": "v1.7.4",
+      "adapter": "derived",
+      "build": false,
+      "check": [
+        "node {{devbaseline}} run-derived-check --dir ."
+      ],
+      "fix": {
+        "autofix_callable": ".github/workflows/autofix-callable.yml",
+        "fixer_present": false,
+        "cap": 3,
+        "supported": true
+      },
+      "verify": [
+        "node {{devbaseline}} run-derived-check --dir ."
+      ],
+      "context": {
+        "builder": "external",
+        "entrypoints_present": [
+          "package.json",
+          "src/index.js"
+        ]
+      },
+      "logs": {
+        "contract_version": 1,
+        "retention_days": 90
+      },
+      "ci_present": true,
+      "ci_required": null,
+      "staging_present": true,
+      "staging_required": true,
+      "autofix_ref": "v1.7.4",
+      "readable": true,
+      "notes": [
+        "fix: missing — repository has no .github/workflows/autofix-callable.yml",
+        "adapter: derived (package.json present)",
+        "live: branch=main, files=164, workflows=5",
+        "scope: Telegram gateway (Cloudflare Worker)"
+      ]
+    },
+    {
+      "repo": "trained-assist/trained-assist-web",
+      "owner": "trained-assist",
+      "type": "node",
+      "profile": "node",
+      "profile_ref": "v1.7.4",
+      "adapter": "derived",
+      "build": false,
+      "check": [
+        "node {{devbaseline}} run-derived-check --dir ."
+      ],
+      "fix": {
+        "autofix_callable": ".github/workflows/autofix-callable.yml",
+        "fixer_present": false,
+        "cap": 3,
+        "supported": true
+      },
+      "verify": [
+        "node {{devbaseline}} run-derived-check --dir ."
+      ],
+      "context": {
+        "builder": "external",
+        "entrypoints_present": [
+          "package.json"
+        ]
+      },
+      "logs": {
+        "contract_version": 1,
+        "retention_days": 90
+      },
+      "ci_present": true,
+      "ci_required": null,
+      "staging_present": true,
+      "staging_required": true,
+      "autofix_ref": "v1.7.4",
+      "readable": true,
+      "notes": [
+        "fix: missing — repository has no .github/workflows/autofix-callable.yml",
+        "adapter: derived (package.json present)",
+        "live: branch=main, files=47, workflows=3",
+        "scope: web frontend/backend"
+      ]
+    }
+  ]
+}

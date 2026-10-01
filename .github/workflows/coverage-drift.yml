@@ -1,0 +1,58 @@
+name: coverage-drift
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  coverage-drift:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Resolve profile_ref from the committed table
+        id: tool
+        run: |
+          node - <<'NODE'
+          const fs = require('fs');
+          const rows = require('./docs/inventory/repo-coverage.json').repos;
+          const refs = [...new Set(rows.map(r => r.profile_ref))];
+          if (refs.length !== 1 || !/^v\d+\.\d+\.\d+$/.test(refs[0])) throw Error('invalid profile_ref');
+          fs.appendFileSync(process.env.GITHUB_OUTPUT, `ref=${refs[0]}\n`);
+          NODE
+      - uses: actions/checkout@v4
+        with:
+          repository: trained-assist/pr-autofix
+          ref: ${{ steps.tool.outputs.ref }}
+          path: .inventory-tool
+          persist-credentials: false
+      - name: Regenerate using the existing organization reader
+        env:
+          GH_TOKEN: ${{ secrets.AUTOFIX_PAT }}
+        run: |
+          test -n "$GH_TOKEN" || { echo '::error::Organization reader AUTOFIX_PAT is unavailable'; exit 1; }
+          node scripts/inventory/regenerate.mjs .inventory-tool "$RUNNER_TEMP/coverage"
+          diff -u docs/inventory/repo-coverage.json "$RUNNER_TEMP/coverage/repo-coverage.json"
+          diff -u docs/inventory/repo-coverage.md "$RUNNER_TEMP/coverage/repo-coverage.md"
+  staging-gate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/checkout@v4
+        with:
+          repository: trained-assist/pr-autofix
+          ref: 2a1a7c78ef21371315f50c61428d391ba5b40e8b
+          path: .inventory-tool
+          persist-credentials: false
+      - name: Coverage drift and credential rejection behavior
+        run: node --test scripts/inventory/coverage.test.mjs
