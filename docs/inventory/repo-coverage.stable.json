@@ -1,5 +1,5 @@
 {
-  "generated_by": "pr-autofix v1.7.5",
+  "generated_by": "pr-autofix v1.7.6",
   "columns": [
     "repo",
     "owner",
@@ -28,7 +28,7 @@
       "owner": "trained-assist",
       "type": "node",
       "profile": "node",
-      "profile_ref": "v1.7.5",
+      "profile_ref": "v1.7.6",
       "adapter": "derived",
       "build": false,
       "check": [
@@ -36,7 +36,13 @@
       ],
       "fix": {
         "autofix_callable": ".github/workflows/autofix-callable.yml",
+        "installation": "absent",
         "fixer_present": false,
+        "observed_refs": [],
+        "callers": [],
+        "desired_ref": "v1.7.6",
+        "evidence_complete": true,
+        "execution_verified": false,
         "cap": 3,
         "supported": true
       },
@@ -57,7 +63,7 @@
       "ci_required": null,
       "staging_present": false,
       "staging_required": true,
-      "autofix_ref": "v1.7.4",
+      "autofix_ref": "v1.7.6",
       "read_state": "read",
       "notes": [
         "fix: missing — repository has no .github/workflows/autofix-callable.yml",
@@ -72,7 +78,7 @@
       "owner": "trained-assist",
       "type": "node",
       "profile": "node",
-      "profile_ref": "v1.7.5",
+      "profile_ref": "v1.7.6",
       "adapter": "derived",
       "build": false,
       "check": [
@@ -80,7 +86,13 @@
       ],
       "fix": {
         "autofix_callable": ".github/workflows/autofix-callable.yml",
+        "installation": "absent",
         "fixer_present": false,
+        "observed_refs": [],
+        "callers": [],
+        "desired_ref": "v1.7.6",
+        "evidence_complete": true,
+        "execution_verified": false,
         "cap": 3,
         "supported": true
       },
@@ -101,7 +113,7 @@
       "ci_required": null,
       "staging_present": false,
       "staging_required": true,
-      "autofix_ref": "v1.7.4",
+      "autofix_ref": "v1.7.6",
       "read_state": "read",
       "notes": [
         "fix: missing — repository has no .github/workflows/autofix-callable.yml",
@@ -116,7 +128,7 @@
       "owner": "trained-assist",
       "type": "docs",
       "profile": "docs",
-      "profile_ref": "v1.7.5",
+      "profile_ref": "v1.7.6",
       "adapter": "derived",
       "build": false,
       "check": [
@@ -124,7 +136,13 @@
       ],
       "fix": {
         "autofix_callable": null,
+        "installation": "unsupported",
         "fixer_present": false,
+        "observed_refs": [],
+        "callers": [],
+        "desired_ref": null,
+        "evidence_complete": true,
+        "execution_verified": false,
         "cap": 0,
         "supported": false
       },
@@ -161,7 +179,7 @@
       "owner": "trained-assist",
       "type": "node",
       "profile": "node",
-      "profile_ref": "v1.7.5",
+      "profile_ref": "v1.7.6",
       "adapter": "derived",
       "build": false,
       "check": [
@@ -169,7 +187,13 @@
       ],
       "fix": {
         "autofix_callable": ".github/workflows/autofix-callable.yml",
+        "installation": "absent",
         "fixer_present": false,
+        "observed_refs": [],
+        "callers": [],
+        "desired_ref": "v1.7.6",
+        "evidence_complete": true,
+        "execution_verified": false,
         "cap": 3,
         "supported": true
       },
@@ -190,7 +214,7 @@
       "ci_required": null,
       "staging_present": false,
       "staging_required": true,
-      "autofix_ref": "v1.7.4",
+      "autofix_ref": "v1.7.6",
       "read_state": "read",
       "notes": [
         "fix: missing — repository has no .github/workflows/autofix-callable.yml",
@@ -205,7 +229,7 @@
       "owner": "trained-assist",
       "type": "docs",
       "profile": "docs",
-      "profile_ref": "v1.7.5",
+      "profile_ref": "v1.7.6",
       "adapter": "derived",
       "build": false,
       "check": [
@@ -213,7 +237,13 @@
       ],
       "fix": {
         "autofix_callable": null,
+        "installation": "unsupported",
         "fixer_present": false,
+        "observed_refs": [],
+        "callers": [],
+        "desired_ref": null,
+        "evidence_complete": true,
+        "execution_verified": false,
         "cap": 0,
         "supported": false
       },
@@ -250,7 +280,7 @@
       "owner": "trained-assist",
       "type": "node",
       "profile": "node",
-      "profile_ref": "v1.7.5",
+      "profile_ref": "v1.7.6",
       "adapter": "derived",
       "build": false,
       "check": [
@@ -258,7 +288,21 @@
       ],
       "fix": {
         "autofix_callable": ".github/workflows/autofix-callable.yml",
-        "fixer_present": false,
+        "installation": "remote_caller",
+        "fixer_present": true,
+        "observed_refs": [
+          "v1.5.3"
+        ],
+        "callers": [
+          {
+            "workflow": ".github/workflows/ci.yml",
+            "job": "autofix",
+            "ref": "v1.5.3"
+          }
+        ],
+        "desired_ref": "v1.7.6",
+        "evidence_complete": true,
+        "execution_verified": false,
         "cap": 3,
         "supported": true
       },
@@ -279,10 +323,9 @@
       "ci_required": null,
       "staging_present": false,
       "staging_required": true,
-      "autofix_ref": "v1.7.4",
+      "autofix_ref": "v1.7.6",
       "read_state": "read",
       "notes": [
-        "fix: missing — repository has no .github/workflows/autofix-callable.yml",
         "staging: missing — required but absent",
         "adapter: derived (package.json present)",
         "live: tree read from main",
@@ -294,7 +337,7 @@
       "owner": "trained-assist",
       "type": "node",
       "profile": "node",
-      "profile_ref": "v1.7.5",
+      "profile_ref": "v1.7.6",
       "adapter": "derived",
       "build": false,
       "check": [
@@ -302,7 +345,21 @@
       ],
       "fix": {
         "autofix_callable": ".github/workflows/autofix-callable.yml",
-        "fixer_present": false,
+        "installation": "remote_caller",
+        "fixer_present": true,
+        "observed_refs": [
+          "v1.7.2"
+        ],
+        "callers": [
+          {
+            "workflow": ".github/workflows/pr-autofix.yml",
+            "job": "autofix",
+            "ref": "v1.7.2"
+          }
+        ],
+        "desired_ref": "v1.7.6",
+        "evidence_complete": true,
+        "execution_verified": false,
         "cap": 3,
         "supported": true
       },
@@ -323,10 +380,9 @@
       "ci_required": null,
       "staging_present": true,
       "staging_required": true,
-      "autofix_ref": "v1.7.4",
+      "autofix_ref": "v1.7.6",
       "read_state": "read",
       "notes": [
-        "fix: missing — repository has no .github/workflows/autofix-callable.yml",
         "adapter: derived (package.json present)",
         "live: tree read from main",
         "scope: playbook library; installer + setup orchestrator (Z01 owner T10)"
@@ -337,7 +393,7 @@
       "owner": "trained-assist",
       "type": "docs",
       "profile": "docs",
-      "profile_ref": "v1.7.5",
+      "profile_ref": "v1.7.6",
       "adapter": "derived",
       "build": false,
       "check": [
@@ -345,7 +401,13 @@
       ],
       "fix": {
         "autofix_callable": null,
+        "installation": "unsupported",
         "fixer_present": false,
+        "observed_refs": [],
+        "callers": [],
+        "desired_ref": null,
+        "evidence_complete": true,
+        "execution_verified": false,
         "cap": 0,
         "supported": false
       },
@@ -382,7 +444,7 @@
       "owner": "trained-assist",
       "type": "node",
       "profile": "node",
-      "profile_ref": "v1.7.5",
+      "profile_ref": "v1.7.6",
       "adapter": "derived",
       "build": false,
       "check": [
@@ -390,7 +452,21 @@
       ],
       "fix": {
         "autofix_callable": ".github/workflows/autofix-callable.yml",
-        "fixer_present": false,
+        "installation": "remote_caller",
+        "fixer_present": true,
+        "observed_refs": [
+          "v1.7.3"
+        ],
+        "callers": [
+          {
+            "workflow": ".github/workflows/ci.yml",
+            "job": "autofix",
+            "ref": "v1.7.3"
+          }
+        ],
+        "desired_ref": "v1.7.6",
+        "evidence_complete": true,
+        "execution_verified": false,
         "cap": 3,
         "supported": true
       },
@@ -412,10 +488,9 @@
       "ci_required": null,
       "staging_present": true,
       "staging_required": true,
-      "autofix_ref": "v1.7.4",
+      "autofix_ref": "v1.7.6",
       "read_state": "read",
       "notes": [
-        "fix: missing — repository has no .github/workflows/autofix-callable.yml",
         "adapter: derived (package.json present)",
         "live: tree read from main",
         "scope: agent core: runner, sessions, core MCP, web backend"
@@ -426,7 +501,7 @@
       "owner": "trained-assist",
       "type": "node",
       "profile": "node",
-      "profile_ref": "v1.7.5",
+      "profile_ref": "v1.7.6",
       "adapter": "derived",
       "build": false,
       "check": [
@@ -434,7 +509,13 @@
       ],
       "fix": {
         "autofix_callable": ".github/workflows/autofix-callable.yml",
+        "installation": "absent",
         "fixer_present": false,
+        "observed_refs": [],
+        "callers": [],
+        "desired_ref": "v1.7.6",
+        "evidence_complete": true,
+        "execution_verified": false,
         "cap": 3,
         "supported": true
       },
@@ -455,7 +536,7 @@
       "ci_required": null,
       "staging_present": false,
       "staging_required": true,
-      "autofix_ref": "v1.7.4",
+      "autofix_ref": "v1.7.6",
       "read_state": "read",
       "notes": [
         "fix: missing — repository has no .github/workflows/autofix-callable.yml",
@@ -470,7 +551,7 @@
       "owner": "trained-assist",
       "type": "docs",
       "profile": "docs",
-      "profile_ref": "v1.7.5",
+      "profile_ref": "v1.7.6",
       "adapter": "derived",
       "build": false,
       "check": [
@@ -478,7 +559,13 @@
       ],
       "fix": {
         "autofix_callable": null,
+        "installation": "unsupported",
         "fixer_present": false,
+        "observed_refs": [],
+        "callers": [],
+        "desired_ref": null,
+        "evidence_complete": true,
+        "execution_verified": false,
         "cap": 0,
         "supported": false
       },
@@ -515,7 +602,7 @@
       "owner": "trained-assist",
       "type": "docs",
       "profile": "docs",
-      "profile_ref": "v1.7.5",
+      "profile_ref": "v1.7.6",
       "adapter": "derived",
       "build": false,
       "check": [
@@ -523,7 +610,13 @@
       ],
       "fix": {
         "autofix_callable": null,
+        "installation": "unsupported",
         "fixer_present": false,
+        "observed_refs": [],
+        "callers": [],
+        "desired_ref": null,
+        "evidence_complete": true,
+        "execution_verified": false,
         "cap": 0,
         "supported": false
       },
@@ -560,7 +653,7 @@
       "owner": "trained-assist",
       "type": "node",
       "profile": "node",
-      "profile_ref": "v1.7.5",
+      "profile_ref": "v1.7.6",
       "adapter": "derived",
       "build": false,
       "check": [
@@ -568,7 +661,13 @@
       ],
       "fix": {
         "autofix_callable": ".github/workflows/autofix-callable.yml",
+        "installation": "absent",
         "fixer_present": false,
+        "observed_refs": [],
+        "callers": [],
+        "desired_ref": "v1.7.6",
+        "evidence_complete": true,
+        "execution_verified": false,
         "cap": 3,
         "supported": true
       },
@@ -589,7 +688,7 @@
       "ci_required": null,
       "staging_present": false,
       "staging_required": true,
-      "autofix_ref": "v1.7.4",
+      "autofix_ref": "v1.7.6",
       "read_state": "read",
       "notes": [
         "fix: missing — repository has no .github/workflows/autofix-callable.yml",
@@ -604,7 +703,7 @@
       "owner": "trained-assist",
       "type": "docs",
       "profile": "docs",
-      "profile_ref": "v1.7.5",
+      "profile_ref": "v1.7.6",
       "adapter": "derived",
       "build": false,
       "check": [
@@ -612,7 +711,13 @@
       ],
       "fix": {
         "autofix_callable": null,
+        "installation": "unsupported",
         "fixer_present": false,
+        "observed_refs": [],
+        "callers": [],
+        "desired_ref": null,
+        "evidence_complete": true,
+        "execution_verified": false,
         "cap": 0,
         "supported": false
       },
@@ -649,7 +754,7 @@
       "owner": "trained-assist",
       "type": "docs",
       "profile": "docs",
-      "profile_ref": "v1.7.5",
+      "profile_ref": "v1.7.6",
       "adapter": "derived",
       "build": false,
       "check": [
@@ -657,7 +762,13 @@
       ],
       "fix": {
         "autofix_callable": null,
+        "installation": "unsupported",
         "fixer_present": false,
+        "observed_refs": [],
+        "callers": [],
+        "desired_ref": null,
+        "evidence_complete": true,
+        "execution_verified": false,
         "cap": 0,
         "supported": false
       },
@@ -693,7 +804,7 @@
       "owner": "trained-assist",
       "type": "node",
       "profile": "node",
-      "profile_ref": "v1.7.5",
+      "profile_ref": "v1.7.6",
       "adapter": "derived",
       "build": false,
       "check": [
@@ -701,7 +812,21 @@
       ],
       "fix": {
         "autofix_callable": ".github/workflows/autofix-callable.yml",
-        "fixer_present": false,
+        "installation": "remote_caller",
+        "fixer_present": true,
+        "observed_refs": [
+          "v1.5.3"
+        ],
+        "callers": [
+          {
+            "workflow": ".github/workflows/pr-autofix.yml",
+            "job": "autofix",
+            "ref": "v1.5.3"
+          }
+        ],
+        "desired_ref": "v1.7.6",
+        "evidence_complete": true,
+        "execution_verified": false,
         "cap": 3,
         "supported": true
       },
@@ -722,10 +847,9 @@
       "ci_required": null,
       "staging_present": false,
       "staging_required": true,
-      "autofix_ref": "v1.7.4",
+      "autofix_ref": "v1.7.6",
       "read_state": "read",
       "notes": [
-        "fix: missing — repository has no .github/workflows/autofix-callable.yml",
         "staging: missing — required but absent",
         "adapter: derived (package.json present)",
         "live: tree read from main",
@@ -737,7 +861,7 @@
       "owner": "trained-assist",
       "type": "node",
       "profile": "node",
-      "profile_ref": "v1.7.5",
+      "profile_ref": "v1.7.6",
       "adapter": "derived",
       "build": false,
       "check": [
@@ -745,7 +869,21 @@
       ],
       "fix": {
         "autofix_callable": ".github/workflows/autofix-callable.yml",
-        "fixer_present": false,
+        "installation": "remote_caller",
+        "fixer_present": true,
+        "observed_refs": [
+          "v1.5.3"
+        ],
+        "callers": [
+          {
+            "workflow": ".github/workflows/pr-autofix.yml",
+            "job": "autofix",
+            "ref": "v1.5.3"
+          }
+        ],
+        "desired_ref": "v1.7.6",
+        "evidence_complete": true,
+        "execution_verified": false,
         "cap": 3,
         "supported": true
       },
@@ -766,10 +904,9 @@
       "ci_required": null,
       "staging_present": true,
       "staging_required": true,
-      "autofix_ref": "v1.7.4",
+      "autofix_ref": "v1.7.6",
       "read_state": "read",
       "notes": [
-        "fix: missing — repository has no .github/workflows/autofix-callable.yml",
         "adapter: derived (package.json present)",
         "live: tree read from main",
         "scope: domain skill: hh/recruiting"
@@ -780,7 +917,7 @@
       "owner": "trained-assist",
       "type": "docs",
       "profile": "docs",
-      "profile_ref": "v1.7.5",
+      "profile_ref": "v1.7.6",
       "adapter": "derived",
       "build": false,
       "check": [
@@ -788,7 +925,13 @@
       ],
       "fix": {
         "autofix_callable": null,
+        "installation": "unsupported",
         "fixer_present": false,
+        "observed_refs": [],
+        "callers": [],
+        "desired_ref": null,
+        "evidence_complete": true,
+        "execution_verified": false,
         "cap": 0,
         "supported": false
       },
@@ -825,7 +968,7 @@
       "owner": "trained-assist",
       "type": "node",
       "profile": "node",
-      "profile_ref": "v1.7.5",
+      "profile_ref": "v1.7.6",
       "adapter": "derived",
       "build": false,
       "check": [
@@ -833,7 +976,13 @@
       ],
       "fix": {
         "autofix_callable": ".github/workflows/autofix-callable.yml",
+        "installation": "absent",
         "fixer_present": false,
+        "observed_refs": [],
+        "callers": [],
+        "desired_ref": "v1.7.6",
+        "evidence_complete": true,
+        "execution_verified": false,
         "cap": 3,
         "supported": true
       },
@@ -855,7 +1004,7 @@
       "ci_required": null,
       "staging_present": false,
       "staging_required": true,
-      "autofix_ref": "v1.7.4",
+      "autofix_ref": "v1.7.6",
       "read_state": "read",
       "notes": [
         "fix: missing — repository has no .github/workflows/autofix-callable.yml",
@@ -870,7 +1019,7 @@
       "owner": "trained-assist",
       "type": "node",
       "profile": "node",
-      "profile_ref": "v1.7.5",
+      "profile_ref": "v1.7.6",
       "adapter": "derived",
       "build": false,
       "check": [
@@ -878,7 +1027,13 @@
       ],
       "fix": {
         "autofix_callable": ".github/workflows/autofix-callable.yml",
+        "installation": "absent",
         "fixer_present": false,
+        "observed_refs": [],
+        "callers": [],
+        "desired_ref": "v1.7.6",
+        "evidence_complete": true,
+        "execution_verified": false,
         "cap": 3,
         "supported": true
       },
@@ -899,7 +1054,7 @@
       "ci_required": null,
       "staging_present": false,
       "staging_required": true,
-      "autofix_ref": "v1.7.4",
+      "autofix_ref": "v1.7.6",
       "read_state": "read",
       "notes": [
         "fix: missing — repository has no .github/workflows/autofix-callable.yml",
@@ -914,7 +1069,7 @@
       "owner": "trained-assist",
       "type": "node",
       "profile": "node",
-      "profile_ref": "v1.7.5",
+      "profile_ref": "v1.7.6",
       "adapter": "derived",
       "build": false,
       "check": [
@@ -922,7 +1077,13 @@
       ],
       "fix": {
         "autofix_callable": ".github/workflows/autofix-callable.yml",
+        "installation": "absent",
         "fixer_present": false,
+        "observed_refs": [],
+        "callers": [],
+        "desired_ref": "v1.7.6",
+        "evidence_complete": true,
+        "execution_verified": false,
         "cap": 3,
         "supported": true
       },
@@ -943,7 +1104,7 @@
       "ci_required": null,
       "staging_present": false,
       "staging_required": true,
-      "autofix_ref": "v1.7.4",
+      "autofix_ref": "v1.7.6",
       "read_state": "read",
       "notes": [
         "fix: missing — repository has no .github/workflows/autofix-callable.yml",
@@ -958,7 +1119,7 @@
       "owner": "trained-assist",
       "type": "node",
       "profile": "node",
-      "profile_ref": "v1.7.5",
+      "profile_ref": "v1.7.6",
       "adapter": "derived",
       "build": false,
       "check": [
@@ -966,7 +1127,13 @@
       ],
       "fix": {
         "autofix_callable": ".github/workflows/autofix-callable.yml",
+        "installation": "absent",
         "fixer_present": false,
+        "observed_refs": [],
+        "callers": [],
+        "desired_ref": "v1.7.6",
+        "evidence_complete": true,
+        "execution_verified": false,
         "cap": 3,
         "supported": true
       },
@@ -987,7 +1154,7 @@
       "ci_required": null,
       "staging_present": false,
       "staging_required": true,
-      "autofix_ref": "v1.7.4",
+      "autofix_ref": "v1.7.6",
       "read_state": "read",
       "notes": [
         "fix: missing — repository has no .github/workflows/autofix-callable.yml",
@@ -1002,7 +1169,7 @@
       "owner": "trained-assist",
       "type": "node",
       "profile": "node",
-      "profile_ref": "v1.7.5",
+      "profile_ref": "v1.7.6",
       "adapter": "derived",
       "build": false,
       "check": [
@@ -1010,7 +1177,13 @@
       ],
       "fix": {
         "autofix_callable": ".github/workflows/autofix-callable.yml",
+        "installation": "absent",
         "fixer_present": false,
+        "observed_refs": [],
+        "callers": [],
+        "desired_ref": "v1.7.6",
+        "evidence_complete": true,
+        "execution_verified": false,
         "cap": 3,
         "supported": true
       },
@@ -1031,7 +1204,7 @@
       "ci_required": null,
       "staging_present": false,
       "staging_required": true,
-      "autofix_ref": "v1.7.4",
+      "autofix_ref": "v1.7.6",
       "read_state": "read",
       "notes": [
         "fix: missing — repository has no .github/workflows/autofix-callable.yml",
@@ -1046,7 +1219,7 @@
       "owner": "trained-assist",
       "type": "node",
       "profile": "node",
-      "profile_ref": "v1.7.5",
+      "profile_ref": "v1.7.6",
       "adapter": "derived",
       "build": false,
       "check": [
@@ -1054,7 +1227,21 @@
       ],
       "fix": {
         "autofix_callable": ".github/workflows/autofix-callable.yml",
-        "fixer_present": false,
+        "installation": "remote_caller",
+        "fixer_present": true,
+        "observed_refs": [
+          "v1.5.3"
+        ],
+        "callers": [
+          {
+            "workflow": ".github/workflows/ci.yml",
+            "job": "autofix",
+            "ref": "v1.5.3"
+          }
+        ],
+        "desired_ref": "v1.7.6",
+        "evidence_complete": true,
+        "execution_verified": false,
         "cap": 3,
         "supported": true
       },
@@ -1076,10 +1263,9 @@
       "ci_required": null,
       "staging_present": true,
       "staging_required": true,
-      "autofix_ref": "v1.7.4",
+      "autofix_ref": "v1.7.6",
       "read_state": "read",
       "notes": [
-        "fix: missing — repository has no .github/workflows/autofix-callable.yml",
         "adapter: derived (package.json present)",
         "live: tree read from main",
         "scope: Telegram gateway (Cloudflare Worker)"
@@ -1090,7 +1276,7 @@
       "owner": "trained-assist",
       "type": "node",
       "profile": "node",
-      "profile_ref": "v1.7.5",
+      "profile_ref": "v1.7.6",
       "adapter": "derived",
       "build": false,
       "check": [
@@ -1098,7 +1284,21 @@
       ],
       "fix": {
         "autofix_callable": ".github/workflows/autofix-callable.yml",
-        "fixer_present": false,
+        "installation": "remote_caller",
+        "fixer_present": true,
+        "observed_refs": [
+          "v1"
+        ],
+        "callers": [
+          {
+            "workflow": ".github/workflows/ci.yml",
+            "job": "autofix",
+            "ref": "v1"
+          }
+        ],
+        "desired_ref": "v1.7.6",
+        "evidence_complete": true,
+        "execution_verified": false,
         "cap": 3,
         "supported": true
       },
@@ -1119,10 +1319,9 @@
       "ci_required": null,
       "staging_present": true,
       "staging_required": true,
-      "autofix_ref": "v1.7.4",
+      "autofix_ref": "v1.7.6",
       "read_state": "read",
       "notes": [
-        "fix: missing — repository has no .github/workflows/autofix-callable.yml",
         "adapter: derived (package.json present)",
         "live: tree read from main",
         "scope: web frontend/backend"
