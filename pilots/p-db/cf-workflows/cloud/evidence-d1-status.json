@@ -130,6 +130,38 @@
         "history": "[{\"kind\":\"status\",\"step\":\"start\",\"at\":1790879565708,\"payload\":\"{\\\"instance\\\":\\\"ut-cf-183121-timeout\\\"}\"},{\"kind\":\"step_done\",\"step\":\"prepare\",\"at\":1790879566060,\"payload\":null},{\"kind\":\"step_done\",\"step\":\"run\",\"at\":1790879566167,\"payload\":\"{\\\"external\\\":\\\"called\\\",\\\"version\\\":\\\"v1\\\"}\"},{\"kind\":\"status\",\"step\":\"wait\",\"at\":1790879566283,\"payload\":\"{\\\"waitingFor\\\":\\\"user_reply\\\",\\\"version\\\":\\\"v1\\\"}\"},{\"kind\":\"wait_timeout\",\"step\":\"wait\",\"at\":1790879586366,\"payload\":\"{\\\"timeoutSec\\\":20,\\\"version\\\":\\\"v1\\\"}\"}]"
       },
       {
+        "id": "ut-cf-183802-crash",
+        "status": "done",
+        "generation": 1,
+        "result_json": "{\"answer\":\"да\",\"ok\":true,\"version\":\"v1\"}",
+        "side_effects": "{\"apply\":1,\"prepare\":1,\"run\":1}",
+        "history": "[{\"kind\":\"status\",\"step\":\"start\",\"at\":1790879905289,\"payload\":\"{\\\"instance\\\":\\\"ut-cf-183802-crash\\\"}\"},{\"kind\":\"step_done\",\"step\":\"prepare\",\"at\":1790879905816,\"payload\":null},{\"kind\":\"step_done\",\"step\":\"run\",\"at\":1790879905917,\"payload\":\"{\\\"external\\\":\\\"called\\\",\\\"version\\\":\\\"v1\\\"}\"},{\"kind\":\"step_done\",\"step\":\"guard-crash\",\"at\":1790879908056,\"payload\":\"{\\\"resumedBy\\\":\\\"platform\\\",\\\"attempt\\\":2,\\\"version\\\":\\\"v1\\\"}\"},{\"kind\":\"status\",\"step\":\"wait\",\"at\":1790879908215,\"payload\":\"{\\\"waitingFor\\\":\\\"user_reply\\\",\\\"version\\\":\\\"v1\\\"}\"},{\"kind\":\"signal\",\"step\":\"user_reply\",\"at\":1790879909166,\"payload\":\"{\\\"answer\\\":\\\"да\\\"}\"},{\"kind\":\"step_done\",\"step\":\"wait\",\"at\":1790879909278,\"payload\":\"{\\\"answer\\\":\\\"да\\\"}\"},{\"kind\":\"step_done\",\"step\":\"apply\",\"at\":1790879909377,\"payload\":\"{\\\"used\\\":\\\"да\\\",\\\"version\\\":\\\"v1\\\"}\"},{\"kind\":\"step_done\",\"step\":\"finalize\",\"at\":1790879909493,\"payload\":null}]"
+      },
+      {
+        "id": "ut-cf-183802-deploy",
+        "status": "done",
+        "generation": 1,
+        "result_json": "{\"answer\":\"да\",\"ok\":true,\"version\":\"v2\"}",
+        "side_effects": "{\"apply\":1,\"prepare\":1,\"run\":1}",
+        "history": "[{\"kind\":\"status\",\"step\":\"start\",\"at\":1790880001576,\"payload\":\"{\\\"instance\\\":\\\"ut-cf-183802-deploy\\\"}\"},{\"kind\":\"step_done\",\"step\":\"prepare\",\"at\":1790880002052,\"payload\":null},{\"kind\":\"step_done\",\"step\":\"run\",\"at\":1790880002160,\"payload\":\"{\\\"external\\\":\\\"called\\\",\\\"version\\\":\\\"v1\\\"}\"},{\"kind\":\"status\",\"step\":\"wait\",\"at\":1790880002271,\"payload\":\"{\\\"waitingFor\\\":\\\"user_reply\\\",\\\"version\\\":\\\"v1\\\"}\"},{\"kind\":\"signal\",\"step\":\"user_reply\",\"at\":1790880090469,\"payload\":\"{\\\"answer\\\":\\\"да\\\"}\"},{\"kind\":\"step_done\",\"step\":\"wait\",\"at\":1790880091792,\"payload\":\"{\\\"answer\\\":\\\"да\\\"}\"},{\"kind\":\"step_done\",\"step\":\"apply\",\"at\":1790880091894,\"payload\":\"{\\\"used\\\":\\\"да\\\",\\\"version\\\":\\\"v2\\\"}\"},{\"kind\":\"step_done\",\"step\":\"finalize\",\"at\":1790880092007,\"payload\":null}]"
+      },
+      {
+        "id": "ut-cf-183802-sleep",
+        "status": "done",
+        "generation": 1,
+        "result_json": "{\"answer\":\"да\",\"ok\":true,\"version\":\"v1\"}",
+        "side_effects": "{\"apply\":1,\"prepare\":1,\"run\":1}",
+        "history": "[{\"kind\":\"status\",\"step\":\"start\",\"at\":1790879913359,\"payload\":\"{\\\"instance\\\":\\\"ut-cf-183802-sleep\\\"}\"},{\"kind\":\"step_done\",\"step\":\"prepare\",\"at\":1790879913871,\"payload\":null},{\"kind\":\"step_done\",\"step\":\"run\",\"at\":1790879913971,\"payload\":\"{\\\"external\\\":\\\"called\\\",\\\"version\\\":\\\"v1\\\"}\"},{\"kind\":\"status\",\"step\":\"wait\",\"at\":1790879961361,\"payload\":\"{\\\"waitingFor\\\":\\\"user_reply\\\",\\\"version\\\":\\\"v1\\\"}\"},{\"kind\":\"signal\",\"step\":\"user_reply\",\"at\":1790879973971,\"payload\":\"{\\\"answer\\\":\\\"да\\\"}\"},{\"kind\":\"step_done\",\"step\":\"wait\",\"at\":1790879974107,\"payload\":\"{\\\"answer\\\":\\\"да\\\"}\"},{\"kind\":\"step_done\",\"step\":\"apply\",\"at\":1790879974205,\"payload\":\"{\\\"used\\\":\\\"да\\\",\\\"version\\\":\\\"v1\\\"}\"},{\"kind\":\"step_done\",\"step\":\"finalize\",\"at\":1790879974318,\"payload\":null}]"
+      },
+      {
+        "id": "ut-cf-183802-timeout",
+        "status": "failed",
+        "generation": 1,
+        "result_json": "{\"reason\":\"user_reply_timeout\"}",
+        "side_effects": "{\"prepare\":1,\"run\":1}",
+        "history": "[{\"kind\":\"status\",\"step\":\"start\",\"at\":1790879978148,\"payload\":\"{\\\"instance\\\":\\\"ut-cf-183802-timeout\\\"}\"},{\"kind\":\"step_done\",\"step\":\"prepare\",\"at\":1790879978507,\"payload\":null},{\"kind\":\"step_done\",\"step\":\"run\",\"at\":1790879978610,\"payload\":\"{\\\"external\\\":\\\"called\\\",\\\"version\\\":\\\"v1\\\"}\"},{\"kind\":\"status\",\"step\":\"wait\",\"at\":1790879978717,\"payload\":\"{\\\"waitingFor\\\":\\\"user_reply\\\",\\\"version\\\":\\\"v1\\\"}\"},{\"kind\":\"wait_timeout\",\"step\":\"wait\",\"at\":1790879998785,\"payload\":\"{\\\"timeoutSec\\\":20,\\\"version\\\":\\\"v1\\\"}\"}]"
+      },
+      {
         "id": "ut-cf-sanity",
         "status": "done",
         "generation": 1,
@@ -145,14 +177,14 @@
       "served_by_colo": "ARN",
       "served_by_primary": true,
       "timings": {
-        "sql_duration_ms": 0.8132
+        "sql_duration_ms": 3.1567
       },
-      "duration": 0.8132,
+      "duration": 3.1567,
       "changes": 0,
-      "last_row_id": 0,
+      "last_row_id": 164,
       "changed_db": false,
-      "size_after": 53248,
-      "rows_read": 231,
+      "size_after": 61440,
+      "rows_read": 284,
       "rows_written": 0,
       "total_attempts": 1
     }

@@ -1,21 +1,21 @@
 {
   "variant": "cf-workflows-d1",
-  "run": "183121",
+  "run": "183802",
   "mode": "real Cloudflare account (worker p-db-a1-cloud-smoke, D1 p-db-a1-taskstore)",
   "criteria": {
     "C1_continuation_after_crash_without_trigger": "PASS",
     "C2_durable_sleep_no_external_event": "PASS",
-    "C2_sleep_gap_ms": 47377,
+    "C2_sleep_gap_ms": 47390,
     "C2_wake_after_sleep": "PASS",
     "C2_waitFor_timeout_no_event": "PASS",
-    "C3_deploy_while_waiting": "FAIL"
+    "C3_deploy_while_waiting": "PASS"
   },
   "notes": {
-    "c1_signal_to_finalize_ms": 554,
-    "c2_signal_to_apply_ms": 280,
-    "c3_signal_to_apply_after_deploy_ms": 316,
-    "c1_wall_ms": 6366,
-    "t8_rows": 17
+    "c1_signal_to_finalize_ms": 548,
+    "c2_signal_to_apply_ms": 234,
+    "c3_signal_to_apply_after_deploy_ms": 1425,
+    "c1_wall_ms": 6880,
+    "t8_rows": 21
   },
   "evidence": {
     "C1": {
@@ -49,9 +49,9 @@
       "result": {
         "answer": "да",
         "ok": true,
-        "version": "v1"
+        "version": "v2"
       },
-      "apply_version": "v1"
+      "apply_version": "v2"
     }
   },
   "files": [
