@@ -1,0 +1,43 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
+import { pathToFileURL } from 'node:url';
+import { spawnSync } from 'node:child_process';
+
+test('pinned generator: unchanged repo passes; adapter edit changes coverage and fails drift', async t => {
+  const root = fs.mkdtempSync(path.join(process.env.RUNNER_TEMP || os.tmpdir(), 'coverage-'));
+  t.after(() => fs.rmSync(root, { recursive: true, force: true }));
+  const tool = path.resolve(process.env.PR_AUTOFIX_PINNED_DIR || '.inventory-tool');
+  const { scanLocal } = await import(pathToFileURL(path.join(tool, 'scripts/lib/devbaseline/inventory.mjs')));
+  fs.writeFileSync(path.join(root, 'README.md'), '# Fixture\n');
+  const adapter = { schema_version: 1, profile: 'docs', staging: { required: false }, context: { entrypoints: ['README.md'] } };
+  fs.writeFileSync(path.join(root, '.devbaseline.json'), JSON.stringify(adapter));
+  const entry = { repo: 'fixture/docs', path: root };
+  const a = await scanLocal(entry, 'v1.7.4');
+  assert.equal(a.readable, true, JSON.stringify(a));
+  const before = JSON.stringify(a);
+  const repeat = JSON.stringify(await scanLocal(entry, 'v1.7.4'));
+  assert.equal(repeat, before);
+  adapter.context.entrypoints = ['missing.md'];
+  fs.writeFileSync(path.join(root, '.devbaseline.json'), JSON.stringify(adapter));
+  const changed = JSON.stringify(await scanLocal(entry, 'v1.7.4'));
+  const oldFile = path.join(root, 'before.json'), newFile = path.join(root, 'after.json');
+  fs.writeFileSync(oldFile, before); fs.writeFileSync(newFile, repeat);
+  assert.equal(spawnSync('diff', ['-u', oldFile, newFile]).status, 0);
+  fs.writeFileSync(newFile, changed);
+  assert.equal(spawnSync('diff', ['-u', oldFile, newFile]).status, 1);
+});
+test('credential names pass, synthetic credential value fails without printing it', t => {
+  const root = fs.mkdtempSync(path.join(process.env.RUNNER_TEMP || os.tmpdir(), 'credential-scan-'));
+  t.after(() => fs.rmSync(root, { recursive: true, force: true }));
+  const file = path.join(root, 'fixture.json');
+  fs.writeFileSync(file, JSON.stringify({ credential_name: 'AUTOFIX_PAT' }));
+  const run = () => spawnSync(process.execPath, ['scripts/inventory/assert-no-credential-values.js', file], { encoding: 'utf8' });
+  assert.equal(run().status, 0);
+  const fake = 'gh' + 'p_' + 'x'.repeat(35);
+  fs.writeFileSync(file, JSON.stringify({ value: fake }));
+  const bad = run(); assert.equal(bad.status, 1);
+  assert.ok(!(bad.stdout + bad.stderr).includes(fake));
+});
