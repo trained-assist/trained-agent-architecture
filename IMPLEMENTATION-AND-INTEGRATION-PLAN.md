@@ -99,6 +99,14 @@ Runner и контрольный слой можно разрабатывать 
 
 Названия I00–I10, E0–E7, Pxx и M0/M1 из старых эпиков сосуществуют. Для работы использовать card issue + конкретный acceptance outcome; номера не являются четырьмя последовательными планами. [#87](https://github.com/trained-assist/trained-agent-architecture/issues/87) — подготовительный ускоряющий эпик, не замена полной приёмки P01–P30.
 
+## Параллельный research: Fast-path до запуска агента
+
+Решение владельца 01.10: до production интеграции подробно исследовать необязательные Agent Runs. [Алгоритм, JSON outcomes, corpus и eval](TASK-ROUTER-AND-MCP.md#11-fast-path-v1-алгоритм-до-запуска-агента), [explicit aliases и compact catalog](CAPABILITY-CATALOG-AND-FAST-REPLIES.md#explicit-names-и-compact-catalog-v1--01102026).
+
+Это неблокирующий research track в отдельном pilot/fast-path каталоге нового control-plane repo, с собственным владельцем/веткой/worktree. При пересечении с исполнителем ядра согласовать пути до изменений. Не менять живые adapters, shared VM services, native MCP names и ветки текущей приёмки PR. Результат: catalog inventory/mapping, утверждённый sanitized corpus, сравнение one-pass/two-pass, mock replay harness, live-model holdout report и решение по promotion. Использует существующие карточки catalog/fast replies; не является prerequisite первого Web vertical slice.
+
+Текущие MCP имена сохраняем через compatibility mapping. Full request/context по умолчанию; head/tail только preview, не доказательство полноты ответа. Host-owned bounded tool execution не превращает llm-recipe-job в автономного агента. Формальные thresholds выбираем до holdout; нет blanket обещания экономии токенов или качества.
+
 ## Итерации и зависимости
 
 | Stage | Результат | Зависимости |

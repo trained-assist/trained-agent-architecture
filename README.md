@@ -23,6 +23,8 @@ python3 tools/repo-context/map.py
 
 Актуальный датированный [срез реализации и критический путь](IMPLEMENTATION-AND-INTEGRATION-PLAN.md#срез-реализации-и-критический-путь--01102026-2318-мск) — в плане. На 01.10 cloud smoke завершён и Runner имеет реализацию; новый control plane ещё требует прикладного кода. Окончательная приёмка — в карточках, не по наличию файла или merged PR.
 
+Fast-path research: [алгоритм до запуска агента и протокол исследования](TASK-ROUTER-AND-MCP.md#11-fast-path-v1-алгоритм-до-запуска-агента) и [compact catalog / explicit naming](CAPABILITY-CATALOG-AND-FAST-REPLIES.md#explicit-names-и-compact-catalog-v1--01102026). Pilot изолирован от живых компонентов и текущей приёмки PR.
+
 ## Начать разработку
 
 1. Прочитать [ARCHITECTURE](ARCHITECTURE.md): границы, ownership, инварианты и условия перехода с живого сервиса.

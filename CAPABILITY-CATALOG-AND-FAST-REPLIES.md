@@ -1,6 +1,6 @@
 # Capability Catalog и быстрые ответы
 
-Статус: актуальная локальная спецификация capability catalog · 30.09.2026.
+Статус: актуальная локальная спецификация capability catalog · 01.10.2026.
 
 ## Четыре режима, три Job types
 
@@ -36,3 +36,52 @@ Typed commands, validated template matches и известные deterministic o
 Сравниваем варианты на одном sanitized corpus: FAQ, missing input, Tilda/site capability, tool-free reasoning, live data, цитированные URL, ограничения в середине, недоступные integrations, wrong profile cache, invalid JSON и late attachments. Измеряем correct answer/action, false-fast, unnecessary-agent, p50/p95 и provider calls/usage. Не объявляем два этапа лучше до eval.
 
 Фиксированная LLM не вызывает MCP сама: host выполняет разрешённый bounded handler и передаёт результат recipe. Agent MCP сохраняет собственный scoped interface. Эскалация конечна OpenCode; отсутствие прав/бюджета не устраняется confidence от модели.
+
+## Explicit names и compact catalog v1 — 01.10.2026
+
+Алгоритм и протокол исследования: [Task Router §11](TASK-ROUTER-AND-MCP.md#11-fast-path-v1-алгоритм-до-запуска-агента). Для fast path каталог компилируется в краткую проекцию; native MCP definitions сохраняют полные schemas/docs.
+
+### Имена без поломки потребителей
+
+Предложенная форма readable alias: domain + action + object + существенный qualifier, например recruiting_get_candidate_search_status, recruiting_connect_headhunter_account, engineering_get_pull_request_checks, documents_explain_file_sharing_requirements. Это **иллюстрации naming**, не имена существующих методов.
+
+- Stable capabilityId — семантическая идентичность, version — контракт. routingName/displayLabel — ясное название; native MCP tool name — transport mapping.
+- Однозначность важнее максимальной длины. Не включать бессмысленные слова, полный список args или все сценарии в имя. Выбранный стиль snake_case сохраняет совместимость существующей convention; дефисы не обязательны для экономии.
+- «Что умеет продукт», «получить текущий статус» и «выполнить действие» — разные contracts. describe_site_creation_capabilities не должен маскировать create_and_publish_site.
+- Routing aliases сначала добавляются в compiler/adapter. Native rename — позднее, отдельным compatibility PR с alias period/versioning, collision checks и consumer tests; не делать массовое изменение доменных repos во время приёмки PR.
+- Alias и old name отображают один capability, не два одинаковых tools в model context. API/test/public references не ломаются ради wording.
+
+### Brief имеет минимум смысла, а не только имена
+
+Tier 1 entry: id, explicit routing name, one-line summary, supported/preferred modes, effect (none/read/write), data needs (none/prepared/live), input hints и availability/required binding facts. Имя одно не описывает permission/readiness, необходимость свежих данных и нужные args. Полные input/output schemas, constraints, template/recipe refs — Tier 2 только для candidates.
+
+Пример иллюстративной проекции:
+
+```json
+{
+  "id": "recruiting.search_status",
+  "routingName": "recruiting_get_candidate_search_status",
+  "summary": "Текущий статус выбранного поиска пользователя",
+  "modes": ["deterministic"],
+  "effect": "read",
+  "data": "live",
+  "required": ["searchId"],
+  "availability": "enabled"
+}
+```
+
+Summary о capability — factual catalog data; это не user profile dump. availability snapshot не заменяет повторную auth перед выполнением. Disabled capability может оставаться как явный факт/инструкция подключения, но не как executable candidate.
+
+Дерево группирует домены/действия для discovery; не отдавать всю огромную библиотеку каждому вопросу. Pilot сравнивает full brief vs deterministic/retrieved shortlist; candidate recall измеряется отдельно. Не показывать лишь имена, если этим теряются effect/required inputs; максимум candidates выбирается по eval, не по догме.
+
+### Source of truth и handler implementations
+
+Compiler читает versioned domain manifests/resources и verified platform metadata. Если существующий manifest не содержит supportedModes/effects/templates, оформить metadata gap, не угадывать реализацию по названию. Один capability может поддерживать template/deterministic/llm/agent, но каждый advertised mode требует реального implementation binding и теста.
+
+Generated outputs: compact brief, alias/native mapping, selected full schemas, catalogVersion/digest, coverage/gaps. CI проверяет collisions, неизвестные modes/bindings, dangling refs и drift definitions. Compiler source входит в pilot; generated catalog не правится руками и не становится вторым credstore.
+
+### Acceptance каталога
+
+На одинаковом eval измерить: tokens/latency, candidate recall, wrong capability/args, false-fast, unavailable capability selection. Longer names допускаются ради ясности, но утверждение «токенов стало меньше» требует замера **всего prompt**, включая summaries/schemas и повторные calls. Stable prefix/cache может помочь только при корректном scoped/versioned ключе.
+
+Проверить: старые native callers работают; понятные aliases выбираются на новых перефразировках; read/write методы различимы; connect instruction не выдаёт permission; capability descriptions не обещают отсутствующую integration; template ответ не требует агентского workspace.

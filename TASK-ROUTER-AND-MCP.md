@@ -1,6 +1,6 @@
 # Task Router — routing, fast replies и MCP
 
-Статус: актуальная спецификация Task Router/MCP · 30.09.2026. Реализация и точный wire API не объявляются готовыми. Размещение по [ARCHITECTURE §9](ARCHITECTURE.md): **Router сначала модуль общего control plane над Task Store**. Отдельный репозиторий — возможное последующее выделение при независимом жизненном цикле, не prerequisite реализации. Этот документ специфицирует routing/MCP, не вводит второго владельца task state.
+Статус: актуальная спецификация Task Router/MCP · 01.10.2026. Реализация и точный wire API не объявляются готовыми. Размещение по [ARCHITECTURE §9](ARCHITECTURE.md): **Router сначала модуль общего control plane над Task Store**. Отдельный репозиторий — возможное последующее выделение при независимом жизненном цикле, не prerequisite реализации. Этот документ специфицирует routing/MCP, не вводит второго владельца task state.
 
 ## Принятая policy 30.09.2026
 
@@ -167,3 +167,125 @@ API: route(preparedInput, resolvedPolicy) → decision/dispatch spec; typed cont
 [Capability Catalog and Fast Replies](CAPABILITY-CATALOG-AND-FAST-REPLIES.md) задаёт supportedModes template/deterministic/llm/agent, explicit labels/aliases, required input/readiness, tier-1 brief + retrieved schemas. Это platform metadata, не новый Job type и не переименование всех native MCP tools. Regex внешних URL/keywords высокоточные intent features; простое присутствие ссылки не доказывает необходимость tools. Fixed LLM получает данные от host handler; browsing/fs автономия остаются Agent Job.
 
 [Engineering Approach](ENGINEERING-APPROACH.md) определяет sandbox и evidence. Corpus готовим из sanitized current fast-path logs плюс labelled fixtures до выбора окончательного recipe. Missing email/login — required input outcome, не запуск агента ради отсутствующего параметра.
+
+## 11. Fast-path v1: алгоритм до запуска агента
+
+Статус: **предлагаемый implementation contract, 01.10.2026**. Основной вариант для исследования — один полезный reply-or-route; двухэтапный selection → execution сравнивается на тех же входах. Это уточнение дизайна, не объявление runtime готовым. Цель — сократить необязательные Agent Runs без ухудшения полноты ответа и исполнения действий.
+
+### 11.1 Вход и владельцы
+
+Input фиксирует неизменный originalRequestRef, attachment manifest, conversation/context snapshot и trusted envelope: userTaskId, principal/profile, authorization/bindings, budgets, catalogVersion, policyVersion. Данные модели не могут менять эти поля. Relevant предыдущие сообщения необходимы для «а Tilda?» и «да, сделай»; один последний текст недостаточен.
+
+Catalog compiler публикует scoped brief; Router policy выбирает путь; Recipe executor выполняет модель; capability adapter вызывает проверенный handler; общий Output валидирует outcome и ведёт continuation/delivery. Это логические функции **одного control plane**, не новые очереди/сервисы. Профиль/Task Store читает host до вызова recipe в рамках разрешённого контекста. LLM recipe не получает свободный MCP-клиент, FS или цикл произвольных tools.
+
+### 11.2 Последовательность
+
+0. **Admission и normalization.** Дедуп user request, принадлежность profile/conversation, состояние вложений, caps. Pending audio extraction не превращать в ответ на пустое сообщение. Запрос остановки/статуса/ответ на существующее ожидание маршрутизируется по typed contract, не как новая задача.
+1. **Детерминированные пути.** Кнопка/команда/точное template match/заданная domain operation идут в их handler. Missing required field → Awaiting user input. Запрос использовать конкретный engine сохраняется и проверяется policy, не заменяется скрыто fast reply.
+2. **Подготовить context/catalog.** Для короткого и среднего ввода дать полный запрос, relevant conversation и compact allowed catalog. Для длинного дать bounded context с coverage flags и refs (11.6). Выбрать relevant candidates; отсутствие capability среди candidates не доказывает её отсутствия во всей системе.
+3. **Один reply-or-route.** Модель получает данные и strict decision contract. Возвращает один outcome: reply / clarify / needs_executor. needs_executor может означать bounded capability или ai-agent-job. Вариант template определяется capabilityId; модель не сочиняет «стандартный» ответ вместо существующего template.
+4. **Host validation.** Schema и semantic checks: существует ли capability/version, разрешён ли mode, соответствуют ли args inputSchema, есть ли поля/права/readiness/freshness; согласованы ли evidence и assessment; достаточен ли context. JSON-валидность не доказывает истинность ответа. Semantic invalid decision не исполняется.
+5. **Исполнение capability.** Handler выбирается из verified catalog. Он может вернуть template/result, fixed llm-recipe-job spec, missing_input, blocked либо needs_agent. LLM не выбирает произвольный backend/URL/секрет из текста. После handler при необходимости один фиксированный renderer/LLM answer по возвращённым данным; для готового template второй LLM не нужен.
+6. **Ответ или эскалация.** Итог через общий Output/Report. Для агента сохраняется userTaskId, создаются новая jobId/runId. Original input, контекст, результат предыдущего шага и причины эскалации прикладываются refs; structured agentGoal дополняет исходную просьбу. Обычный routing не добавляет gtdId.
+7. **Bounded termination.** На одну decision attempt: максимум один schema repair и максимум один capability execution плюс один post-tool recipe. Chain of tools/повторный поиск/новая итерация неизвестного пути → agent либо явный blocked/clarify. Лимиты — предлагаемые v1 defaults, подлежат измерению; retry общего workflow сохраняет operationId/idempotency key и не повторяет внешний effect без защиты. Общий deadline/call/token budget проверяется между этапами.
+
+**Смысл ответа важнее cheap route.** «Создай и опубликуй» нельзя закрыть объяснением «умеем создавать». Пропуск действия — false-fast. Missing credentials не лечится запуском агента. Резервный агент — OpenCode по разрешённой policy; автоматического перехода к Claude/Codex нет.
+
+### 11.3 Decision JSON
+
+Используем существующие union kinds из §3, без второго несовместимого API. Ниже example needs_executor для host-owned capability; финальная JSON Schema будет частью пилота. Для каждого kind задаются отдельные обязательные поля и запрещённые лишние поля. При provider support — strict structured output; иначе JSON parse + schema validation, один bounded repair. Refusal, truncated output и timeout имеют отдельные outcomes.
+
+```json
+{
+  "schemaVersion": 1,
+  "kind": "needs_executor",
+  "proposedJobType": "deterministic-job",
+  "capabilityId": "recruiting.search_status",
+  "capabilityVersion": 1,
+  "arguments": {"searchId": "search-example"},
+  "reasonCode": "NEEDS_CURRENT_USER_DATA",
+  "assessment": {
+    "contextSufficient": true,
+    "needsFreshData": true,
+    "needsActions": false,
+    "needsAdaptiveTools": false
+  }
+}
+```
+
+IDs/versions в примере — иллюстрация, не утверждение, что такой handler реализован. Модель выбирает только существующие entries из snapshot.
+
+- **reply:** reply.text + evidenceRefs; assessment.contextSufficient=true. Для platform facts refs ведут к catalog/resources; для task-dependent данных — к host snapshot/result. Обычное рассуждение по данному пользователем тексту не требует выдуманных внешних citations.
+- **clarify:** question, missingFields, reasonCode. Awaiting user input оформляет host с waitId и typed expected reply; модель не генерирует waitId. Не запускать Agent Run для просьбы «укажите email».
+- **needs_executor/capability:** proposedJobType, capabilityId/version, arguments, reasonCode. supportedModes решает allowed dispatch; template — deterministic-job, а не новый Job type.
+- **needs_executor/agent:** proposedJobType=ai-agent-job, nextGoal, preservedConstraints, requiredCapabilities, reasonCode. Reason например ADAPTIVE_TOOL_LOOP, CONTEXT_NOT_COVERED, ARTIFACT_WORKSPACE_REQUIRED. Пользовательский запрет публикации или бюджет не могут исчезать при reformulation.
+
+Не используем probability/confidence той же модели как единственное разрешение fast reply. Опора: typed metadata, context coverage, host validation и измеренная ошибка на holdout.
+
+### 11.4 Handler outcome и readiness
+
+Capability не «думает сама» по умолчанию: deterministic handler может вернуть проверенные данные/инструкцию; declared LLM recipe генерирует текст; агент имеет автономию. Контракт handler:
+
+| Outcome | Действие host |
+|---|---|
+| completed + result/template | Render и общий Output |
+| needs_llm + recipeId + preparedDataRef | Запустить разрешённый fixed recipe; максимум один post-tool вызов |
+| missing_input + fields | Awaiting user input; привязать ответ к waitId/task, не к случайной последней задаче |
+| blocked + reason | Сообщить, как подключить integration/пополнить бюджет; без escalation обхода |
+| needs_agent + reason + partialResultRef | Разрешённый Agent Job с full original и partial result |
+| technical_error + typed code | Ограниченный технический retry/diagnosis policy; не рекурсивный fast-path loop |
+
+supportedModes и effect/readiness — статическое ограничение; handler outcome — факт конкретного invocation. Разрешения, key bindings и budget host проверяет повторно перед effect. Mutating операции сохраняют существующее правило подтверждения/авторизации; selection модели не является approval. Read-only/freshness/per-user отличаются от «просто текст».
+
+### 11.5 Что получает агент
+
+AgentWorkOrder содержит originalRequestRef + full-content access, user goal, explicit constraints, relevant conversation refs, attachments, capability/data snapshot versions, completed actions/results, unresolved questions и escalationReason. Запрещено выдавать предположение classifier за новое требование пользователя. Уже совершённые внешние действия снабжаются operation receipts, чтобы агент их не повторял.
+
+Оптимизация промпта измеряется отдельно: structured brief может уменьшить поиск, но не гарантирует более дешёвый Run. Prepared goal не заменяет исходник и не теряет запреты/обязательные результаты. «Агент запущен» UI получает только после start receipt; до этого допустим routing/queued status.
+
+### 11.6 Input: полный текст по умолчанию, не произвольное обрезание
+
+1. В пределах provider budget передаём **полный актуальный запрос** и релевантную conversation, а не 500 токенов head + tail.
+2. При превышении — original остаётся artifact; context builder помечает что покрыто/пропущено, извлекает relevant chunks и constraints с source spans. Extraction тоже имеет цену и не гарантирует completeness.
+3. По preview разрешено выбрать candidate route; полный ответ на весь документ/анализ нельзя выдавать при неполном coverage. Контекст расширяется host bounded step либо путь передаётся агенту с исходником.
+4. Ссылка не равна обязательному агенту: обсуждение процитированного URL может быть text-only; известный live lookup — deterministic + LLM; самостоятельное browsing/research — agent.
+5. Token budget зависит от tokenizer/model. В исследовании сравнить full vs prepared retrieval vs head/tail preview и отдельно считать потерю constraints в середине.
+
+### 11.7 Неблокирующее исследование и тестовый стенд
+
+**Размещение:** отдельный pilot/fast-path каталог в trained-assist-control-plane, собственная ветка/worktree и владелец. Не менять рабочие TG/Web/core/Runner, их shared bindings и native MCP names. Routing contracts/templates/compiler + fixture UI/API образуют research artifact. Реальные domain handlers подключаются позже через adapter; никаких скрытых core imports.
+
+1. Inventory текущих quick handlers и catalog definitions в domain repos: stable IDs, labels, schemas, effects, supported modes, readiness, native mapping. Публиковать mapping и gaps, не массовый rename PR.
+2. Составить протокол сбора истории; владелец утверждает sanitized dataset до выгрузки. Read-only исследование не перезапускает старые mutating requests.
+3. Label по минимальному **достаточному** пути template/deterministic/LLM/agent/clarify/blocked; фактический legacy agent start не ground truth. Отдельно спорные примеры для human adjudication.
+4. Сравнить: current baseline, one-pass reply-or-route, two-pass selection + answer/handler. Одинаковые разрешённые данные/модели/budgets; считать все provider calls, retrieval overhead и clean-room startup.
+5. Offline fixtures: deterministic replay input/context/catalog, scripted model decisions и tool responses, expected actions/results. Это проверяет orchestration, не качество живой LLM.
+6. Отдельный live model eval на holdout с mocked external effects. Он проверяет selection/answer; не обзывать mocked LLM replay модельной accuracy.
+7. Shadow: получать decision без dispatch/effects; compare с историей/экспертной разметкой. Затем явный opt-in sandbox adapter. Production promotion — отдельная приёмка.
+
+### 11.8 Какие данные собрать из истории
+
+Минимальная строка исследования: anonymized sampleId, domain/intent label, sanitized full request и relevant preceding turns, attachment type/readiness (содержимое лишь когда нужно и разрешено), разрешённый на тот момент catalog/readiness snapshot либо явный missing snapshot flag, фактический route/engine, был ли tool/action, outcome/user correction, timing, usage/cost availability. Не собирать auth tokens, cookies, credential values или full profile dump. Если historical capability snapshot отсутствует, counterfactual eval обозначается неполным; не реконструировать готовность задним числом как факт.
+
+Включить FAQ, capability questions, connect instructions, status, simple transforms, сложное reasoning без tools, private/live queries, bounded tool call, adaptive research, website/file actions, неоднозначность, продолжения «да/нет», длинные middle constraints, pending audio/files, failures и unavailable bindings. Вложенный/цитируемый текст с инструкциями также нужен для проверки, что он не переопределяет envelope/policy.
+
+Split по conversation/user-group/time, не по отдельным соседним сообщениям; иначе leakage. Отдельный holdout новых перефразировок и rare critical cases. Размер/TTL/access/export destination утверждаются в research protocol; соблюдать observability retention. Live user text не включать в публичные fixtures.
+
+### 11.9 Метрики, логи, acceptance
+
+Главная ошибка — **false-fast**: система дала неполный/необоснованный ответ или не выполнила обязательное действие. Затем unnecessary-agent среди запросов, для которых проверенный более простой путь достаточен. Дополнительно: correct capability+args, missing-input accuracy, unsafe effect attempts (host должен отвергать), p50/p95 useful reply и completion, calls/tokens/cost на successful task, JSON failures, escalation count, same-task repeated effect, quality по domain. Процент отказа от агента без качества ничего не доказывает.
+
+Research report фиксирует corpus/labels/version, holdout size, uncertainty, модели и лимиты, результаты отдельных классов, latency/cost и принятый вариант. Целевые пороги выбираем до holdout; для critical synthetic fixtures — ни одного нарушения инвариантов. Synthetic нулевые ошибки не доказывают нулевую live error rate. Если выигрыш не подтверждён, policy остаётся консервативной.
+
+RoutingDecision event: trusted profile/userTaskId, decisionId, input/context/catalog/policy versions, candidates/selected capability, reasonCode, mode, schema/semantic validation, coverage, timings, actual usage source, continuation/job/run refs. Логи не содержат секреты и полный текст по умолчанию; replay data имеет отдельный scoped доступ/TTL. Политика выполняет общий OBSERVABILITY-AND-ERROR-CONTRACT.md.
+
+Fault fixtures: invalid/refused/truncated JSON, timeout, budget denied, no enabled candidates, missing args, stale context/cache другого пользователя, late attachment, unknown capability/version, conflicting reply/effects, duplicate submit, restart после effect до receipt, tool timeout, agent admission failure, terminal late event. Missing credentials/permission → blocked/clarify, а не бесконечная escalation.
+
+### 11.10 Основания и границы рекомендаций
+
+- https://www.anthropic.com/engineering/writing-tools-for-agents — ясные имена/описания, namespaces, meaningful results и eval. Применяем к каталогам; длина имени сама по себе не является оптимизацией.
+- https://www.anthropic.com/engineering/advanced-tool-use — поиск relevant definitions вместо загрузки всех tools, важность различимых имён и параметров. Это основание candidate retrieval, не обязательство использовать vendor-specific feature.
+- https://developers.openai.com/api/docs/guides/function-calling — schema constraints/strict mode и уменьшение набора функций для selection. Strict помогает форме, но не доказывает correctness выбора/args.
+- https://www.anthropic.com/engineering/building-effective-agents — fixed workflows vs adaptive agents и routing. Наш v1 bounded fast path — workflow; исследование определяет, когда его достаточно.
+
+Точное число candidates, контекстный budget, один/два вызова и качество модели — **наши проверяемые гипотезы**, не универсальные best practices с гарантией.
