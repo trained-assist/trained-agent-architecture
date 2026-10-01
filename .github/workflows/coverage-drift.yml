@@ -1,0 +1,74 @@
+name: coverage-drift
+
+# Z01 / T12 (AC-40). The committed coverage table is only worth something if it cannot
+# silently go stale, so this job regenerates it from the PINNED pr-autofix ref and fails
+# on any difference. Without the pinned ref a table "from another tool version" would be
+# indistinguishable from a table that is simply out of date — so AUTOFIX_REF is a repo
+# variable with a default, and the effective value is printed in the run log.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  coverage-drift:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Resolve the pinned tool ref
+        id: tool
+        env:
+          DEFAULT_AUTOFIX_REF: v1.7.4
+        run: |
+          ref="${{ vars.AUTOFIX_REF || env.DEFAULT_AUTOFIX_REF }}"
+          echo "ref=$ref" >> "$GITHUB_OUTPUT"
+          echo "profile_ref: $ref"
+
+      # Fresh clone BY TAG, never a checkout of the tool's working tree: the contract under
+      # test is what a consumer actually receives when it pins this ref.
+      - name: Clone the pinned pr-autofix tool
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TOOL_REF: ${{ steps.tool.outputs.ref }}
+        run: |
+          git clone --depth 1 --branch "$TOOL_REF" \
+            https://github.com/trained-assist/pr-autofix.git "$RUNNER_TEMP/pr-autofix"
+
+      - name: Regenerate the coverage table
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TOOL_REF: ${{ steps.tool.outputs.ref }}
+        run: |
+          mkdir -p "$RUNNER_TEMP/regen"
+          node "$RUNNER_TEMP/pr-autofix/scripts/devbaseline.mjs" inventory \
+            --repos "$RUNNER_TEMP/pr-autofix/inventory/repos.json" \
+            --profile-ref "$TOOL_REF" \
+            --out "$RUNNER_TEMP/regen" \
+            --strict
+
+      - name: Fail on drift
+        env:
+          TOOL_REF: ${{ steps.tool.outputs.ref }}
+        run: |
+          drift=0
+          for f in repo-coverage.md repo-coverage.json; do
+            if ! diff -u "docs/inventory/$f" "$RUNNER_TEMP/regen/$f"; then
+              echo "::error file=docs/inventory/$f::out of date for pr-autofix $TOOL_REF — regenerate and commit"
+              drift=1
+            fi
+          done
+          exit "$drift"
+
+      - name: A committed table must never carry a credential value
+        run: node scripts/inventory/assert-no-credential-values.js docs/inventory/repo-coverage.json
