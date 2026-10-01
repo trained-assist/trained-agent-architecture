@@ -106,7 +106,7 @@ flowchart TD
 - Большие файлы — в Artifact Storage (R2); в базе только ссылки, владелец, размер и контрольная сумма.
 - Разговорные сессии, проекты и привязки чатов тоже переезжают в Task Store (раздел 6: сейчас это JSON-файлы без транзакций).
 
-**Стартовая схема — прод.** В проде уже работает SQLite-база планов `durable-tasks/state.db` **В проде ✅**: таблицы `durable_tasks`, `task_items` (с ожиданием `wait_json` и веером `fanout_json`), `executions`, `task_validation_results`, `hook_executions`, `cron_jobs`. На 30.09.2026 в ней 52 плана, 706 шагов, 625 запусков у 6 профилей. Её таблицы и поля — основа схемы Task Store; новые сущности (userTaskId, delivery, awaiting input, conversation) добавляются к ней, а не проектируются заново.
+**Стартовая схема — прод.** В проде уже работает SQLite-база планов `durable-tasks/state.db` **В проде ✅**: таблицы `durable_tasks`, `task_items` (с ожиданием `wait_json` и веером `fanout_json`), `executions`, `task_validation_results`, `hook_executions`, `cron_jobs`. На 30.09.2026 в ней 52 плана, 706 шагов, 625 запусков у 6 профилей. Её таблицы и поля — основа схемы Task Store; новые сущности (userTaskId, delivery, awaiting input, conversation) добавляются к ней, а не проектируются заново. Инвентарь базы (read-only снимок) и целевая схема v1 с DDL — [TASK-STORE-SCHEMA-V1](TASK-STORE-SCHEMA-V1.md).
 
 Физическая база:
 
@@ -388,7 +388,7 @@ Credentials имеют scopes shared/platform, private/user и replaceable-defau
 
 До первой строки кода нового control plane:
 1. Пилот P-DB (4.5): выбор пары «база + движок».
-2. Схема Task Store на основе прод-схемы планов (4.1).
+2. Схема Task Store на основе прод-схемы планов (4.1) — [TASK-STORE-SCHEMA-V1](TASK-STORE-SCHEMA-V1.md).
 3. Контракт разговорной сессии (раздел 5; документ — [Контракт разговорной сессии](CONVERSATIONAL-SESSION-CONTRACT.md)).
 
 **Первый вертикальный сценарий — диалог из пяти реплик в Web с рестартом посередине** (5.1), а не фоновая задача через API: именно он доказывает, что новая система может заменить старую. Параллельно — пилот расписания (раздел 10).
