@@ -40,6 +40,7 @@ python3 tools/repo-context/map.py
 | [Stories](stories/README.md) | Истории: кто, ценность, шаги, «готово, когда», на каком этапе рождаются |
 | [Project «Trained Assist — Migration»](https://github.com/orgs/trained-assist/projects/1) | Статус карточек и эпиков, чек-листы приёмки, блокеры и пробелы (issues) |
 | [Implementation and Integration Plan](IMPLEMENTATION-AND-INTEGRATION-PLAN.md) | Решения владельца, путь интеграции, этапы, зависимости, таблица карточек со ссылками на issues, scope, риски |
+| [Task Store v1 schema](TASK-STORE-SCHEMA-V1.md) | Инвентарь прод `durable-tasks/state.db` (read-only) и целевая схема Task Store: userTaskId, журнал событий, сигналы с дедуп, awaiting input, delivery, conversation |
 | [Engineering Approach](ENGINEERING-APPROACH.md) | Концепция Sandbox Driven Development и общие правила разработки |
 | [Acceptance](ACCEPTANCE-CHECKLIST.md) | Типы доказательств, общий гейт Done карточки, сквозные проверки инвариантов и контрактов; где теперь лежат чек-листы. Не план и не трекер |
 | [Sandbox](SANDBOX.md) | Песочница каждого этапа R00, I00–I10: что запускаем, сбои, ожидаемый результат, классы bindings/credentials, logs checks; правила и механизмы хранения credentials (без значений) |
