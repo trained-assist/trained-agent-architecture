@@ -25,6 +25,8 @@ python3 tools/repo-context/map.py
 
 Fast-path research: [алгоритм до запуска агента и протокол исследования](TASK-ROUTER-AND-MCP.md#11-fast-path-v1-алгоритм-до-запуска-агента) и [compact catalog / explicit naming](CAPABILITY-CATALOG-AND-FAST-REPLIES.md#explicit-names-и-compact-catalog-v1--01102026). Pilot изолирован от живых компонентов и текущей приёмки PR.
 
+Интерактивность: [формы, кнопки, Awaiting user input и research B](INTERACTIVE-EXECUTION-AND-USER-INPUT.md). End-to-end не запрещает вопросы; формы открываются host handler без нового Agent Run.
+
 ## Начать разработку
 
 1. Прочитать [ARCHITECTURE](ARCHITECTURE.md): границы, ownership, инварианты и условия перехода с живого сервиса.

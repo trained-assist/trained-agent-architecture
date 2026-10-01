@@ -289,3 +289,35 @@ Fault fixtures: invalid/refused/truncated JSON, timeout, budget denied, no enabl
 - https://www.anthropic.com/engineering/building-effective-agents — fixed workflows vs adaptive agents и routing. Наш v1 bounded fast path — workflow; исследование определяет, когда его достаточно.
 
 Точное число candidates, контекстный budget, один/два вызова и качество модели — **наши проверяемые гипотезы**, не универсальные best practices с гарантией.
+
+## 12. Два исследования: multimodal routing и интерактивное выполнение
+
+02.10.2026: Research A уточняет intent/domain/capability selection, input preparation и быстрые пути; Research B — [интерактивное выполнение](INTERACTIVE-EXECUTION-AND-USER-INPUT.md), формы/кнопки, ожидание и policy вопросов. Они неблокирующие относительно текущей PR-приёмки и нового ядра; исследование не является массовым rename/native agent implementation.
+
+### Multimodal RoutingContext
+
+User request — envelope сообщений/attachments, не строка. Соблюдаем порядок и batch revision: 5 voice + 3 MD + screenshot может ещё собираться. Manifest содержит artifactId, kind, size/pages/duration, extraction state/version, hash/ref, privacy и relationship к запросу. Pending/failed extraction видно явно; решение по неполному batch не публикуется как полное.
+
+По типам:
+- voice: transcript refs, время/порядок, confidence/неразобранные spans; ASR — bounded preprocessing job со своей ценой;
+- Markdown/doc: headers, sections, relevant chunks/constraints с provenance; полный original сохраняется;
+- screenshot: image metadata + при необходимости bounded vision/OCR по intent; OCR не заменяет visual understanding layout/графики;
+- large/irrelevant binary: metadata/ref, не вставка blob в prompt.
+
+Не требуется анализировать каждый пиксель/транскрипт заранее для любого вопроса. Известный typed click или статус идёт напрямую. Для обычного multimodal routing context builder выбирает bounded extraction; если информация отсутствует, contextSufficient=false, expand/clarify/agent. RAG помогает выбрать контекст, но сам по себе не доказывает coverage.
+
+Сравнить policies full feasible / head-tail + section manifest / relevant retrieved chunks / progressive expansion на нескольких моделях и payload sizes. Измерять end-to-end preprocessing + routing + outcome, не только токены classifier. Слабая/сильная модель не возвращает потерянные в preview ограничения. Preview допустим для гипотезы маршрута и capability shortlist, не полного substantive ответа.
+
+Routing assessment дополняется domainTags (multi-label/unknown), intentTags, candidate capabilities и suggestedInteractionMode с reason; это аналитика/подготовка, не authorization и не изменение explicit preferences. AgentWorkOrder получает полные definitions выбранных capabilities плюс compact discovery index остальных **разрешённых** возможностей; неизвестные заранее tools остаются доступны через scoped discovery. Не ограничивать агента ошибочным первичным shortlist.
+
+### Внешний доступ и постепенное развитие
+
+Known GitHub PR status, единичный search/query и declared Playwright operation могут идти в host-owned bounded tool workflow с LLM rendering — без clean room. Browser capabilities имеют effect/session/privacy metadata; «Playwright» не означает автоматически read-only. Если после результата нужен самостоятельный выбор следующих действий или итерации, отправляем OpenCode.
+
+Это плавная лестница возможностей, а не запрет tools вне агента. Позднее собственный native agent loop возможен как отдельный executor; fast-path v1 остаётся bounded workflow и не превращается незаметно в бесконечный цикл. Возможность reusable external tool не означает, что она уже реализована/разрешена данному пользователю.
+
+### Research A: конкретный поиск при малом корпусе
+
+Дополнить историю частыми простыми случаями: «работаешь?», «какой статус PR?», «ключ получен?», «как подключить?», «что умеете?», «отправил», «да» после меню. Для health/readiness нужны текущие host facts, не ответ по общим знаниям. Различать native typed button и текстовую фразу.
+
+Сохранять sanitized message ordering, attachment manifest/extraction availability и версии контекста в момент решения. Majority dev/agent-heavy corpus не использовать как единственную оценку: отдельно natural frequency и balanced challenge set, не обещать большой savings всем юзерам по synthetic tests. Дополнительные fixtures — гипотезы, не подмена статистики live usage. Исследовательские вопросы/разметка interactions — Research B §8.

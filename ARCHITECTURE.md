@@ -446,3 +446,7 @@ Credentials имеют scopes shared/platform, private/user и replaceable-defau
 - Режим бюджета при недоступном учёте: предложен fail-open с локальным потолком (раздел 9), ждёт подтверждения.
 - Достаточен ли приватный Web-просмотр задачи всем пользователям API и как выдаётся доступ?
 - Какие пробелы Ledger и базовой задержки подтвердит следующий аудит прода?
+
+## Уточнение: fast-path и интерактивность — 02.10.2026
+
+[Router §11–12](TASK-ROUTER-AND-MCP.md) задаёт bounded tools/context preparation без обязательного Agent Run. [Interaction contract](INTERACTIVE-EXECUTION-AND-USER-INPUT.md) отделяет interaction policy от executor: as_needed/collaborative/unattended не отменяют авторизацию и обязательные user actions. Host открывает registered forms/choices и сохраняет waits; user submission продолжает конкретную задачу, не превращается в новый generic chat prompt. End-to-end goal не означает запрета уточнений. Эти спецификации — research targets; production implementation не объявляется готовой.

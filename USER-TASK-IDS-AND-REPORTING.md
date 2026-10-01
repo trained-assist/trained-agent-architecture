@@ -235,3 +235,7 @@ Journal — небольшой shared operational module, не новый биз
 GTD не добавляется ко всем задачам. Cron, delegation, длинный Run и эскалация ошибки сами по себе не создают gtdId; explicit next-step/acceptance control создаёт его. [Общая архитектура](ARCHITECTURE.md).
 
 [Error contract](OBSERVABILITY-AND-ERROR-CONTRACT.md) обязателен: profile scope, channel/destinationRef если известны, source/task/run IDs. [Watcher](SYSTEM-ERROR-WATCHER.md) создаёт отдельный diagnosticUserTaskId с incidentId/sourceUserTaskId; исходная ошибка не переименовывается в успешную диагностику. Serverless client receipt однозначно mapped к userTaskId, даже без Web UI.
+
+## Взаимодействия — 02.10.2026
+
+[Interaction contract](INTERACTIVE-EXECUTION-AND-USER-INPUT.md) уточняет interactionId (карточка/форма), waitId (ожидание continuation), actionId (операция), submissionId (dedup), providerSessionRef и generation/version. userTaskId сохраняется; новый runId только если нужен execution. Формы/кнопки не вводят нового task state owner; Task Store/Reporting остаются authoritative. Статус пользователя — Awaiting user input, внутренний storage enum согласуется со схемой, а не переименовывается автоматически.

@@ -85,3 +85,27 @@ Generated outputs: compact brief, alias/native mapping, selected full schemas, c
 На одинаковом eval измерить: tokens/latency, candidate recall, wrong capability/args, false-fast, unavailable capability selection. Longer names допускаются ради ясности, но утверждение «токенов стало меньше» требует замера **всего prompt**, включая summaries/schemas и повторные calls. Stable prefix/cache может помочь только при корректном scoped/versioned ключе.
 
 Проверить: старые native callers работают; понятные aliases выбираются на новых перефразировках; read/write методы различимы; connect instruction не выдаёт permission; capability descriptions не обещают отсутствующую integration; template ответ не требует агентского workspace.
+
+## Один каталог, несколько command adapters — 02.10.2026
+
+Рекомендуемая canonical routingName: lowercase snake_case (underscore — разделитель). readable title допускает пробелы/локализацию. CLI может иметь подкоманды/дефисы; slash — Telegram syntax, не часть capability identity. Выбор пунктуации не является доказанной token optimization.
+
+| Проекция | Иллюстрация |
+|---|---|
+| capabilityId | credentials.connect |
+| routing/MCP alias | credentials_connect_cloudflare_account |
+| Telegram alias | /connect_cloudflare |
+| CLI | assist credentials connect --provider cloudflare |
+| UI title | Подключить Cloudflare |
+
+Все adapters обращаются к одному registered handler/schema; не обязаны иметь одинаковую строку. Telegram BotCommand: 1–32 символа, lowercase English letters/digits/underscore; длинное explicit MCP имя не всегда помещается. MCP 2025-11-25 рекомендует 1–128 символов и ASCII letters/digits/underscore/hyphen/dot; slash/spaces не входят в рекомендуемый набор. Проверять фактически используемые provider/client limits при генерации.
+
+Источники:
+https://core.telegram.org/bots/api#botcommand
+https://modelcontextprotocol.io/specification/2025-11-25/server/tools#tool-names
+
+Platform annotation (не стандартные MCP поля): commandAliases, channelExposure, uiTemplateIds, supportedModes, inputSchemaRef, effect/readiness, handlerRef/version. Compiler генерирует typed dispatch mapping и channel help; полные definitions остаются в manifest. Результат исследования имён — mapping old → canonical alias → TG/CLI/UI, collision/length report и consumer compatibility, не немедленный rename всех native methods.
+
+Не парсить произвольный MCP text/описания как executable commands. Команда распознаётся channel adapter только в явном command context, с аргументами по schema. /command в процитированном документе не выполняется. /command@bot нормализуется Telegram adapter. Незарегистрированная команда проходит существующий catch-all, а не становится произвольным handler lookup.
+
+Кнопки/формы — typed action с opaque interaction ref из [контракта взаимодействий](INTERACTIVE-EXECUTION-AND-USER-INPUT.md), не текст /command, который снова запускает агента. Каталог общий, но internal-only methods не обязаны быть доступны пользователю как TG/CLI command. Registry/auth определяют доступность каждого transport.

@@ -231,3 +231,11 @@ Integration Gate и Error Watcher — самостоятельные repos.
 Workflow/control plane хранит управляющее состояние вне VM и принимает решения о запуске; Runner исполняет и финализирует. Connection_lost — неизвестный исход, уведомление и ожидание связи/явного сигнала, без автоматического rerun по heartbeat/lease timeout. Смерть процесса не означает потерю диска. Данные задачи переживают Run и доступны следующей разрешённой попытке. После engine exit финализация сохраняет артефакты; её повтор не повторяет исполнение.
 
 Обязательные logs/evidence в затронутых карточках: connection_lost/reconnected, restart signal и его источник, previous/new runId и generation, workspace/volume refs, manifest/checkpoint versions, finalization/export progress/commit/error, cleanup decision. Секреты и signed URLs не логируются. Retention-классы задаются отдельно для рабочих данных, результатов и журналов; timeout не стирает единственную копию молча.
+
+## Research B: интерактивность и user-action без лишнего Run
+
+02.10.2026: [INTERACTIVE-EXECUTION-AND-USER-INPUT.md](INTERACTIVE-EXECUTION-AND-USER-INPUT.md) описывает interaction policy отдельно от execution mode, typed choices/forms, ZeroCreds adapter, durable waits и возобновление без живого agent process. Research A расширен multimodal inputs, domain/intent tagging и candidate tool docs (§12 Router); naming mapping входит в него.
+
+Можно вести обе части одной research-сессией, но два набора labels/evidence. Работу разместить в согласованных pilot paths отдельной ветки/worktree control plane, не трогать текущие PR/production. Сначала собрать и утвердить sanitized corpus (Research A §11.8/12, Research B §8), затем deterministic interaction/multimodal replay и live-model holdout. Новый native agent loop, массовый rename и production rollout не входят в research.
+
+Первый acceptance fixture: пользователь нажал «Ввести ключ» → host открыл mocked form; 0 LLM calls, 0 Agent Runs. Callback обновил readiness и продолжил правильную задачу после restart; duplicate/cancelled/stale responses не повторяют execution. Реальный ZeroCreds/Broker callback и engine checkpoint — отдельная integration приёмка.
