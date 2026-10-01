@@ -320,15 +320,14 @@
       },
       "ci_present": true,
       "ci_required": null,
-      "staging_present": false,
+      "staging_present": true,
       "staging_required": true,
       "autofix_ref": "v1.7.4",
       "readable": true,
       "notes": [
         "fix: missing — repository has no .github/workflows/autofix-callable.yml",
-        "staging: missing — required but absent",
         "adapter: derived (package.json present)",
-        "live: branch=main, files=236, workflows=2",
+        "live: branch=main, files=243, workflows=2",
         "scope: playbook library; installer + setup orchestrator (Z01 owner T10)"
       ]
     },
@@ -356,6 +355,7 @@
         "builder": "external",
         "entrypoints_present": [
           "README.md",
+          "docs",
           "AGENTS.md"
         ]
       },
@@ -365,7 +365,7 @@
       },
       "ci_present": true,
       "ci_required": null,
-      "staging_present": false,
+      "staging_present": true,
       "staging_required": false,
       "autofix_ref": null,
       "readable": true,
@@ -373,7 +373,6 @@
         "staging_required=false: docs_only",
         "fix: unsupported_by_profile (profile docs declares no fixer)",
         "adapter: derived (no code stack, README.md present)",
-        "live: branch=main, files=195, workflows=2",
         "scope: architecture and plan repository; coverage-table owner (T11)"
       ]
     },
@@ -417,7 +416,7 @@
       "notes": [
         "fix: missing — repository has no .github/workflows/autofix-callable.yml",
         "adapter: derived (package.json present)",
-        "live: branch=main, files=841, workflows=8",
+        "live: branch=main, files=844, workflows=8",
         "scope: agent core: runner, sessions, core MCP, web backend"
       ]
     },
