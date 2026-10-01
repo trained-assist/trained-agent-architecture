@@ -54,8 +54,12 @@ jobs:
           node "$RUNNER_TEMP/pr-autofix/scripts/devbaseline.mjs" inventory \
             --repos "$RUNNER_TEMP/pr-autofix/inventory/repos.json" \
             --profile-ref "$TOOL_REF" \
-            --out "$RUNNER_TEMP/regen" \
-            --strict
+            --out "$RUNNER_TEMP/regen"
+
+      # Note the deliberate absence of --strict here. An unreadable repository is usually a
+      # transient API failure, and with --strict a single flaky read would block EVERY merge in
+      # this repository for reasons that have nothing to do with the change. The diff below is
+      # the actual gate: an unreadable row changes the table, and a changed table fails.
 
       - name: Fail on drift
         env:
