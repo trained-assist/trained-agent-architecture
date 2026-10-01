@@ -2,7 +2,7 @@
 
 Статус: **предложение, готово к review** · пункт A2 эпика [#87](https://github.com/trained-assist/trained-agent-architecture/issues/87) · инвентарь прода снят **read-only** 01.10.2026 15:20–15:33 UTC.
 
-Документ отвечает на вторую из трёх предпосылок до первой строки кода control plane: пилот P-DB ([COMPARISON](pilots/p-db/COMPARISON.md)), **схема Task Store** (этот документ), контракт разговорной сессии (A3). Порядок работ — [IMPLEMENTATION-AND-INTEGRATION-PLAN, «Актуальный порядок старта», п. 2](IMPLEMENTATION-AND-INTEGRATION-PLAN.md#актуальный-порядок-старта) и [ARCHITECTURE §11](ARCHITECTURE.md#11-порядок-работ); требования к содержимому — [ARCHITECTURE §4.1](ARCHITECTURE.md#41-одна-транзакционная-база-состояния-задач-task-store). Пункт M0 «схема Task Store v1» эпика миграции — [#11](https://github.com/trained-assist/trained-agent-architecture/issues/11).
+Документ отвечает на вторую из трёх предпосылок до первой строки кода control plane: пилот P-DB ([COMPARISON](pilots/p-db/COMPARISON.md)), **схема Task Store** (этот документ), [контракт разговорной сессии](CONVERSATIONAL-SESSION-CONTRACT.md) (A3). Порядок работ — [IMPLEMENTATION-AND-INTEGRATION-PLAN, «Актуальный порядок старта», п. 2](IMPLEMENTATION-AND-INTEGRATION-PLAN.md#актуальный-порядок-старта) и [ARCHITECTURE §11](ARCHITECTURE.md#11-порядок-работ); требования к содержимому — [ARCHITECTURE §4.1](ARCHITECTURE.md#41-одна-транзакционная-база-состояния-задач-task-store). Пункт M0 «схема Task Store v1» эпика миграции — [#11](https://github.com/trained-assist/trained-agent-architecture/issues/11).
 
 **Что здесь лежит:** (1) инвентарь реальной прод-базы `durable-tasks/state.db`, снятый только чтением; (2) целевая схема Task Store v1 — новые таблицы и аддитивные колонки поверх прод-схемы, с типами, индексами и комментарием «зачем» к каждому; (3) матрица покрытия требований A2 и границы скоупа.
 
@@ -532,12 +532,12 @@ CREATE INDEX idx_deliveries_task ON deliveries(user_task_id, created_at);
 Требование «conversation» закрывается **колонками задачи, а не новой таблицей** — это решение по правилу минимальных требований:
 
 ```sql
-ALTER TABLE durable_tasks ADD COLUMN conversation_id TEXT;  -- диалог, породивший задачу (§5.1 ARCHITECTURE)
-ALTER TABLE durable_tasks ADD COLUMN audience_id     TEXT;  -- бот-аудитория, записанная при приёме (INV-19, §5.4)
+ALTER TABLE durable_tasks ADD COLUMN conversation_id TEXT;  -- диалог, породивший задачу (ARCHITECTURE §5.1)
+ALTER TABLE durable_tasks ADD COLUMN audience_id     TEXT;  -- бот-аудитория, записанная при приёме (INV-19, ARCHITECTURE §5.4)
 ALTER TABLE durable_tasks ADD COLUMN destination_id  TEXT;  -- адрес доставки по умолчанию, записанный при приёме
 ```
 
-- Обе проекции Reporting ([§5.1 ARCHITECTURE](ARCHITECTURE.md#51-реплика-задача-и-контекст)) — «по userTaskId» и «по диалогу» — обслуживает `SELECT … WHERE conversation_id = ?` c индексом `idx_tasks_conversation`.
+- Обе проекции Reporting ([ARCHITECTURE §5.1](ARCHITECTURE.md#51-реплика-задача-и-контекст)) — «по userTaskId» и «по диалогу» — обслуживает `SELECT … WHERE conversation_id = ?` c индексом `idx_tasks_conversation`.
 - `audience_id`/`destination_id` обязаны быть записаны **при приёме**, а не браться «у текущего бота» при отправке — это INV-19, поэтому они принадлежат задаче, а не доставке; в `deliveries` лежит снимок для конкретной отправки.
 - **Отдельная таблица `conversations` в v1 не заводится**: метаданные диалога и привязки чатов сейчас — JSON-файлы с TTL 4 ч ([ARCHITECTURE §6, строка «Хранилище сессий и привязок чатов»](ARCHITECTURE.md#6-что-берём-из-текущего-прода)), их переезд описывает контракт разговорной сессии (A3). Если A3 потребует таблицу — она добавляется аддитивно, колонка `conversation_id` уже сегодня даёт связность. См. §10.
 
@@ -563,7 +563,9 @@ ALTER TABLE executions ADD COLUMN generation INTEGER NOT NULL DEFAULT 0;
 
 Структурированный результат: ответ шага больше не парсится из текста (`DURABLE: done` в `evidence_json.reply`); шаг пишет `task_items.result_json`, попытка — `executions.result_json`. Это снимает 174 из 186 провалов OpenCode ([ARCHITECTURE §6](ARCHITECTURE.md#6-что-берём-из-текущего-прода)).
 
-### 5.8 Проекция состояния на задачу: какие колонки добавляет v1
+### 5.8 Проекция состояния на задачу: все новые колонки одним блоком
+
+Свод того, что §5.4–§5.7 добавляют к `durable_tasks` (повтор в одном месте, чтобы не собирать по разделам):
 
 ```sql
 ALTER TABLE durable_tasks ADD COLUMN stage             TEXT     CHECK (stage IN ('collecting','preparing','queued','handing_off','running','evaluating','waiting_input','waiting_followup','finished'));
@@ -883,6 +885,7 @@ WHERE t.id = ?;
 | [USER-TASK-IDS-AND-REPORTING.md](USER-TASK-IDS-AND-REPORTING.md) | Словарь `stage`/`deliveryState`, snapshot, правило «version назначает журнал» |
 | [contracts C01/C02](contracts/README.md) | Приём по `requestId` → receipt; envelope событий и факты «исполнено ≠ сохранено ≠ доставлено» |
 | [Плейбуки и GTD](PLAYBOOKS-VS-GETTING-THINGS-DONE-BOUNDARIES.md) | `awaitingInputId`, поля ожидания, planId ≠ userTaskId |
+| [Контракт разговорной сессии](CONVERSATIONAL-SESSION-CONTRACT.md) (A3) | Границы Session/Task/Run, resume и то, что из сессий переезжает в Task Store; `conversations`/`respondent_scope` из §5.6 ждут его решения |
 | Эпик [#87](https://github.com/trained-assist/trained-agent-architecture/issues/87) A2 | Это задание; галочка A2 ставится после мержа этого файла в main |
 | Эпик [#11](https://github.com/trained-assist/trained-agent-architecture/issues/11) M0 | «Схема Task Store v1» — пункт M0; порядок этапов теперь только в плане этого репо |
 
