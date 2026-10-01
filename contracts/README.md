@@ -1,6 +1,8 @@
 # Контракты между сервисами
 
-Статус: предложение для согласования · 30.09.2026. Это логические границы; пути API ниже иллюстративны и ещё не утверждены. Раздел не объявляет текущий wire protocol заменённым.
+Статус: **C01/C02/C03 приняты 02.10.2026** как основной контракт взаимодействия каналов с задачами — логические границы, идентификаторы, смысл квитанции, адресация команд, приёмка. Остальные контракты — предложение для согласования · 30.09.2026. Это логические границы; пути API ниже иллюстративны и ещё не утверждены. Раздел не объявляет текущий wire protocol заменённым.
+
+Принятие C01–C03 — решение владельца от 02.10.2026 ([DECISIONS](../DECISIONS.md), [исследование границы шлюза](../research/GATEWAY-BOUNDARY-RESEARCH-2026-10-02.md)): контракт канала фиксируется **до** того, как в старом коде появляется граница адаптера или фасада. Приняты логические границы и запреты (приложение A), а не конкретные URL — их выбирает карточка реализации.
 
 ## Уточнение владельцев v0.3
 
@@ -61,9 +63,15 @@ gtdId opt-in только при явном completion control/конкретн�
 
 ## C01 — вход сообщений и заданий
 
+Статус: **Принято 02.10.2026** (владелец) — граница и смысл приёма. Имена полей и пути API остаются предложением.
+
 **Цель:** Telegram, Web и будущие каналы используют общий смысл input, сохраняя особенности своего UX. Gateway отвечает за webhook/auth своего канала, сбор пачки, media refs и нормализацию; orchestrator — за task/session/project/admission. Канальный router не определяет бизнес-логику домена.
 
-Предлагаемый envelope: `contractVersion, requestId, principalId, conversationRef, sessionId?, projectId?, inputItems[], artifactRefs[], requestedExecutionPolicy?, replyToRef`. Principal, endpoint и доступ к project/session выводятся из проверенной аутентификации, а не принимаются на доверии от модели. Для headless API conversationRef отсутствует; replyToRef может означать polling/webhook/storage target.
+**Чего в канальной поверхности нет (запрет 02.10.2026).** Ни `agentUrl`, ни `host`, ни `region`, ни `engine`, ни «принудительно RU», ни любого другого выбора исполнителя: это C04 и placement policy ([ARCHITECTURE §9](../ARCHITECTURE.md)). Шлюз адресует **одну** точку входа — control plane — и всё, что он знает об адресате, записано при приёме (`audienceId`/`destinationId`, INV-19). Если операции канала требует другого адресата, это дефект контракта, а не флаг функции: заводится карточка в этом репозитории, а не поле в интерфейсе шлюза. Статус в шлюзе — рендер события (C02), а не вычисление состояния; окно «занят» в памяти шлюза не является источником истины.
+
+Envelope (имена полей — предложение): `contractVersion, requestId, principalId, conversationRef, sessionId?, projectId?, inputItems[], artifactRefs[], requestedExecutionPolicy?, replyToRef`. Principal, endpoint и доступ к project/session выводятся из проверенной аутентификации, а не принимаются на доверии от модели. Для headless API conversationRef отсутствует; replyToRef может означать polling/webhook/storage target.
+
+Четыре разных факта, которые нельзя смешивать в одном ответе: **квитанция ≠ запуск ≠ результат ≠ доставка**. Receipt ниже подтверждает только durable acceptance.
 
 Receipt: `requestId, userTaskId, acceptedAt, durable=true`. ACK означает durable acceptance; не запуск, не завершение и не доставку ответа. Повтор того же requestId с тем же payload возвращает прежний receipt; другой payload с тем же ключом — conflict. Scope ключа включает проверенного вызывающего клиента/tenant, срок дедупликации объявлен. Потеря ACK допускает безопасную повторную доставку.
 
@@ -71,7 +79,11 @@ Receipt: `requestId, userTaskId, acceptedAt, durable=true`. ACK означает
 
 **Приёмка:** lost ACK; duplicate request; payload conflict; media failure; параллельный Web и TG одного профиля; подмена principal; restart до и после ACK.
 
+Состав операций канала, которые C01/C02/C03 обязаны покрывать, и снимок того, как это выглядит в живом шлюзе, — [приложение A](#приложение-a-минимальный-контракт-шлюза-снимок-02102026). Перечень операций — производный артефакт, а не пишемый руками список.
+
 ## C02 — события и доставка результата
+
+Статус: **Принято 02.10.2026** (владелец) — граница, состав событий и правило повторов. Имена полей и пути API остаются предложением.
 
 Envelope: `eventId, userTaskId, runId?, sessionId?, sequence, type, occurredAt, replyToRef, payload, artifactRefs?`. События: accepted, queued, started, progress, attempt_failed, waiting, stopped, result_ready, task_failed, delivery_failed. Ошибка попытки не обязана быть ошибкой task; отсутствие прогресса не доказательство зависания.
 
@@ -83,11 +95,15 @@ Envelope: `eventId, userTaskId, runId?, sessionId?, sequence, type, occurredAt, 
 
 ## C03 — stop/supplement/status
 
+Статус: **Принято 02.10.2026** (владелец) — граница, адресация и разведение состояний. Имена полей и пути API остаются предложением.
+
 Command: `commandId, principalId, targetUserTaskId/sessionId, conversationRef?, action, payload?, expectedGeneration?`. На уровне UX Telegram может выбирать текущую задачу lane, но control plane сохраняет resolved target. Stop никогда не означает «убить все задачи профиля». Supplement явно определяет: добавить в текущую попытку, сохранить для следующей или создать follow-up; receipt сообщает принятый вариант.
 
-Развести `stop requested` и `stopped`: второй статус подтверждается остановкой процесса/дочерних работ либо известным terminal outcome. Stop suppresses technical retries и GTD continuation той же работы. Фоновая задача другого проекта остаётся независимой. Mutations, уже завершённые снаружи, stop не откатывает автоматически.
+Адресат команды берётся из записи в Task Store, а не из памяти шлюза: `expectedGeneration` отсекает команду, адресованную уже сменившемуся поколению, и делает команду идемпотентной при повторе отправки. Окно «занят» и локальные идентификаторы шлюза не являются адресатом: они не переживают перезапуск и не видны вебу.
 
-**Сейчас:** есть scoped TG stop и нормативный lane/session writer contract. Единые wire names и поведение всех каналов ещё сверяются.
+Развести `stop requested` и `stopped`: второй статус подтверждается остановкой процесса/дочерних работ либо известным terminal outcome. Stop suppresses technical retries **включая outbox и retry-очередь шлюза** и GTD continuation той же работы. Фоновая задача другого проекта остаётся независимой. Mutations, уже завершённые снаружи, stop не откатывает автоматически.
+
+**Сейчас:** есть scoped TG stop и нормативный lane/session writer contract. Единые wire names и поведение всех каналов ещё сверяются. Стоп не гасит outbox/retry — это дефект прода, заведённый как [trained-assist-tg-bot#325](https://github.com/trained-assist/trained-assist-tg-bot/issues/325); формулировку семантики он не переформулирует, а приводит в соответствие C03.
 
 ## C04 — placement и execution runner
 
@@ -143,11 +159,12 @@ ValidationResult: validator id/version, target artifact/run, verdict (pass/fail/
 
 ## Следующие решения
 
-1. Согласовать C01/C02/C03 как основной контракт взаимодействия каналов с задачами.
+1. ~~Согласовать C01/C02/C03 как основной контракт взаимодействия каналов с задачами.~~ **Согласовано 02.10.2026** — приняты для шлюза, границы и запреты в приложении A; дальше — по карточкам.
 2. Согласовать ownership C04 и persistence C05 до распределения выполнения между VM.
 3. Зафиксировать C06/C07 для доменных сервисов и credentials.
 4. Уточнить C08 для фактического LLM Ledger и budget enforcement.
 5. По каждому контракту оформить schema + compatibility + deterministic consumer/provider tests. Пока это архитектурное предложение, не задача на немедленный рефакторинг.
+6. Классифицировать эксплуатационные операции legacy-бота (`/maintenance`, `/stats`, `/cleanup-flood`, `orphan-checklists`, `/tokens`, `/skills`): либо отдельный эксплуатационный список, либо операции control plane. В C01–C03 они сейчас не входят; решение владельца не принято ([исследование §8 п. 2](https://github.com/trained-assist/trained-assist-tg-bot/issues/327)).
 
 
 ## Тип исполнения в контрактах
@@ -157,3 +174,36 @@ Job definition содержит обязательный jobType: deterministic-
 C04: Agent Runner/Agent clean room обслуживают ai-agent-job; deterministic-job исполняется программным worker, llm-recipe-job — recipe executor/LLM gateway. Это логические роли, не требование трёх новых deploy. Общие admission/ownership/budget принадлежат control plane.
 
 C06/C07: recipe executor не выдаёт модели tools или пользовательские credentials; модель видит только подготовленный input. C08: recipe объявляет input/output, validation и разрешённые вызовы; ai-agent-job может выполнять LLM calls внутри агентского цикла. Model output не считается авторизованной командой. Изменение типа — отдельное согласованное execution, а не скрытый fallback.
+
+## Приложение A. Минимальный контракт шлюза (снимок 02.10.2026)
+
+Что именно шлюз вызывает у control plane, что из этого его ответственность, а что — нет. Принято вместе с C01–C03, чтобы «граница канала» была проверяемым списком, а не описанием.
+
+**Как получен список.** Статическим разбором `fetch(` в `src/` репозитория trained-assist-tg-bot на ревизии `94ad057` (это `main`, дрейфа на 02.10.2026 нет) по `AGENT_URL`, `AGENT_RU_URL`, `agentUrl` и общему клиенту. Получено 24 различных backend endpoint-а в 27 местах вызова; **8 мест обходят общий клиент** и потому не попали бы в перечень, написанный от руки. Числа воспроизводят [ревью #327](https://github.com/trained-assist/trained-assist-tg-bot/issues/327) §4 независимой сверкой.
+
+| Операция | Место в коде | Контракт | Что остаётся в шлюзе / что не остаётся | Владелец повторов |
+|---|---|---|---|---|
+| `POST /run` | `agent-client.js:185`, `run-outbox.js:53` | C01 | шлюз: нормализовать ввод и дождаться durable receipt. Не шлюз: admission, выбор исполнителя, что делать после ACK | шлюз — до durable ACK, дальше control plane |
+| `POST /intake-quick` | `intake-preflight.js:73` | C01 (fast path) | шлюз спрашивает «это быстрый ответ?»; ответ — не запуск задачи | шлюз |
+| `POST /intake-gate` | `agent-client.js:295` | C01 | шлюз решает «выпустить накопленное», не семантику задачи | шлюз |
+| `POST /classify` | `agent-client.js:262` | C01 | классификация входа — канальная; доменную логику сюда не тащат | шлюз |
+| `PUT/GET /intake-files`, `POST /intake-files/release` | `lib/intake-files.js:6,72` | C01 | шлюз принимает и отпускает media refs; байты — в storage | шлюз |
+| `GET /projects`, `GET /project-decision` | `agent-client.js:100,214,222` | C01 | шлюз показывает выбор проекта; само определение проекта — Input (5.2) | шлюз |
+| `GET /sessions` | `agent-client.js:235` | C01 | выбор сессии на входе | шлюз |
+| `GET /internal/run-input` | `agent-client.js:73` | C02 | шлюз рендерит прогресс; источник состояния — Reporting, а не память шлюза | шлюз |
+| `POST /report` | `agent-client.js:349` | C02 | приём отчёта о доставке/показе | шлюз |
+| `POST /tasks/stop` | `agent-client.js:424` | C03 | адрес — из Task Store с `expectedGeneration`; не из локального окна | control plane |
+| `GET /tasks/running?chatId=` | `intake-buffer.js:1272` | **вне C01–C03** | антипаттерн: источник истины «занят» в шлюзе. Снимается вместе с Reporting (§6) | — |
+| `GET /health` | `agent-client.js:383` | вне C01–C03 | эксплуатационная проверка, не канальная операция | шлюз (свой health) |
+| `GET /capabilities` | `agent-client.js:20` | **запрет C01** | сегодня используется для выбора RU/EU-адресата; после принятия C01 выбор исполнителя не принадлежит шлюзу | — |
+| `GET /maintenance` | `commands.js:877`, `run-outbox.js:48` | вне C01–C03 | эксплуатация; классификация не решена (п. 6 «Следующие решения») | — |
+| `GET /stats`, `POST /cleanup-flood` | `user-mgmt.js:125`, `commands.js:737` | вне C01–C03 | эксплуатация и отчётность; классификация не решена | — |
+| `POST /internal/orphan-checklists/action` | `agent-client.js:399` | вне C01–C03 | эксплуатация; классификация не решена | — |
+| `POST /tokens`, `POST /skills` | `agent-client.js:314,327` | вне C01–C03 | управление доступом пользователя, не взаимодействие с задачей | — |
+
+**Правила, которые делают список проверяемым.**
+
+1. **Список производный, а не написанный.** Каждый вызов помечается в коде `// contract: C0x, operation: <имя>`, перечень генерируется разбором; неаннотированный прямой вызов — падение гейта. Проверка вводится карточкой в tg-bot (гейты G2/G3 [исследования](../research/GATEWAY-BOUNDARY-RESEARCH-2026-10-02.md)): на момент принятия контракта это требование к приёмке карточки, а не работающая проверка CI.
+2. **Ни одна операция не добавляет выбор исполнителя.** `host`, `region`, `engine`, «принудительно RU» в канальной поверхности отсутствуют; операция, которой нужен адресат, — дефект контракта, и заводится карточка здесь.
+3. **Снимок версионирован ревизией.** Любой PR, меняющий набор или смысл вызовов, обновляет эту таблицу в том же PR; расхождение таблицы и кода — повод остановить merge.
+4. Эксплуатационные операции не получают «адаптер шлюза», пока владелец не решит их классификацию: иначе C01–C03 перестанут быть минимальным контрактом взаимодействия.
