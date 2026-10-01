@@ -87,9 +87,10 @@ jobs:
       - name: Regenerate using the existing organization reader
         env:
           GH_TOKEN: ${{ secrets.AUTOFIX_PAT }}
+          TOOL_REF: ${{ steps.tool.outputs.ref }}
         run: |
           test -n "$GH_TOKEN" || { echo '::error::Organization reader AUTOFIX_PAT is unavailable'; exit 1; }
-          node scripts/inventory/regenerate.mjs .inventory-tool "$RUNNER_TEMP/coverage"
+          node scripts/inventory/regenerate.mjs .inventory-tool "$RUNNER_TEMP/coverage" "$TOOL_REF"
           # Сравнивается СТАБИЛЬНАЯ проекция, а не вся таблица: строка, которую этот читатель не
           # видит, сравнивается только по (repo, read_state). Иначе ответ гейта зависит от того,
           # каким читателем его запустили, и любой перезапуск с другим токеном — ложный дрейф.
