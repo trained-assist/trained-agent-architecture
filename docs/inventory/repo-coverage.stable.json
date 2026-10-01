@@ -21,6 +21,7 @@
     "read_state",
     "notes"
   ],
+  "compared": "stableRow — a no_access row is compared by (repo, read_state) only",
   "repos": [
     {
       "repo": "trained-assist/ai-agent-runner",
