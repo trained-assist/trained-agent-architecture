@@ -1,0 +1,80 @@
+[
+  {
+    "results": [
+      {
+        "id": "ut-cf-180635-crash",
+        "status": "done",
+        "generation": 1,
+        "result_json": "{\"answer\":\"да\",\"ok\":true,\"version\":\"v1\"}",
+        "side_effects": "{\"apply\":1,\"prepare\":1,\"run\":1}",
+        "history": "[{\"kind\":\"status\",\"step\":\"start\",\"at\":1790878018832},{\"kind\":\"step_done\",\"step\":\"prepare\",\"at\":1790878019303},{\"kind\":\"step_done\",\"step\":\"run\",\"at\":1790878019418},{\"kind\":\"step_done\",\"step\":\"guard-crash\",\"at\":1790878021549},{\"kind\":\"status\",\"step\":\"wait\",\"at\":1790878021713},{\"kind\":\"signal\",\"step\":\"user_reply\",\"at\":1790878022535},{\"kind\":\"step_done\",\"step\":\"wait\",\"at\":1790878022666},{\"kind\":\"step_done\",\"step\":\"apply\",\"at\":1790878022769},{\"kind\":\"step_done\",\"step\":\"finalize\",\"at\":1790878022880}]"
+      },
+      {
+        "id": "ut-cf-180635-sleep",
+        "status": "done",
+        "generation": 1,
+        "result_json": "{\"answer\":\"да\",\"ok\":true,\"version\":\"v1\"}",
+        "side_effects": "{\"apply\":1,\"prepare\":1,\"run\":1}",
+        "history": "[{\"kind\":\"status\",\"step\":\"start\",\"at\":1790878026890},{\"kind\":\"step_done\",\"step\":\"prepare\",\"at\":1790878028896},{\"kind\":\"step_done\",\"step\":\"run\",\"at\":1790878029014},{\"kind\":\"status\",\"step\":\"wait\",\"at\":1790878074159},{\"kind\":\"signal\",\"step\":\"user_reply\",\"at\":1790878076440},{\"kind\":\"step_done\",\"step\":\"wait\",\"at\":1790878076605},{\"kind\":\"step_done\",\"step\":\"apply\",\"at\":1790878076720},{\"kind\":\"step_done\",\"step\":\"finalize\",\"at\":1790878076824}]"
+      },
+      {
+        "id": "ut-cf-181011-crash",
+        "status": "done",
+        "generation": 1,
+        "result_json": "{\"answer\":\"да\",\"ok\":true,\"version\":\"v1\"}",
+        "side_effects": "{\"apply\":1,\"prepare\":1,\"run\":1}",
+        "history": "[{\"kind\":\"status\",\"step\":\"start\",\"at\":1790878234194},{\"kind\":\"step_done\",\"step\":\"prepare\",\"at\":1790878234643},{\"kind\":\"step_done\",\"step\":\"run\",\"at\":1790878234760},{\"kind\":\"step_done\",\"step\":\"guard-crash\",\"at\":1790878236909},{\"kind\":\"status\",\"step\":\"wait\",\"at\":1790878237076},{\"kind\":\"signal\",\"step\":\"user_reply\",\"at\":1790878238182},{\"kind\":\"step_done\",\"step\":\"wait\",\"at\":1790878238461},{\"kind\":\"step_done\",\"step\":\"apply\",\"at\":1790878238567},{\"kind\":\"step_done\",\"step\":\"finalize\",\"at\":1790878238677}]"
+      },
+      {
+        "id": "ut-cf-181011-deploy",
+        "status": "done",
+        "generation": 1,
+        "result_json": "{\"answer\":\"да\",\"ok\":true,\"version\":\"v2\"}",
+        "side_effects": "{\"apply\":1,\"prepare\":1,\"run\":1}",
+        "history": "[{\"kind\":\"status\",\"step\":\"start\",\"at\":1790878319785},{\"kind\":\"step_done\",\"step\":\"prepare\",\"at\":1790878320250},{\"kind\":\"step_done\",\"step\":\"run\",\"at\":1790878320357},{\"kind\":\"status\",\"step\":\"wait\",\"at\":1790878320470},{\"kind\":\"signal\",\"step\":\"user_reply\",\"at\":1790878341781},{\"kind\":\"step_done\",\"step\":\"wait\",\"at\":1790878391779},{\"kind\":\"step_done\",\"step\":\"apply\",\"at\":1790878391939},{\"kind\":\"step_done\",\"step\":\"finalize\",\"at\":1790878392071}]"
+      },
+      {
+        "id": "ut-cf-181011-sleep",
+        "status": "done",
+        "generation": 1,
+        "result_json": "{\"answer\":\"да\",\"ok\":true,\"version\":\"v1\"}",
+        "side_effects": "{\"apply\":1,\"prepare\":1,\"run\":1}",
+        "history": "[{\"kind\":\"status\",\"step\":\"start\",\"at\":1790878243185},{\"kind\":\"step_done\",\"step\":\"prepare\",\"at\":1790878245925},{\"kind\":\"step_done\",\"step\":\"run\",\"at\":1790878246042},{\"kind\":\"status\",\"step\":\"wait\",\"at\":1790878291216},{\"kind\":\"signal\",\"step\":\"user_reply\",\"at\":1790878292820},{\"kind\":\"step_done\",\"step\":\"wait\",\"at\":1790878292955},{\"kind\":\"step_done\",\"step\":\"apply\",\"at\":1790878293062},{\"kind\":\"step_done\",\"step\":\"finalize\",\"at\":1790878293175}]"
+      },
+      {
+        "id": "ut-cf-181011-timeout",
+        "status": "failed",
+        "generation": 1,
+        "result_json": "{\"reason\":\"user_reply_timeout\"}",
+        "side_effects": "{\"prepare\":1,\"run\":1}",
+        "history": "[{\"kind\":\"status\",\"step\":\"start\",\"at\":1790878296518},{\"kind\":\"step_done\",\"step\":\"prepare\",\"at\":1790878296876},{\"kind\":\"step_done\",\"step\":\"run\",\"at\":1790878296993},{\"kind\":\"status\",\"step\":\"wait\",\"at\":1790878297108},{\"kind\":\"wait_timeout\",\"step\":\"wait\",\"at\":1790878317191}]"
+      },
+      {
+        "id": "ut-cf-sanity",
+        "status": "done",
+        "generation": 1,
+        "result_json": "{\"answer\":\"да\",\"ok\":true,\"version\":\"v1\"}",
+        "side_effects": "{\"apply\":1,\"prepare\":1,\"run\":1}",
+        "history": "[{\"kind\":\"status\",\"step\":\"start\",\"at\":1790877856622},{\"kind\":\"step_done\",\"step\":\"prepare\",\"at\":1790877859284},{\"kind\":\"step_done\",\"step\":\"run\",\"at\":1790877859409},{\"kind\":\"status\",\"step\":\"wait\",\"at\":1790877859530},{\"kind\":\"signal\",\"step\":\"user_reply\",\"at\":1790877867373},{\"kind\":\"step_done\",\"step\":\"wait\",\"at\":1790877867655},{\"kind\":\"step_done\",\"step\":\"apply\",\"at\":1790877867868},{\"kind\":\"step_done\",\"step\":\"finalize\",\"at\":1790877868000}]"
+      }
+    ],
+    "success": true,
+    "meta": {
+      "served_by": "v3-prod",
+      "served_by_region": "EEUR",
+      "served_by_colo": "ARN",
+      "served_by_primary": true,
+      "timings": {
+        "sql_duration_ms": 0.5623
+      },
+      "duration": 0.5623,
+      "changes": 0,
+      "last_row_id": 0,
+      "changed_db": false,
+      "size_after": 40960,
+      "rows_read": 94,
+      "rows_written": 0,
+      "total_attempts": 1
+    }
+  }
+]

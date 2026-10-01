@@ -1,0 +1,61 @@
+
+ ⛅️ wrangler 4.145.0 (update available 4.146.0)
+───────────────────────────────────────────────
+Describing latest instance:
+Workflow Name:         task-workflow
+Instance Id:           ut-cf-181011-timeout
+Version Id:            c25f0aa4-17a7-4d4d-89b3-033310edfc25
+Status:                ✅ Completed
+Trigger:               🔗 Binding
+Queued:                01/10/2026, 9:11:36 pm
+Success:               ✅ Yes
+Start:                 01/10/2026, 9:11:36 pm
+End:                   01/10/2026, 9:11:57 pm
+Duration:              21 seconds
+Last Successful Step:  mark-awaiting-1
+Steps:
+
+  Name:      prepare-1
+  Type:      🎯 Step
+  Start:     01/10/2026, 9:11:36 pm
+  End:       01/10/2026, 9:11:36 pm
+  Duration:  0 seconds
+  Success:   ✅ Yes
+  Output:    "1790878296876"
+┌────────────────────────┬────────────────────────┬───────────┬────────────┐
+│ Start                  │ End                    │ Duration  │ State      │
+├────────────────────────┼────────────────────────┼───────────┼────────────┤
+│ 01/10/2026, 9:11:36 pm │ 01/10/2026, 9:11:36 pm │ 0 seconds │ ✅ Success │
+└────────────────────────┴────────────────────────┴───────────┴────────────┘
+
+  Name:      run-1
+  Type:      🎯 Step
+  Start:     01/10/2026, 9:11:36 pm
+  End:       01/10/2026, 9:11:37 pm
+  Duration:  0 seconds
+  Success:   ✅ Yes
+  Output:    "1790878296993"
+┌────────────────────────┬────────────────────────┬───────────┬────────────┐
+│ Start                  │ End                    │ Duration  │ State      │
+├────────────────────────┼────────────────────────┼───────────┼────────────┤
+│ 01/10/2026, 9:11:36 pm │ 01/10/2026, 9:11:37 pm │ 0 seconds │ ✅ Success │
+└────────────────────────┴────────────────────────┴───────────┴────────────┘
+
+  Name:      mark-awaiting-1
+  Type:      🎯 Step
+  Start:     01/10/2026, 9:11:37 pm
+  End:       01/10/2026, 9:11:37 pm
+  Duration:  0 seconds
+  Success:   ✅ Yes
+  Output:    "1790878297108"
+┌────────────────────────┬────────────────────────┬───────────┬────────────┐
+│ Start                  │ End                    │ Duration  │ State      │
+├────────────────────────┼────────────────────────┼───────────┼────────────┤
+│ 01/10/2026, 9:11:37 pm │ 01/10/2026, 9:11:37 pm │ 0 seconds │ ✅ Success │
+└────────────────────────┴────────────────────────┴───────────┴────────────┘
+
+  Name:      wait-1
+  Type:      👀 Waiting for event
+  Start:     01/10/2026, 9:11:37 pm
+  End:       01/10/2026, 9:11:57 pm
+  Duration:  20 seconds

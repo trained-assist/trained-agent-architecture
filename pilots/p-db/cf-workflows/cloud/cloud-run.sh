@@ -18,7 +18,11 @@ now() { python3 -c 'import time;print(int(time.time()*1000))'; }
 req() { local d="${2:-}"; [ -z "$d" ] && d='{}'; curl -s -m 20 -XPOST "$B$1" -H 'content-type: application/json' -d "$d"; }
 row() { curl -s -m 15 "$B/status?taskId=$1"; }
 tstat() { row "$1" | python3 -c 'import json,sys;print(json.load(sys.stdin)["taskStore"]["status"])' 2>/dev/null; }
-hist() { row "$1" | python3 -c "import json,sys;h=json.load(sys.stdin)['taskStore']['history'];print([e['at'] for e in h if e['kind']=='$2' and e.get('step')=='$3'][0])" 2>/dev/null; }
+hist() { row "$1" | python3 -c "
+import json,sys
+h=json.load(sys.stdin)['taskStore']['history']
+h=json.loads(h) if isinstance(h,str) else h
+print([e['at'] for e in h if e['kind']=='$2' and e.get('step')=='$3'][0])" 2>/dev/null; }
 wait_status() { # taskId status timeout_s
   local end=$(( $(date +%s) + $3 ))
   while [ "$(date +%s)" -lt "$end" ]; do [ "$(tstat "$1")" = "$2" ] && return 0; sleep 1; done; return 1; }
@@ -96,6 +100,7 @@ R_C2B=$(jq -r 'if .status=="failed" and .result.reason=="user_reply_timeout" and
 log "== C3 deploy during awaiting_input task=$U-deploy"
 req /start "{\"taskId\":\"$U-deploy\"}" >> "$LOG"
 wait_status "$U-deploy" awaiting_input 90 || log "C3: not awaiting in 90s"
+sleep 10                                 # let the instance hibernate before we look at it
 C3_BEFORE=$(row "$U-deploy" | jq -c '{status:.taskStore.status,engine:.engine.status,
   version:([.taskStore.history|fromjson[]|select(.kind=="status" and .step=="wait")|.payload.version][0])}')
 DEPLOY_T0=$(now)
@@ -114,11 +119,13 @@ log "C3 after=$C3_AFTER"
 "$W" -c "$CFG" workflows instances describe task-workflow "$U-deploy" > "$HERE/evidence-c3-instance.txt" 2>&1
 R_C3=$(python3 -c '
 import json,sys
-mid,after=json.loads(sys.argv[1]),json.loads(sys.argv[2])
-print("PASS" if mid["status"]=="awaiting_input" and mid["engine"]=="waiting"
+before,mid,after=json.loads(sys.argv[1]),json.loads(sys.argv[2]),json.loads(sys.argv[3])
+ok = (before["status"]=="awaiting_input" and before.get("version")=="v1"
+      and mid["status"]=="awaiting_input"
       and after["status"]=="done" and after.get("result",{}).get("version")=="v2"
-      and after.get("apply_version")=="v2" else "FAIL")' "$C3_MID" "$C3_AFTER")
-log "C3 verdict=$R_C3 (waiting instance survived deploy; resumed steps carry version v2)"
+      and after.get("apply_version")=="v2")
+print("PASS" if ok else "FAIL")' "$C3_BEFORE" "$C3_MID" "$C3_AFTER")
+log "C3 verdict=$R_C3 (waiting instance survived deploy; resumed steps carry version v2); engine pre=$C3_BEFORE mid=$C3_MID"
 
 # ---------------- leave the worker as the repo is (v1)
 log "== final redeploy v1 (repo state == deployed state)"
@@ -128,7 +135,7 @@ log "== final redeploy v1 (repo state == deployed state)"
 log "== T8 remote D1 one-SQL query"
 SQL="SELECT t.id, t.status, t.generation, t.result_json,
  (SELECT json_group_object(name, count) FROM side_effects s WHERE s.task_id = t.id) AS side_effects,
- (SELECT json_group_array(json_object('kind', e.kind, 'step', e.step, 'at', e.at)) FROM (SELECT * FROM task_events WHERE task_id = t.id ORDER BY id) e) AS history
+ (SELECT json_group_array(json_object('kind', e.kind, 'step', e.step, 'at', e.at, 'payload', e.payload)) FROM (SELECT * FROM task_events WHERE task_id = t.id ORDER BY id) e) AS history
  FROM tasks t WHERE t.id LIKE 'ut-cf-%' ORDER BY t.id"
 "$W" -c "$CFG" d1 execute p-db-a1-taskstore --remote --json --command "$SQL" > "$HERE/evidence-d1-status.json" 2>&1
 D1_ROWS=$(jq -r '.[0].results|length' "$HERE/evidence-d1-status.json" 2>/dev/null || echo 0)
