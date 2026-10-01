@@ -3,15 +3,24 @@ import path from 'node:path';
 import { execFileSync } from 'node:child_process';
 import { pathToFileURL } from 'node:url';
 
-const tool = path.resolve(process.argv[2] || '');
-const output = path.resolve(process.argv[3] || 'docs/inventory');
-const committed = JSON.parse(fs.readFileSync('docs/inventory/repo-coverage.json'));
-const refs = [...new Set(committed.repos.map(row => row.profile_ref))];
-if (refs.length !== 1 || !/^v\d+\.\d+\.\d+$/.test(refs[0])) throw Error('one immutable release profile_ref is required');
-const ref = refs[0];
+// regenerate.mjs <tool_dir> <output_dir> <tool_ref>
+//
+// Подъём пина и перегенерация таблицы — ОДНА атомарная операция, выполненная читателем гейта.
+// Раньше это были два шага руками: закоммитить таблицу с новым profile_ref, а потом уже
+// генерировать. Первый же запуск падал — генератор читал ref из старой таблицы и проверял старый
+// тег, где новой функции нет (курица и яйцо). Поэтому ref приходит ВХОДОМ, а не читается из
+// таблицы, и генератор сам записывает его в результат.
+
+const [toolDir, outputDir, ref] = process.argv.slice(2);
+const tool = path.resolve(toolDir || '');
+const output = path.resolve(outputDir || 'docs/inventory');
+if (!tool || !output || !ref) throw Error('usage: regenerate.mjs <tool_dir> <output_dir> <tool_ref>');
+if (!/^v\d+\.\d+\.\d+$/.test(ref)) throw Error(`invalid tool_ref: ${ref}`);
+
 const sha = execFileSync('git', ['-C', tool, 'rev-parse', 'HEAD'], { encoding: 'utf8' }).trim();
 const tagSha = execFileSync('git', ['-C', tool, 'rev-parse', `${ref}^{commit}`], { encoding: 'utf8' }).trim();
-if (sha !== tagSha) throw Error('tool checkout does not match table profile_ref');
+if (sha !== tagSha) throw Error(`tool checkout ${sha} does not match ${ref} (${tagSha})`);
+
 const { buildCoverage, renderCoverageMd, renderStableJson, COVERAGE_COLUMNS } = await import(pathToFileURL(path.join(tool, 'scripts/lib/devbaseline/inventory.mjs')));
 const entries = JSON.parse(fs.readFileSync(path.join(tool, 'inventory/repos.json')));
 // This repository must describe the current PR tree, otherwise adding inventory itself

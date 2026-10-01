@@ -11,6 +11,11 @@ on:
         required: false
         type: boolean
         default: false
+      tool_ref:
+        description: 'Тег pr-autofix, которым генерировать и закрепить в таблице'
+        required: false
+        type: string
+        default: v1.7.5
 permissions:
   contents: read
 jobs:
@@ -28,28 +33,20 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Resolve profile_ref from the committed table
-        id: tool
-        run: |
-          node - <<'NODE'
-          const fs = require('fs');
-          const rows = require('./docs/inventory/repo-coverage.json').repos;
-          const refs = [...new Set(rows.map(r => r.profile_ref))];
-          if (refs.length !== 1 || !/^v\d+\.\d+\.\d+$/.test(refs[0])) throw Error('invalid profile_ref');
-          fs.appendFileSync(process.env.GITHUB_OUTPUT, `ref=${refs[0]}\n`);
-          NODE
-      - uses: actions/checkout@v4
+      - name: Check out the generator at the requested tag
+        uses: actions/checkout@v4
         with:
           repository: trained-assist/pr-autofix
-          ref: ${{ steps.tool.outputs.ref }}
+          ref: ${{ inputs.tool_ref }}
           path: .inventory-tool
           persist-credentials: false
       - name: Regenerate with the gate's own reader
         env:
           GH_TOKEN: ${{ secrets.AUTOFIX_PAT }}
+          TOOL_REF: ${{ inputs.tool_ref }}
         run: |
           test -n "$GH_TOKEN" || { echo '::error::Organization reader AUTOFIX_PAT is unavailable'; exit 1; }
-          node scripts/inventory/regenerate.mjs .inventory-tool docs/inventory
+          node scripts/inventory/regenerate.mjs .inventory-tool docs/inventory "$TOOL_REF"
       - name: Commit when the table actually changed
         run: |
           if git diff --quiet -- docs/inventory; then
