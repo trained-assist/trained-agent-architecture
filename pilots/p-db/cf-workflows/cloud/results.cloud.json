@@ -1,0 +1,67 @@
+{
+  "variant": "cf-workflows-d1",
+  "run": "183802",
+  "mode": "real Cloudflare account (worker p-db-a1-cloud-smoke, D1 p-db-a1-taskstore)",
+  "criteria": {
+    "C1_continuation_after_crash_without_trigger": "PASS",
+    "C2_durable_sleep_no_external_event": "PASS",
+    "C2_sleep_gap_ms": 47390,
+    "C2_wake_after_sleep": "PASS",
+    "C2_waitFor_timeout_no_event": "PASS",
+    "C3_deploy_while_waiting": "PASS"
+  },
+  "notes": {
+    "c1_signal_to_finalize_ms": 548,
+    "c2_signal_to_apply_ms": 234,
+    "c3_signal_to_apply_after_deploy_ms": 1425,
+    "c1_wall_ms": 6880,
+    "t8_rows": 21
+  },
+  "evidence": {
+    "C1": {
+      "status": "running",
+      "steps": [
+        "prepare",
+        "run"
+      ],
+      "signals": 0
+    },
+    "C2b": {
+      "status": "failed",
+      "result": {
+        "reason": "user_reply_timeout"
+      },
+      "wait_timeout": 1,
+      "signals": 0,
+      "engine": "complete"
+    },
+    "C3_before": {
+      "status": "awaiting_input",
+      "engine": "running",
+      "version": "v1"
+    },
+    "C3_mid": {
+      "status": "awaiting_input",
+      "engine": "running"
+    },
+    "C3_after": {
+      "status": "done",
+      "result": {
+        "answer": "да",
+        "ok": true,
+        "version": "v2"
+      },
+      "apply_version": "v2"
+    }
+  },
+  "files": [
+    "cloud-run.log",
+    "evidence-tail.jsonl",
+    "evidence-c1-instance.txt",
+    "evidence-c2-instance.txt",
+    "evidence-c2b-instance.txt",
+    "evidence-c3-instance.txt",
+    "evidence-d1-status.json",
+    "evidence-instances-list.txt"
+  ]
+}

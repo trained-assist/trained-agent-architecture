@@ -4,14 +4,20 @@
 import type { WorkflowStep } from 'cloudflare:workers';
 import { TaskStore } from './taskstore';
 
+export interface StepAttempt {
+  /** 1 on the first try, 2+ on platform retries (cloud smoke crash hook). */
+  attempt?: number;
+}
+
 export interface StepCtx {
-  step<T>(name: string, fn: () => Promise<T>, retry?: { limit: number; delaySec: number }): Promise<T>;
+  step<T>(name: string, fn: (attempt?: StepAttempt) => Promise<T>, retry?: { limit: number; delaySec: number }): Promise<T>;
   sleep(name: string, seconds: number): Promise<void>;
   waitFor<T = unknown>(name: string, eventType: string, timeoutSec: number): Promise<T>;
 }
 
 export function cfStepCtx(step: WorkflowStep): StepCtx {
   return {
+    // Cloudflare passes WorkflowStepContext (with `attempt`) as the first callback argument.
     step: (name, fn, retry = { limit: 2, delaySec: 1 }) =>
       step.do(name, { retries: { limit: retry.limit, delay: `${retry.delaySec} seconds`, backoff: 'constant' } }, fn as any) as any,
     sleep: (name, seconds) => step.sleep(name, `${seconds} seconds`),

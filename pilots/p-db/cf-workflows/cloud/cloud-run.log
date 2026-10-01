@@ -1,0 +1,82 @@
+18:38:10 wrangler tail connected (pid 12010)
+18:38:10 == deploy v1
+
+ ⛅️ wrangler 4.145.0 (update available 4.146.0)
+───────────────────────────────────────────────
+Total Upload: 12.39 KiB / gzip: 4.05 KiB
+Your Worker has access to the following bindings:
+Binding                         Resource         
+env.WF (TaskWorkflow)           Workflow         
+env.DB (p-db-a1-taskstore)      D1 Database      
+
+Uploaded p-db-a1-cloud-smoke (5.69 sec)
+Deployed p-db-a1-cloud-smoke triggers (3.50 sec)
+  https://p-db-a1-cloud-smoke.skillset-apply.workers.dev
+  workflow: task-workflow
+Current Version ID: 608941cc-e47d-4eb4-848a-f0619b9d5b18
+18:38:23 == /init
+{
+ "ok": true
+}18:38:23 == C1 crash between steps (crashRunOnce) task=ut-cf-183802-crash
+{
+ "instance": "ut-cf-183802-crash",
+ "created": true
+}{
+ "sentAt": 1790879909166
+}18:38:31 C1 state: {"status":"done","fx":{"apply":1,"prepare":1,"run":1},"steps":["prepare","run","guard-crash","wait","apply","finalize"],"result":{"answer":"да","ok":true,"version":"v1"},"engine":"complete"} (signal->done 548ms, wall 6880ms)
+18:38:32 == C2 sleep 45s, no events sent task=ut-cf-183802-sleep
+{
+ "instance": "ut-cf-183802-sleep",
+ "created": true
+}18:38:44 C2 mid-sleep (t+10s): {"status":"running","steps":["prepare","run"],"signals":0}
+{
+ "sentAt": 1790879973971
+}18:39:36 C2 signal->apply (no deploy) = 234ms
+18:39:36 C2: durable sleep run->wait gap = 47390ms; instance woke at 61032ms from start with 0 events sent
+18:39:37 == C2b waitFor timeout 20s, NO signal ever task=ut-cf-183802-timeout
+{
+ "instance": "ut-cf-183802-timeout",
+ "created": true
+}18:39:59 C2b state after 22186ms: {"status":"failed","result":{"reason":"user_reply_timeout"},"wait_timeout":1,"signals":0,"engine":"complete"}
+18:40:00 == C3 deploy during awaiting_input task=ut-cf-183802-deploy
+{
+ "instance": "ut-cf-183802-deploy",
+ "created": true
+}
+ ⛅️ wrangler 4.145.0 (update available 4.146.0)
+───────────────────────────────────────────────
+Total Upload: 12.39 KiB / gzip: 4.05 KiB
+Your Worker has access to the following bindings:
+Binding                         Resource         
+env.WF (TaskWorkflow)           Workflow         
+env.DB (p-db-a1-taskstore)      D1 Database      
+
+Uploaded p-db-a1-cloud-smoke (7.06 sec)
+Deployed p-db-a1-cloud-smoke triggers (3.94 sec)
+  https://p-db-a1-cloud-smoke.skillset-apply.workers.dev
+  workflow: task-workflow
+Current Version ID: b4fe201f-c502-4152-8ad9-6bcde510ce78
+18:41:30 C3 before={"status":"awaiting_input","engine":"running","version":"v1"} deploy=15173ms after={"status":"awaiting_input","engine":"running"}
+{
+ "sentAt": 1790880090469
+}18:41:33 C3 signal->apply after deploy = 1425ms
+18:41:33 C3 after={"status":"done","result":{"answer":"да","ok":true,"version":"v2"},"apply_version":"v2"}
+18:41:34 C3 verdict=PASS (waiting instance survived deploy; resumed steps carry version v2); engine pre={"status":"awaiting_input","engine":"running","version":"v1"} mid={"status":"awaiting_input","engine":"running"}
+18:41:34 == final redeploy v1 (repo state == deployed state)
+
+ ⛅️ wrangler 4.145.0 (update available 4.146.0)
+───────────────────────────────────────────────
+Total Upload: 12.39 KiB / gzip: 4.05 KiB
+Your Worker has access to the following bindings:
+Binding                         Resource         
+env.WF (TaskWorkflow)           Workflow         
+env.DB (p-db-a1-taskstore)      D1 Database      
+
+Uploaded p-db-a1-cloud-smoke (5.91 sec)
+Deployed p-db-a1-cloud-smoke triggers (3.41 sec)
+  https://p-db-a1-cloud-smoke.skillset-apply.workers.dev
+  workflow: task-workflow
+Current Version ID: 07917858-dbb4-43af-90f5-3fced1756441
+18:41:47 == T8 remote D1 one-SQL query
+18:41:48 T8 rows: 21
+18:41:49 == RESULTS: C1=PASS C2-sleep=PASS C2-wake=PASS C2-timeout=PASS C3=PASS
