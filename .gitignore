@@ -3,3 +3,6 @@
 docs/inventory/construction-tasks.md
 
 .inventory-tool/
+
+# wrangler local cache (account id cache from `wrangler whoami`)
+.wrangler/
