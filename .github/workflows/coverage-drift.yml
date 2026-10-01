@@ -5,10 +5,64 @@ on:
   pull_request:
     branches: [main]
   workflow_dispatch:
+    inputs:
+      regenerate:
+        description: 'Перегенерировать и закоммитить таблицу тем же читателем, что и гейт'
+        required: false
+        type: boolean
+        default: false
 permissions:
   contents: read
 jobs:
+  # Таблица — артефакт ТОГО ЖЕ читателя, что и гейт. Пока её коммитили руками с личным токеном
+  # владельца, а гейт читал организационным AUTOFIX_PAT, гейт сравнивал две разные таблицы и
+  # краснел на карточке, которая сама добавила инвентарь в свой репозиторий (R8).
+  # Перегенерация идёт тем же секретом и тем же скриптом, поэтому читатель у них один.
+  regenerate:
+    if: github.event_name == 'workflow_dispatch' && inputs.regenerate
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Resolve profile_ref from the committed table
+        id: tool
+        run: |
+          node - <<'NODE'
+          const fs = require('fs');
+          const rows = require('./docs/inventory/repo-coverage.json').repos;
+          const refs = [...new Set(rows.map(r => r.profile_ref))];
+          if (refs.length !== 1 || !/^v\d+\.\d+\.\d+$/.test(refs[0])) throw Error('invalid profile_ref');
+          fs.appendFileSync(process.env.GITHUB_OUTPUT, `ref=${refs[0]}\n`);
+          NODE
+      - uses: actions/checkout@v4
+        with:
+          repository: trained-assist/pr-autofix
+          ref: ${{ steps.tool.outputs.ref }}
+          path: .inventory-tool
+          persist-credentials: false
+      - name: Regenerate with the gate's own reader
+        env:
+          GH_TOKEN: ${{ secrets.AUTOFIX_PAT }}
+        run: |
+          test -n "$GH_TOKEN" || { echo '::error::Organization reader AUTOFIX_PAT is unavailable'; exit 1; }
+          node scripts/inventory/regenerate.mjs .inventory-tool docs/inventory
+      - name: Commit when the table actually changed
+        run: |
+          if git diff --quiet -- docs/inventory; then
+            echo "coverage: table already current for pr-autofix $(node -p "require('./docs/inventory/repo-coverage.json').generated_by")"
+            exit 0
+          fi
+          git config user.name "trained-assist-product-owner[bot]"
+          git config user.email "agent@trainedassist.store"
+          git add docs/inventory
+          git commit -m "chore(coverage): перегенерировать таблицу читателем гейта (R8)"
+          git push
   coverage-drift:
+    if: github.event_name != 'workflow_dispatch'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -39,7 +93,10 @@ jobs:
         run: |
           test -n "$GH_TOKEN" || { echo '::error::Organization reader AUTOFIX_PAT is unavailable'; exit 1; }
           node scripts/inventory/regenerate.mjs .inventory-tool "$RUNNER_TEMP/coverage"
-          diff -u docs/inventory/repo-coverage.json "$RUNNER_TEMP/coverage/repo-coverage.json"
+          # Сравнивается СТАБИЛЬНАЯ проекция, а не вся таблица: строка, которую этот читатель не
+          # видит, сравнивается только по (repo, read_state). Иначе ответ гейта зависит от того,
+          # каким читателем его запустили, и любой перезапуск с другим токеном — ложный дрейф.
+          diff -u docs/inventory/repo-coverage.stable.json "$RUNNER_TEMP/coverage/repo-coverage.stable.json"
           diff -u docs/inventory/repo-coverage.md "$RUNNER_TEMP/coverage/repo-coverage.md"
   staging-gate:
     runs-on: ubuntu-latest
@@ -51,7 +108,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           repository: trained-assist/pr-autofix
-          ref: 2a1a7c78ef21371315f50c61428d391ba5b40e8b
+          ref: v1.7.5
           path: .inventory-tool
           persist-credentials: false
       - name: Coverage drift and credential rejection behavior

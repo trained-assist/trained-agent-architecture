@@ -12,7 +12,7 @@ const ref = refs[0];
 const sha = execFileSync('git', ['-C', tool, 'rev-parse', 'HEAD'], { encoding: 'utf8' }).trim();
 const tagSha = execFileSync('git', ['-C', tool, 'rev-parse', `${ref}^{commit}`], { encoding: 'utf8' }).trim();
 if (sha !== tagSha) throw Error('tool checkout does not match table profile_ref');
-const { buildCoverage, renderCoverageMd, COVERAGE_COLUMNS } = await import(pathToFileURL(path.join(tool, 'scripts/lib/devbaseline/inventory.mjs')));
+const { buildCoverage, renderCoverageMd, renderStableJson, COVERAGE_COLUMNS } = await import(pathToFileURL(path.join(tool, 'scripts/lib/devbaseline/inventory.mjs')));
 const entries = JSON.parse(fs.readFileSync(path.join(tool, 'inventory/repos.json')));
 // This repository must describe the current PR tree, otherwise adding inventory itself
 // guarantees self-drift immediately after merge. Other repositories use their live defaults.
@@ -20,9 +20,15 @@ const self = entries.find(e => e.repo === 'trained-assist/trained-agent-architec
 if (!self) throw Error('coverage input omits its owner');
 self.path = process.cwd();
 const result = await buildCoverage(entries, { profileRef: ref });
-if (result.unreadable) throw Error(`inventory unreadable=${result.unreadable}: ${result.rows.filter(r => !r.readable).map(r => r.repo).join(', ')}`);
+// A repository this reader cannot see is DATA, not a broken run (R8). Refusing to write the table
+// at all meant the table could only ever be produced by a reader with MORE access than the gate
+// has — which is exactly how the gate ended up comparing two different tables. The blind spot is
+// written down, compared by (repo, read_state), and reported.
+const blind = result.rows.filter(r => r.read_state === 'no_access').map(r => r.repo);
 fs.mkdirSync(output, { recursive: true });
 fs.writeFileSync(path.join(output, 'repo-coverage.json'), JSON.stringify({ generated_by: `pr-autofix ${ref}`, columns: COVERAGE_COLUMNS, repos: result.rows }, null, 2) + '\n');
 fs.writeFileSync(path.join(output, 'repo-coverage.md'), renderCoverageMd({ rows: result.rows, profileRef: ref, unreadable: result.unreadable }));
+fs.writeFileSync(path.join(output, 'repo-coverage.stable.json'), renderStableJson({ rows: result.rows, profileRef: ref, unreadable: result.unreadable }));
 execFileSync(process.execPath, ['scripts/inventory/assert-no-credential-values.js', path.join(output, 'repo-coverage.json')], { stdio: 'inherit' });
-console.log(`coverage: ${result.rows.length} repositories, 0 unreadable, profile_ref=${ref}, tool_sha=${sha}`);
+console.log(`coverage: ${result.rows.length} repositories, ${blind.length} not visible to this reader, profile_ref=${ref}, tool_sha=${sha}`);
+if (blind.length) console.log(`not visible: ${blind.join(', ')} — grant the reader access, then regenerate`);

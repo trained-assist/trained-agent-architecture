@@ -16,7 +16,7 @@ test('pinned generator: unchanged repo passes; adapter edit changes coverage and
   fs.writeFileSync(path.join(root, '.devbaseline.json'), JSON.stringify(adapter));
   const entry = { repo: 'fixture/docs', path: root };
   const a = await scanLocal(entry, 'v1.7.4');
-  assert.equal(a.readable, true, JSON.stringify(a));
+  assert.equal(a.read_state, 'read', JSON.stringify(a));
   const before = JSON.stringify(a);
   const repeat = JSON.stringify(await scanLocal(entry, 'v1.7.4'));
   assert.equal(repeat, before);
