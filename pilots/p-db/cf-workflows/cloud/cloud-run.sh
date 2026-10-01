@@ -58,7 +58,7 @@ C1_T1=$(now)
 C1_STATE=$(row "$U-crash" | jq -c '{status:.taskStore.status,fx:(.taskStore.side_effects|fromjson),
   steps:[.taskStore.history|fromjson[]|select(.kind=="step_done")|.step],result:(.taskStore.result_json|fromjson?),
   engine:.engine.status}')
-C1_FIN=$(hist "$U-crash" step_done finalize)
+C1_FIN=$(hist "$U-crash" step_done finalize); C1_FIN=${C1_FIN:-0}
 log "C1 state: $C1_STATE (signal->done $((C1_FIN - C1_SIG_T))ms, wall $((C1_T1-C1_T0))ms)"
 "$W" -c "$CFG" workflows instances describe task-workflow "$U-crash" > "$HERE/evidence-c1-instance.txt" 2>&1
 R_C1=$(jq -r 'if .status=="done" and .fx.prepare==1 and .fx.run==1 and .fx.apply==1
@@ -78,6 +78,8 @@ C2_AWAKE=$(now)
 C2_GAP=$(( $(hist "$U-sleep" status wait) - $(hist "$U-sleep" step_done run) ))
 req /signal "{\"taskId\":\"$U-sleep\",\"payload\":{\"answer\":\"да\"}}" >> "$LOG"
 wait_status "$U-sleep" done 60 || log "C2: not done in 60s"
+_a=$(hist "$U-sleep" step_done apply); _s=$(hist "$U-sleep" signal user_reply); C2_LAT=$(( ${_a:-0} - ${_s:-0} ))
+log "C2 signal->apply (no deploy) = ${C2_LAT}ms"
 log "C2: durable sleep run->wait gap = ${C2_GAP}ms; instance woke at $((C2_AWAKE-C2_T0))ms from start with 0 events sent"
 "$W" -c "$CFG" workflows instances describe task-workflow "$U-sleep" > "$HERE/evidence-c2-instance.txt" 2>&1
 R_C2_SLEEP=$(jq -r 'if .status=="running" and (.steps|length)==2 and .signals==0 then "PASS" else "FAIL" end' <<<"$C2_MID")
@@ -102,19 +104,21 @@ req /start "{\"taskId\":\"$U-deploy\"}" >> "$LOG"
 wait_status "$U-deploy" awaiting_input 90 || log "C3: not awaiting in 90s"
 sleep 10                                 # let the instance hibernate before we look at it
 C3_BEFORE=$(row "$U-deploy" | jq -c '{status:.taskStore.status,engine:.engine.status,
-  version:([.taskStore.history|fromjson[]|select(.kind=="status" and .step=="wait")|.payload.version][0])}')
+  version:([.taskStore.history|fromjson[]|select(.kind=="status" and .step=="wait")|(.payload|fromjson?)|.version][0])}')
 DEPLOY_T0=$(now)
 set_version v2
 "$W" -c "$CFG" deploy 2>&1 | tee -a "$LOG" | tail -3
 set_version v1
 DEPLOY_T1=$(now)
-sleep 5
+sleep 60  # observed: workflow instances pick up the new code >=6s..~50s after wrangler deploy returns (issue #92)
 C3_MID=$(row "$U-deploy" | jq -c '{status:.taskStore.status,engine:.engine.status}')
 log "C3 before=$C3_BEFORE deploy=$((DEPLOY_T1-DEPLOY_T0))ms after=$C3_MID"
 req /signal "{\"taskId\":\"$U-deploy\",\"payload\":{\"answer\":\"да\"}}" >> "$LOG"
-wait_status "$U-deploy" done 90 || log "C3: not done in 90s"
+wait_status "$U-deploy" done 420 || log "C3: not done in 420s"
+_a=$(hist "$U-deploy" step_done apply); _s=$(hist "$U-deploy" signal user_reply); C3_LAT=$(( ${_a:-0} - ${_s:-0} ))
+log "C3 signal->apply after deploy = ${C3_LAT}ms"
 C3_AFTER=$(row "$U-deploy" | jq -c '{status:.taskStore.status,result:(.taskStore.result_json|fromjson?),
-  apply_version:([.taskStore.history|fromjson[]|select(.kind=="step_done" and .step=="apply")|.payload.version][0])}')
+  apply_version:([.taskStore.history|fromjson[]|select(.kind=="step_done" and .step=="apply")|(.payload|fromjson?)|.version][0])}')
 log "C3 after=$C3_AFTER"
 "$W" -c "$CFG" workflows instances describe task-workflow "$U-deploy" > "$HERE/evidence-c3-instance.txt" 2>&1
 R_C3=$(python3 -c '
@@ -146,7 +150,7 @@ kill "$TAIL_PID" 2>/dev/null; TAIL_PID=""
 
 jq -n --arg run "$RUN" --arg c1 "$R_C1" --arg sleep "$R_C2_SLEEP" --arg wake "$R_C2_WAKE" \
   --arg to "$R_C2B" --arg c3 "$R_C3" --argjson gap "$C2_GAP" --argjson rows "$D1_ROWS" \
-  --argjson c1lat "$((C1_FIN - C1_SIG_T))" --argjson wall1 "$((C1_T1-C1_T0))" \
+  --argjson c1lat "$((C1_FIN - C1_SIG_T))" --argjson c3lat "$C3_LAT" --argjson c2lat "$C2_LAT" --argjson wall1 "$((C1_T1-C1_T0))" \
   --argjson sleepmid "$C2_MID" --argjson timeoutstate "$C2B" --argjson before "$C3_BEFORE" \
   --argjson mid "$C3_MID" --argjson after "$C3_AFTER" \
   '{variant:"cf-workflows-d1", run:$run, mode:"real Cloudflare account (worker p-db-a1-cloud-smoke, D1 p-db-a1-taskstore)",
@@ -156,7 +160,7 @@ jq -n --arg run "$RUN" --arg c1 "$R_C1" --arg sleep "$R_C2_SLEEP" --arg wake "$R
                "C2_wake_after_sleep":$wake,
                "C2_waitFor_timeout_no_event":$to,
                "C3_deploy_while_waiting":$c3 },
-    notes:{ c1_signal_to_finalize_ms:$c1lat, c1_wall_ms:$wall1, t8_rows:$rows },
+    notes:{ c1_signal_to_finalize_ms:$c1lat, c2_signal_to_apply_ms:$c2lat, c3_signal_to_apply_after_deploy_ms:$c3lat, c1_wall_ms:$wall1, t8_rows:$rows },
     evidence:{ C1:$sleepmid, C2b:$timeoutstate, C3_before:$before, C3_mid:$mid, C3_after:$after },
     files:["cloud-run.log","evidence-tail.jsonl","evidence-c1-instance.txt","evidence-c2-instance.txt",
            "evidence-c2b-instance.txt","evidence-c3-instance.txt","evidence-d1-status.json","evidence-instances-list.txt"]}' \

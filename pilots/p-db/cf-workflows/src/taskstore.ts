@@ -112,7 +112,7 @@ export class TaskStore {
 SELECT t.id, t.status, t.generation, t.result_json,
   (SELECT json_group_object(name, count) FROM side_effects s WHERE s.task_id = t.id) AS side_effects,
   (SELECT json_group_array(json_object('kind', e.kind, 'step', e.step, 'gen', e.generation, 'at', e.at, 'payload', e.payload))
-     FROM (SELECT * FROM task_events WHERE task_id = t.id ORDER BY id) e)
+     FROM (SELECT * FROM task_events WHERE task_id = t.id ORDER BY id) e) AS history
 FROM tasks t WHERE t.id = ?`;
 
   async statusRow(taskId: string) {

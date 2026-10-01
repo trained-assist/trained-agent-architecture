@@ -1,80 +1,82 @@
-18:10:19 wrangler tail connected (pid 3178)
-18:10:19 == deploy v1
+18:31:29 wrangler tail connected (pid 10189)
+18:31:29 == deploy v1
 
  ⛅️ wrangler 4.145.0 (update available 4.146.0)
 ───────────────────────────────────────────────
-Total Upload: 12.35 KiB / gzip: 4.03 KiB
+Total Upload: 12.39 KiB / gzip: 4.05 KiB
 Your Worker has access to the following bindings:
 Binding                         Resource         
 env.WF (TaskWorkflow)           Workflow         
 env.DB (p-db-a1-taskstore)      D1 Database      
 
-Uploaded p-db-a1-cloud-smoke (6.15 sec)
-Deployed p-db-a1-cloud-smoke triggers (3.90 sec)
+Uploaded p-db-a1-cloud-smoke (6.20 sec)
+Deployed p-db-a1-cloud-smoke triggers (3.87 sec)
   https://p-db-a1-cloud-smoke.skillset-apply.workers.dev
   workflow: task-workflow
-Current Version ID: b5cb2d98-44c2-49cb-b090-849e5d9bd244
-18:10:32 == /init
+Current Version ID: 972c2fd6-876f-44be-bca9-349ba553a38f
+18:31:43 == /init
 {
  "ok": true
-}18:10:32 == C1 crash between steps (crashRunOnce) task=ut-cf-181011-crash
+}18:31:43 == C1 crash between steps (crashRunOnce) task=ut-cf-183121-crash
 {
- "instance": "ut-cf-181011-crash",
+ "instance": "ut-cf-183121-crash",
  "created": true
 }{
- "sentAt": 1790878238182
-}18:10:41 C1 state: {"status":"done","fx":{"apply":1,"prepare":1,"run":1},"steps":["prepare","run","guard-crash","wait","apply","finalize"],"result":{"answer":"да","ok":true,"version":"v1"},"engine":"complete"} (signal->done 695ms, wall 7626ms)
-18:10:42 == C2 sleep 45s, no events sent task=ut-cf-181011-sleep
+ "sentAt": 1790879508203
+}18:31:50 C1 state: {"status":"done","fx":{"apply":1,"prepare":1,"run":1},"steps":["prepare","run","guard-crash","wait","apply","finalize"],"result":{"answer":"да","ok":true,"version":"v1"},"engine":"complete"} (signal->done 554ms, wall 6366ms)
+18:31:51 == C2 sleep 45s, no events sent task=ut-cf-183121-sleep
 {
- "instance": "ut-cf-181011-sleep",
+ "instance": "ut-cf-183121-sleep",
  "created": true
-}18:10:53 C2 mid-sleep (t+10s): {"status":"running","steps":["prepare","run"],"signals":0}
+}18:32:02 C2 mid-sleep (t+10s): {"status":"running","steps":["prepare","run"],"signals":0}
 {
- "sentAt": 1790878292820
-}18:11:34 C2: durable sleep run->wait gap = 45174ms; instance woke at 50018ms from start with 0 events sent
-18:11:35 == C2b waitFor timeout 20s, NO signal ever task=ut-cf-181011-timeout
+ "sentAt": 1790879562201
+}18:32:43 C2 signal->apply (no deploy) = 280ms
+18:32:43 C2: durable sleep run->wait gap = 47377ms; instance woke at 50118ms from start with 0 events sent
+18:32:44 == C2b waitFor timeout 20s, NO signal ever task=ut-cf-183121-timeout
 {
- "instance": "ut-cf-181011-timeout",
+ "instance": "ut-cf-183121-timeout",
  "created": true
-}18:11:57 C2b state after 22190ms: {"status":"failed","result":{"reason":"user_reply_timeout"},"wait_timeout":1,"signals":0,"engine":"complete"}
-18:11:58 == C3 deploy during awaiting_input task=ut-cf-181011-deploy
+}18:33:07 C2b state after 22875ms: {"status":"failed","result":{"reason":"user_reply_timeout"},"wait_timeout":1,"signals":0,"engine":"complete"}
+18:33:08 == C3 deploy during awaiting_input task=ut-cf-183121-deploy
 {
- "instance": "ut-cf-181011-deploy",
+ "instance": "ut-cf-183121-deploy",
  "created": true
 }
  ⛅️ wrangler 4.145.0 (update available 4.146.0)
 ───────────────────────────────────────────────
-Total Upload: 12.35 KiB / gzip: 4.04 KiB
+Total Upload: 12.39 KiB / gzip: 4.05 KiB
 Your Worker has access to the following bindings:
 Binding                         Resource         
 env.WF (TaskWorkflow)           Workflow         
 env.DB (p-db-a1-taskstore)      D1 Database      
 
-Uploaded p-db-a1-cloud-smoke (6.51 sec)
-Deployed p-db-a1-cloud-smoke triggers (3.80 sec)
+Uploaded p-db-a1-cloud-smoke (6.18 sec)
+Deployed p-db-a1-cloud-smoke triggers (3.79 sec)
   https://p-db-a1-cloud-smoke.skillset-apply.workers.dev
   workflow: task-workflow
-Current Version ID: 888bb8e4-e956-4c3f-a210-9a2bd7bcf35f
-18:12:21 C3 before={"status":"awaiting_input","engine":"running","version":null} deploy=13890ms after={"status":"awaiting_input","engine":"running"}
+Current Version ID: 121ea0de-1249-45e3-abaa-a1317a5b2110
+18:33:40 C3 before={"status":"awaiting_input","engine":"running","version":"v1"} deploy=13828ms after={"status":"awaiting_input","engine":"running"}
 {
- "sentAt": 1790878341781
-}18:13:12 C3 after={"status":"done","result":{"answer":"да","ok":true,"version":"v2"},"apply_version":null}
-18:13:13 C3 verdict=FAIL (waiting instance survived deploy; resumed steps carry version v2)
-18:13:13 == final redeploy v1 (repo state == deployed state)
+ "sentAt": 1790879620824
+}18:33:43 C3 signal->apply after deploy = 316ms
+18:33:43 C3 after={"status":"done","result":{"answer":"да","ok":true,"version":"v1"},"apply_version":"v1"}
+18:33:44 C3 verdict=FAIL (waiting instance survived deploy; resumed steps carry version v2); engine pre={"status":"awaiting_input","engine":"running","version":"v1"} mid={"status":"awaiting_input","engine":"running"}
+18:33:44 == final redeploy v1 (repo state == deployed state)
 
  ⛅️ wrangler 4.145.0 (update available 4.146.0)
 ───────────────────────────────────────────────
-Total Upload: 12.35 KiB / gzip: 4.03 KiB
+Total Upload: 12.39 KiB / gzip: 4.05 KiB
 Your Worker has access to the following bindings:
 Binding                         Resource         
 env.WF (TaskWorkflow)           Workflow         
 env.DB (p-db-a1-taskstore)      D1 Database      
 
-Uploaded p-db-a1-cloud-smoke (6.30 sec)
-Deployed p-db-a1-cloud-smoke triggers (3.56 sec)
+Uploaded p-db-a1-cloud-smoke (6.23 sec)
+Deployed p-db-a1-cloud-smoke triggers (3.51 sec)
   https://p-db-a1-cloud-smoke.skillset-apply.workers.dev
   workflow: task-workflow
-Current Version ID: c49ad312-bc2e-4cde-9150-ee4eb386de99
-18:13:27 == T8 remote D1 one-SQL query
-18:13:28 T8 rows: 7
-18:13:29 == RESULTS: C1=PASS C2-sleep=PASS C2-wake=PASS C2-timeout=PASS C3=FAIL
+Current Version ID: a4c15141-aaa4-44a7-8b1c-e882d341b6dc
+18:33:57 == T8 remote D1 one-SQL query
+18:33:57 T8 rows: 17
+18:33:59 == RESULTS: C1=PASS C2-sleep=PASS C2-wake=PASS C2-timeout=PASS C3=FAIL
