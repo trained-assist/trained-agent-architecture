@@ -5,8 +5,9 @@
 //   waitForTimeoutSec-> short wait deadline: proves the wait timeout fires with no event sent.
 //   PILOT_VERSION    -> recorded in step payloads: proves which deployed code a resumed instance ran.
 import type { StepCtx } from './port';
-import { TaskStore, FencedError, TerminalStateError } from './taskstore';
+import { TaskStore, FencedError, TerminalStateError, MissingAnswerError } from './taskstore';
 import { PILOT_VERSION } from './version';
+import { waitIdFor, logCtx } from './ids';
 
 export interface PlanParams {
   taskId: string;
@@ -81,51 +82,72 @@ export async function pilotPlan(ctx: StepCtx, store: TaskStore, p: PlanParams) {
   }
   // Test hook: a durable pause between step 2 and 3 so the harness can kill -9 "between steps".
   if (p.pauseAfterRunSec) await ctx.sleep('pause-after-run', p.pauseAfterRunSec);
-  await ctx.step('mark-awaiting', async () =>
-    store.commitStep(taskId, gen, 'wait', {
-      status: 'awaiting_input', kind: 'status',
-      payload: { waitingFor: 'user_reply', version: PILOT_VERSION },
-    }));
-  let reply: { answer: string; expectVersion?: string } | undefined;
+  // (1) of issue #116: wait + task transition + delivery intent are ONE atomic D1 batch, and the
+  // wait row is keyed by (userTaskId, generation), so a stale attempt can never touch a newer wait.
+  const waitId = waitIdFor(taskId, 'wait', gen);
+  await ctx.step('mark-awaiting', async () => store.openWait(taskId, gen, { step: 'wait' }));
+  // Controlled failure point: die AFTER the wait is durable, BEFORE blocking on the event.
+  if (await store.consumeFault('after_open_wait'))
+    throw new Error('injected crash after the durable wait commit (fault: after_open_wait)');
+
+  // (4) of issue #116: the answer lives in the Task Store. The Workflows signal is only a wake-up:
+  // its payload is never read, and a durable answer that arrived early is used without any signal.
   const timeoutSec = p.waitForTimeoutSec ?? 24 * 3600;
-  try {
-    reply = await ctx.waitFor<{ answer: string; expectVersion?: string }>('wait', 'user_reply', timeoutSec);
-  } catch (e) {
-    // Only the engine's own deadline closes the task as `user_reply_timeout`; every other error
-    // from waitForEvent is a different failure and must keep its own reason (issue #90).
-    if (isWaitTimeoutError(e)) {
+  let wokeBy: 'durable_answer' | 'engine_event' = 'durable_answer';
+  let durable = await store.readAnswer(taskId, waitId);
+  if (!durable) {
+    try {
+      await ctx.waitFor<unknown>('wait', 'user_reply', timeoutSec);
+      wokeBy = 'engine_event';
+    } catch (e) {
+      // Only the engine's own deadline closes the task as `user_reply_timeout`; every other error
+      // from waitForEvent is a different failure and must keep its own reason (issue #90).
+      if (isWaitTimeoutError(e)) {
+        const r = await recordWaitFailure(store, p, {
+          kind: 'wait_timeout',
+          reason: 'user_reply_timeout',
+          payload: logCtx(taskId, gen, { waitId, timeoutSec, error: String((e as Error)?.message ?? e) }),
+        });
+        return { ok: false, reason: r.recorded ? 'user_reply_timeout' : 'late_wait_timeout_ignored' };
+      }
       const r = await recordWaitFailure(store, p, {
-        kind: 'wait_timeout',
-        reason: 'user_reply_timeout',
-        payload: { timeoutSec, error: String((e as Error)?.message ?? e) },
+        kind: 'wait_error',
+        reason: 'wait_error',
+        payload: logCtx(taskId, gen, { waitId, timeoutSec, error: String((e as Error)?.message ?? e), errorName: (e as Error)?.name ?? null }),
       });
-      return { ok: false, reason: r.recorded ? 'user_reply_timeout' : 'late_wait_timeout_ignored' };
+      return { ok: false, reason: r.recorded ? 'wait_error' : 'late_wait_error_ignored' };
     }
-    const r = await recordWaitFailure(store, p, {
-      kind: 'wait_error',
-      reason: 'wait_error',
-      payload: { timeoutSec, error: String((e as Error)?.message ?? e), errorName: (e as Error)?.name ?? null },
-    });
-    return { ok: false, reason: r.recorded ? 'wait_error' : 'late_wait_error_ignored' };
+    durable = await store.readAnswer(taskId, waitId);
+    if (!durable) {
+      await store.logEvent(taskId, 'answer_missing', 'wait', logCtx(taskId, gen, { waitId, reason: 'no_durable_answer', wokeBy }), gen);
+      throw new MissingAnswerError(`woken by event but the durable wait ${waitId} has no answer`);
+    }
   }
-  // Version guard (issue #92): the control plane states which deployed code it expects the
-  // woken instance to run. Awaiting instances can only run the code they were loaded with, so
-  // old logic must fail loudly (`version_mismatch`) instead of silently producing a result
-  // from the pre-deploy version. Check is outside ctx.step: no new step name, no step-order
-  // change — the version contract (COMPARISON.md §Выводы.5) stays untouched.
-  if (reply?.expectVersion && reply.expectVersion !== PILOT_VERSION) {
+  // The durable answer may be any JSON value (a string, an object, ...); normalise it to the
+  // { answer } shape the rest of the plan expects.
+  const reply =
+    typeof durable.answer === 'object' && durable.answer !== null
+      ? (durable.answer as { answer?: string })
+      : { answer: durable.answer as string };
+  // Version guard (issue #92), now fed by the DURABLE answer, not by the signal payload: the
+  // control plane states which deployed code it expects; old code fails loudly instead of
+  // silently producing a result from the pre-deploy version.
+  if (durable.expectVersion && durable.expectVersion !== PILOT_VERSION) {
     await store.commitStep(taskId, gen, 'wait', {
       status: 'failed',
       kind: 'version_mismatch',
-      payload: { expected: reply.expectVersion, actual: PILOT_VERSION, used: reply.answer },
-      result: { reason: 'version_mismatch', expected: reply.expectVersion, actual: PILOT_VERSION },
+      payload: logCtx(taskId, gen, { waitId, expected: durable.expectVersion, actual: PILOT_VERSION, eventKey: durable.eventKey }),
+      result: { reason: 'version_mismatch', expected: durable.expectVersion, actual: PILOT_VERSION },
     });
-    return { ok: false, reason: 'version_mismatch', expected: reply.expectVersion, actual: PILOT_VERSION };
+    return { ok: false, reason: 'version_mismatch', expected: durable.expectVersion, actual: PILOT_VERSION };
   }
-  await ctx.step('wait-received', async () => store.commitStep(taskId, gen, 'wait', { status: 'running', payload: reply }));
+  await ctx.step('wait-received', async () =>
+    store.consumeAnswer(taskId, waitId, gen, { wokeBy, eventKey: durable.eventKey, expectVersion: durable.expectVersion, source: 'durable_wait' }));
   const applied = await ctx.step('apply', async () =>
-    store.commitStep(taskId, gen, 'apply', { effect: 'apply', payload: { used: reply?.answer, version: PILOT_VERSION } })
-      .then((at) => ({ at, answer: reply?.answer })),
+    store.commitStep(taskId, gen, 'apply', {
+      effect: 'apply',
+      payload: logCtx(taskId, gen, { used: reply?.answer, waitId, eventKey: durable.eventKey, wokeBy, version: PILOT_VERSION }),
+    }).then((at) => ({ at, answer: reply?.answer })),
     { limit: 0, delaySec: 1 });
   await ctx.step('finalize', async () =>
     store.commitStep(taskId, gen, 'finalize', {
