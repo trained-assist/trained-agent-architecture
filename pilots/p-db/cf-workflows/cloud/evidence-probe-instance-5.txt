@@ -1,0 +1,62 @@
+
+ ⛅️ wrangler 4.145.0 (update available 4.146.0)
+───────────────────────────────────────────────
+Describing latest instance:
+Workflow Name:         task-workflow
+Instance Id:           ut-cf-070557-p5
+Version Id:            0f80e6bb-f5e0-46c1-8eae-269ff41be00f
+Status:                ✅ Completed
+Trigger:               🔗 Binding
+Queued:                02/10/2026, 10:21:56 am
+Success:               ✅ Yes
+Start:                 02/10/2026, 10:21:56 am
+End:                   02/10/2026, 10:22:13 am
+Duration:              17 seconds
+Last Successful Step:  mark-awaiting-1
+Steps:
+
+  Name:      prepare-1
+  Type:      🎯 Step
+  Start:     02/10/2026, 10:21:56 am
+  End:       02/10/2026, 10:21:56 am
+  Duration:  0 seconds
+  Success:   ✅ Yes
+  Output:    "1790925716909"
+┌─────────────────────────┬─────────────────────────┬───────────┬────────────┐
+│ Start                   │ End                     │ Duration  │ State      │
+├─────────────────────────┼─────────────────────────┼───────────┼────────────┤
+│ 02/10/2026, 10:21:56 am │ 02/10/2026, 10:21:56 am │ 0 seconds │ ✅ Success │
+└─────────────────────────┴─────────────────────────┴───────────┴────────────┘
+
+  Name:      run-1
+  Type:      🎯 Step
+  Start:     02/10/2026, 10:21:56 am
+  End:       02/10/2026, 10:21:57 am
+  Duration:  0 seconds
+  Success:   ✅ Yes
+  Output:    "1790925717015"
+┌─────────────────────────┬─────────────────────────┬───────────┬────────────┐
+│ Start                   │ End                     │ Duration  │ State      │
+├─────────────────────────┼─────────────────────────┼───────────┼────────────┤
+│ 02/10/2026, 10:21:56 am │ 02/10/2026, 10:21:57 am │ 0 seconds │ ✅ Success │
+└─────────────────────────┴─────────────────────────┴───────────┴────────────┘
+
+  Name:      mark-awaiting-1
+  Type:      🎯 Step
+  Start:     02/10/2026, 10:21:57 am
+  End:       02/10/2026, 10:21:57 am
+  Duration:  0 seconds
+  Success:   ✅ Yes
+  Output:    "1790925717121"
+┌─────────────────────────┬─────────────────────────┬───────────┬────────────┐
+│ Start                   │ End                     │ Duration  │ State      │
+├─────────────────────────┼─────────────────────────┼───────────┼────────────┤
+│ 02/10/2026, 10:21:57 am │ 02/10/2026, 10:21:57 am │ 0 seconds │ ✅ Success │
+└─────────────────────────┴─────────────────────────┴───────────┴────────────┘
+
+  Name:      wait-1
+  Type:      👀 Waiting for event
+  Start:     02/10/2026, 10:21:57 am
+  End:       02/10/2026, 10:22:13 am
+  Duration:  16 seconds
+  Output:    "{\"answer\":\"да\",\"expectVersion\":\"v6\"}"

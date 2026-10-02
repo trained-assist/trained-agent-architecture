@@ -1,46 +1,52 @@
 == start wrangler dev (4.145.0) persist=state/
-dev ready in 3248ms at http://127.0.0.1:38725
+dev ready in 2505ms at http://127.0.0.1:8795
 == T1 happy path
 {
  "instance": "ut-pilot-1",
  "created": true
 }T1 state: {"status":"done","gen":1,"fx":{"apply":1,"prepare":1,"run":1},"engine":"complete","steps":["prepare","run","wait","apply","finalize"]}
-T1 wall=708ms signal->apply=163ms
+T1 wall=395ms signal->apply=65ms
 == T4 early signal
 {
- "sentAt": 1790789570389
-}T4 state: {"status":"done","gen":1,"fx":{"apply":1,"prepare":1,"run":1},"engine":"complete","steps":["prepare","run","wait","apply","finalize"]} ; signal.at=1790789570389 waitFor-reached.at=1790789573411 (signal earlier by 3022ms)
+ "sentAt": 1790923190689,
+ "prewarmMs": 18,
+ "sendMs": 16,
+ "deliveryMs": 44,
+ "prewarmError": null
+}T4 state: {"status":"done","gen":1,"fx":{"apply":1,"prepare":1,"run":1},"engine":"complete","steps":["prepare","run","wait","apply","finalize"]} ; signal.at=1790923190689 waitFor-reached.at=1790923193683 (signal earlier by 2994ms)
 == T5 duplicate signal
-T5 state: {"status":"done","gen":1,"fx":{"apply":1,"prepare":1,"run":1},"engine":"complete","steps":["prepare","run","wait","apply","finalize"]} ; signals logged=3 ; 3rd signal after done -> {"sentAt":1790789577069}
+T5 state: {"status":"done","gen":1,"fx":{"apply":1,"prepare":1,"run":1},"engine":"complete","steps":["prepare","run","wait","apply","finalize"]} ; signals logged=3 ; 3rd signal after done -> {"sentAt":1790923196380,"prewarmMs":10,"sendMs":6,"deliveryMs":29,"prewarmError":null}
 == T6 fencing
 T6 before={"status":"awaiting_input","gen":1,"fx":{"prepare":1,"run":1},"engine":"running","steps":["prepare","run"]} bump={"generation":2} stale-write(gen1)={"rejected":true,"error":"fenced: task ut-pilot-6 step apply gen 1 != current 2"} after={"status":"awaiting_input","gen":2,"fx":{"prepare":1,"run":1},"engine":"running","steps":["prepare","run"]}
 T6 after stale instance signalled: {"status":"awaiting_input","gen":2,"fx":{"prepare":1,"run":1},"engine":"errored","steps":["prepare","run"]} err={"name":"WorkflowFatalError","message":"The execution of the Workflow instance was terminated, as a step threw an NonRetryableError and it was not handled"} fenced_events=4
 == T7 cancel
-T7 cancel={"generation":2} signal-after-cancel={"sentAt":1790789582646} state={"status":"cancelled","gen":2,"fx":{"prepare":1,"run":1},"engine":"terminated","steps":["prepare","run"]}
+T7 cancel={"generation":2} signal-after-cancel={"sentAt":1790923204417,"prewarmMs":29,"sendMs":47,"deliveryMs":123,"prewarmError":null} state={"status":"cancelled","gen":2,"fx":{"prepare":1,"run":1},"engine":"terminated","steps":["prepare","run"]}
 == T3 wait with executor fully stopped
-alive while waiting: RSS total(node wrangler+esbuild+workerd)=557432kB workerd-only=235716kB
-    PID   RSS COMMAND
- 172260 49712 node
- 172269 246940 node
- 172502 17088 esbuild
- 172557 73900 workerd
- 172568 161816 workerd
- 173103  7976 esbuild
-kill -9 process group; processes left: 0
-restart ready in 2220ms
+alive while waiting: RSS total(node wrangler+esbuild+workerd)=244400kB workerd-only=68352kB
+   36800 node
+   65712 /Users/vova/.nvm/versions/node/v24.13.0/bin/node
+   16496 /Users/vova/Code/trained-agent-architecture/pilots/p-db/cf-workflows/node_modules/@esbuild/darwin-arm64/bin/esbuild
+   31888 /Users/vova/Code/trained-agent-architecture/pilots/p-db/cf-workflows/node_modules/@cloudflare/workerd-darwin-arm64/bin/workerd
+   37040 /Users/vova/Code/trained-agent-architecture/pilots/p-db/cf-workflows/node_modules/@cloudflare/workerd-darwin-arm64/bin/workerd
+    9408 /Users/vova/Code/trained-agent-architecture/pilots/p-db/cf-workflows/node_modules/@esbuild/darwin-arm64/bin/esbuild
+kill tree of wrangler dev; processes left: 0
+restart ready in 8528ms
 T3 after restart, before signal: {"status":"awaiting_input","gen":1,"fx":{"prepare":1,"run":1},"engine":"running","steps":["prepare","run"]}
-T3 state: {"status":"done","gen":1,"fx":{"apply":1,"prepare":1,"run":1},"engine":"complete","steps":["prepare","run","wait","apply","finalize"]} ; signal->apply after cold restart=151ms
+T3 state: {"status":"done","gen":1,"fx":{"apply":1,"prepare":1,"run":1},"engine":"complete","steps":["prepare","run","wait","apply","finalize"]} ; signal->apply after cold restart=124ms
 == T2 kill -9 right after step 2 (engine has persisted 'run' output), before step 3
 killed at: {"status":"running","gen":1,"fx":{"prepare":1,"run":1},"engine":"running","steps":["prepare","run"]}
 T2 10s after restart, no external trigger: {"status":"running","gen":1,"fx":{"prepare":1,"run":1},"engine":"running","steps":["prepare","run"]}
 no automatic resume -> Port.recover() (sends no-op __wake event to unfinished instances): [{"id":"ut-pilot-6","engineStatus":"errored"},{"id":"ut-pilot-2","engineStatus":"running"}]
 T2 final: {"status":"done","gen":1,"fx":{"apply":1,"prepare":1,"run":1},"engine":"complete","steps":["prepare","run","wait","apply","finalize"]}
-T7 after 2 restarts + recover + signal({"sentAt":1790789608401}): {"status":"cancelled","gen":2,"fx":{"prepare":1,"run":1},"engine":"terminated","steps":["prepare","run"]}
+T7 after 2 restarts + recover + signal({"sentAt":1790923243092,"prewarmMs":10,"sendMs":6,"deliveryMs":26,"prewarmError":null}): {"status":"cancelled","gen":2,"fx":{"prepare":1,"run":1},"engine":"terminated","steps":["prepare","run"]}
+== T9 late wait_timeout after done must not change status or result
+T9 before={"status":"done","result":{"answer":"да","ok":true,"version":"v1"},"gen":1} late={"recorded":false,"reason":"terminal","error":"terminal: task ut-pilot-1 is done; write of step wait rejected","generation":1} stale={"rejected":true,"error":"terminal: task ut-pilot-1 is done; write of step apply rejected"} after={"status":"done","result":{"answer":"да","ok":true,"version":"v1"},"gen":1} events={"wait_timeout":0,"ignored":1,"rejected":2}
+T9 classify: timeout={"isTimeout":true} other={"isTimeout":false}
 == T8 one SQL query over Task Store
 SQL: SELECT t.id, t.status, t.generation, t.result_json,
  (SELECT json_group_object(name, count) FROM side_effects s WHERE s.task_id = t.id) AS side_effects,
  (SELECT json_group_array(json_object('kind', e.kind, 'step', e.step, 'at', e.at)) FROM (SELECT * FROM task_events WHERE task_id = t.id ORDER BY id) e) AS history
 FROM tasks t WHERE t.id = 'ut-pilot-2'
-T8 row: {"id":"ut-pilot-2","status":"done","generation":1,"result_json":"{\"answer\":\"да\",\"ok\":true}","side_effects":"{\"apply\":1,\"prepare\":1,\"run\":1}","history":"[{\"kind\":\"status\",\"step\":\"start\",\"at\":1790789593973},{\"kind\":\"step_done\",\"step\":\"prepare\",\"at\":1790789594009},{\"kind\":\"step_done\",\"step\":\"run\",\"at\":1790789594045},{\"kind\":\"status\",\"step\":\"wait\",\"at\":1790789607611},{\"kind\":\"signal\",\"step\":\"user_reply\",\"at\":1790789607787},{\"kind\":\"step_done\",\"step\":\"wait\",\"at\":1790789607924},{\"kind\":\"step_done\",\"step\":\"apply\",\"at\":1790789607954},{\"kind\":\"step_done\",\"step\":\"finalize\",\"at\":1790789608005}]"}
+T8 row: {"id":"ut-pilot-2","status":"done","generation":1,"result_json":"{\"answer\":\"да\",\"ok\":true,\"version\":\"v1\"}","side_effects":"{\"apply\":1,\"prepare\":1,\"run\":1}","history":"[{\"kind\":\"status\",\"step\":\"start\",\"at\":1790923224372},{\"kind\":\"step_done\",\"step\":\"prepare\",\"at\":1790923224392},{\"kind\":\"step_done\",\"step\":\"run\",\"at\":1790923224418},{\"kind\":\"status\",\"step\":\"wait\",\"at\":1790923242704},{\"kind\":\"signal\",\"step\":\"user_reply\",\"at\":1790923242857},{\"kind\":\"step_done\",\"step\":\"wait\",\"at\":1790923242919},{\"kind\":\"step_done\",\"step\":\"apply\",\"at\":1790923242937},{\"kind\":\"step_done\",\"step\":\"finalize\",\"at\":1790923242948}]"}
 all tasks: [{"id":"ut-pilot-1","status":"done","generation":1,"fx":"{\"apply\":1,\"prepare\":1,\"run\":1}"},{"id":"ut-pilot-2","status":"done","generation":1,"fx":"{\"apply\":1,\"prepare\":1,\"run\":1}"},{"id":"ut-pilot-3","status":"done","generation":1,"fx":"{\"apply\":1,\"prepare\":1,\"run\":1}"},{"id":"ut-pilot-4","status":"done","generation":1,"fx":"{\"apply\":1,\"prepare\":1,\"run\":1}"},{"id":"ut-pilot-5","status":"done","generation":1,"fx":"{\"apply\":1,\"prepare\":1,\"run\":1}"},{"id":"ut-pilot-6","status":"awaiting_input","generation":2,"fx":"{\"prepare\":1,\"run\":1}"},{"id":"ut-pilot-7","status":"cancelled","generation":2,"fx":"{\"prepare\":1,\"run\":1}"}]
-== RESULTS: T1=PASS T2=PASS T3=PASS T4=PASS T5=PASS T6=PASS T7=PASS T8=PASS
+== RESULTS: T1=PASS T2=PASS T3=PASS T4=PASS T5=PASS T6=PASS T7=PASS T8=PASS T9=PASS

@@ -1,0 +1,58 @@
+
+ ⛅️ wrangler 4.145.0
+────────────────────
+
+[31m✘ [41;31m[[41;97mERROR[41;31m][0m [1mA request to the Cloudflare API (/accounts/d740a05e9442c1d0feacae2dfc673e93/workflows/task-workflow/instances/ut-cf-070557-p3) failed.[0m
+
+  Authentication error [code: 10000]
+
+
+Getting User settings...
+👋 You are logged in with an OAuth Token, associated with the email typeformowner@gmail.com.
+🔐 Credentials are stored in: /Users/vova/.wrangler/config/default.toml
+┌───────────────────────────────────┬──────────────────────────────────┐
+│ Account Name                      │ Account ID                       │
+├───────────────────────────────────┼──────────────────────────────────┤
+│ Typeformowner@gmail.com's Account │ d740a05e9442c1d0feacae2dfc673e93 │
+└───────────────────────────────────┴──────────────────────────────────┘
+🔓 Token Permissions:
+Scope (Access)
+- user (read)
+- offline_access 
+- account (read)
+- workers (write)
+- workers_kv (write)
+- workers_routes (write)
+- workers_scripts (write)
+- workers_tail (read)
+- d1 (write)
+- pages (write)
+- zone (read)
+- ssl_certs (write)
+- ai (write)
+- ai-search (write)
+- ai-search (run)
+- websearch.run 
+- agent-memory (write)
+- queues (write)
+- pipelines (write)
+- secrets_store (write)
+- artifacts (write)
+- flagship (write)
+- containers (write)
+- cloudchamber (write)
+- connectivity (admin)
+- email_routing (write)
+- email_sending (write)
+- browser (write)
+- challenge-widgets.write 
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mWrangler is missing some expected Oauth scopes. To fix this, run `wrangler login` to refresh your token. The missing scopes are:[0m
+
+  - k2.read
+  - k2.write
+
+
+🎢 Membership roles in "Typeformowner@gmail.com's Account": Contact account super admin to change your permissions.
+- Super Administrator - All Privileges
+🪵  Logs were written to "/Users/vova/.wrangler/wrangler-null.log"

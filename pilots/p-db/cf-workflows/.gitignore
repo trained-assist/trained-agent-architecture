@@ -6,3 +6,4 @@ bin/
 state/
 !run.log
 !cloud/cloud-run.log
+!cloud/probe-wake.log

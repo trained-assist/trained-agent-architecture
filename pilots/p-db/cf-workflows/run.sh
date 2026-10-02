@@ -1,13 +1,17 @@
 #!/usr/bin/env bash
-# P-DB pilot, variant "Cloudflare Workflows + D1" — runs T1..T8 locally (wrangler dev / miniflare).
+# P-DB pilot, variant "Cloudflare Workflows + D1" — runs T1..T9 locally (wrangler dev / miniflare).
 # One command: ./run.sh   -> run.log, results.json. Cleans up its own processes on exit.
 set -uo pipefail
 HERE=$(cd "$(dirname "$0")" && pwd); cd "$HERE"
 
-# --- toolchain: wrangler 4 needs Node >= 22; the box has Node 20, so fetch a local Node 22 into bin/
-if [ ! -x bin/bin/node ]; then
+# --- toolchain: wrangler 4 needs Node >= 22. Use the system node when it is new enough;
+# otherwise fetch a Node build for THIS machine (os/arch) into bin/ (was linux-x64 only).
+if ! node -e 'process.exit(Number(process.versions.node.split(".")[0])>=22?0:1)' 2>/dev/null; then
+  OS=$(uname -s | tr '[:upper:]' '[:lower:]'); ARCH=$(uname -m)
+  case "$ARCH" in x86_64) ARCH=x64;; aarch64) ARCH=arm64;; esac
   V=$(curl -s https://nodejs.org/dist/index.json | python3 -c "import json,sys;print([r['version'] for r in json.load(sys.stdin) if r['version'].startswith('v22.')][0])")
-  mkdir -p bin && curl -sL "https://nodejs.org/dist/$V/node-$V-linux-x64.tar.xz" | tar -xJ -C bin --strip-components=1
+  mkdir -p bin && curl -sL "https://nodejs.org/dist/$V/node-$V-$OS-$ARCH.tar.xz" | tar -xJ -C bin --strip-components=1
+  export PATH="$HERE/bin/bin:$PATH"
 fi
 source "$HERE/lib.sh"
 [ -d node_modules/wrangler ] || NODE_ENV= npm install --silent
@@ -15,7 +19,7 @@ trap 'kill_dev' EXIT INT TERM
 
 rm -rf state .wrangler wrangler.log; : > run.log
 log() { echo "$*" | tee -a run.log; }
-now() { date +%s%3N; }
+now() { python3 -c 'import time;print(int(time.time()*1000))'; }   # BSD date has no %3N
 st() { api GET "/status?taskId=$1"; }
 brief() { st "$1" | jq -c '{status:.taskStore.status, gen:.taskStore.generation, fx:(.taskStore.side_effects|fromjson? // {}), engine:.engine.status, steps:([.taskStore.history|fromjson? // [] | .[] | select(.kind=="step_done") | .step])}'; }
 wait_until() { # id jq-expr timeout_s
@@ -74,7 +78,9 @@ wait_until ut-pilot-6 '.engine.status=="errored"' 20
 T6_ENGINE=$(brief ut-pilot-6); T6_ERR=$(st ut-pilot-6 | jq -c '.engine.error')
 NFENCED6=$(st ut-pilot-6 | jq '[.taskStore.history|fromjson|.[]|select(.kind=="fenced")]|length')
 log "T6 after stale instance signalled: $T6_ENGINE err=$T6_ERR fenced_events=$NFENCED6"
-R6=$(pass '[ "$(jq -r .rejected <<<"$T6_STALE")" = true ] && [ "$(jq -c "{status,fx}" <<<"$T6_BEFORE")" = "$(jq -c "{status,fx}" <<<"$T6_AFTER")" ] && [ "$(jq -r ".status+\":\"+((.fx.apply//0)|tostring)" <<<"$T6_ENGINE")" = "awaiting_input:0" ]')
+# NOTE: no braces in jq programs that run under `eval` (bash 3.2 on macOS re-parses the
+# command substitution without the inner double quotes and brace-expands {a,b} into words).
+R6=$(pass '[ "$(jq -r .rejected <<<"$T6_STALE")" = true ] && [ "$(jq -c "[.status,.fx]" <<<"$T6_BEFORE")" = "$(jq -c "[.status,.fx]" <<<"$T6_AFTER")" ] && [ "$(jq -r ".status+\":\"+((.fx.apply//0)|tostring)" <<<"$T6_ENGINE")" = "awaiting_input:0" ]')
 
 # ---------------- T7 cancel (checked again after restarts below)
 log "== T7 cancel"
@@ -86,10 +92,10 @@ sleep 2; log "T7 cancel=$T7_CANCEL signal-after-cancel=$T7_SIG1 state=$(brief ut
 # ---------------- T3 wait without resources
 log "== T3 wait with executor fully stopped"
 api POST /start '{"taskId":"ut-pilot-3"}' >/dev/null; wait_until ut-pilot-3 "$AWAIT" 20
-RSS_TOTAL=$(group_rss_kb); RSS_WORKERD=$(ps -o rss=,comm= -g "$(cat wr.pid)" | awk '$2=="workerd"{s+=$1} END{print s}')
+RSS_TOTAL=$(group_rss_kb); RSS_WORKERD=$(tree_comm "$(cat wr.pid)" | awk 'index($2,"workerd"){s+=$1} END{print s+0}')
 log "alive while waiting: RSS total(node wrangler+esbuild+workerd)=${RSS_TOTAL}kB workerd-only=${RSS_WORKERD}kB"
-ps -o pid,rss,comm -g "$(cat wr.pid)" >> run.log
-kill_dev; LEFT=$(pgrep -f "$HERE/node_modules" | wc -l); log "kill -9 process group; processes left: $LEFT"
+tree_comm "$(cat wr.pid)" | sed 's/^/  /' >> run.log
+kill_dev; LEFT=$(pgrep -f "$HERE/node_modules" | wc -l | tr -d ' '); log "kill tree of wrangler dev; processes left: $LEFT"
 sleep 5
 t=$(now); start_dev || exit 1; COLD2=$(( $(now) - t )); log "restart ready in ${COLD2}ms"
 log "T3 after restart, before signal: $(brief ut-pilot-3)"
@@ -123,6 +129,28 @@ api POST /recover '{}' >/dev/null; sleep 3
 T7=$(brief ut-pilot-7); log "T7 after 2 restarts + recover + signal($T7_SIG2): $T7"
 R7=$(pass '[ "$(jq -r ".status+\":\"+.engine+\":\"+((.fx.apply//0)|tostring)" <<<"$T7")" = "cancelled:terminated:0" ]')
 
+# ---------------- T9 terminal status is immutable (issue #90)
+log "== T9 late wait_timeout after done must not change status or result"
+# ut-pilot-1 is terminal since T1; replay the plan's own failure write with the SAME generation.
+T9_BEFORE=$(st ut-pilot-1 | jq -c '{status:.taskStore.status, result:(.taskStore.result_json|fromjson?), gen:.taskStore.generation}')
+T9_LATE=$(api POST /late-wait-timeout '{"taskId":"ut-pilot-1"}' | jq -c .)
+T9_STALE=$(api POST /stale-write '{"taskId":"ut-pilot-1","generation":1,"step":"apply"}' | jq -c .)
+sleep 1
+T9_AFTER=$(st ut-pilot-1 | jq -c '{status:.taskStore.status, result:(.taskStore.result_json|fromjson?), gen:.taskStore.generation}')
+T9_EVENTS=$(st ut-pilot-1 | jq -c '{wait_timeout:([.taskStore.history|fromjson|.[]|select(.kind=="wait_timeout")]|length),
+  ignored:([.taskStore.history|fromjson|.[]|select(.kind=="wait_timeout_ignored")]|length),
+  rejected:([.taskStore.history|fromjson|.[]|select(.kind=="late_write_rejected")]|length)}')
+# the classifier that decides WHICH reason reaches the Task Store (timeout vs any other error)
+T9_CLASS=$(api POST /classify-wait-error '{"name":"WorkflowTimeoutError","message":"Execution timed out after 20000ms"}' | jq -c .)
+T9_CLASS2=$(api POST /classify-wait-error '{"name":"Error","message":"could not load the Durable Object"}' | jq -c .)
+log "T9 before=$T9_BEFORE late=$T9_LATE stale=$T9_STALE after=$T9_AFTER events=$T9_EVENTS"
+log "T9 classify: timeout=$T9_CLASS other=$T9_CLASS2"
+R9=$(pass '[ "$(jq -r .recorded <<<"$T9_LATE")" = false ] && [ "$T9_BEFORE" = "$T9_AFTER" ] \
+  && [ "$(jq -r .status <<<"$T9_AFTER")" = done ] && [ "$(jq -r .rejected <<<"$T9_STALE")" = true ] \
+  && [ "$(jq -r .wait_timeout <<<"$T9_EVENTS")" = 0 ] && [ "$(jq -r .ignored <<<"$T9_EVENTS")" = 1 ] \
+  && [ "$(jq -r .rejected <<<"$T9_EVENTS")" = 2 ] \
+  && [ "$(jq -r .isTimeout <<<"$T9_CLASS")" = true ] && [ "$(jq -r .isTimeout <<<"$T9_CLASS2")" = false ]')
+
 kill_dev
 
 # ---------------- T8 one SQL query straight from the Task Store (D1 local file, dev stopped)
@@ -131,24 +159,28 @@ SQL="SELECT t.id, t.status, t.generation, t.result_json,
  (SELECT json_group_object(name, count) FROM side_effects s WHERE s.task_id = t.id) AS side_effects,
  (SELECT json_group_array(json_object('kind', e.kind, 'step', e.step, 'at', e.at)) FROM (SELECT * FROM task_events WHERE task_id = t.id ORDER BY id) e) AS history
 FROM tasks t WHERE t.id = 'ut-pilot-2'"
-T8=$(timeout 60 node node_modules/.bin/wrangler d1 execute taskstore --local --persist-to state --json --command "$SQL" </dev/null 2>/dev/null | jq -c '.[0].results[0]')
+T8=$(tmo 60 node node_modules/.bin/wrangler d1 execute taskstore --local --persist-to state --json --command "$SQL" </dev/null 2>/dev/null | jq -c '.[0].results[0]')
 log "SQL: $SQL"; log "T8 row: $T8"
-ALL=$(timeout 60 node node_modules/.bin/wrangler d1 execute taskstore --local --persist-to state --json --command "SELECT id,status,generation,(SELECT json_group_object(name,count) FROM side_effects s WHERE s.task_id=t.id) fx FROM tasks t ORDER BY id" </dev/null 2>/dev/null | jq -c '.[0].results')
+ALL=$(tmo 60 node node_modules/.bin/wrangler d1 execute taskstore --local --persist-to state --json --command "SELECT id,status,generation,(SELECT json_group_object(name,count) FROM side_effects s WHERE s.task_id=t.id) fx FROM tasks t ORDER BY id" </dev/null 2>/dev/null | jq -c '.[0].results')
 log "all tasks: $ALL"
 R8=$(pass '[ "$(jq -r .status <<<"$T8")" = done ]')
 
 LOC=$(cat src/*.ts | grep -cvE '^\s*(//|\*|/\*|$)')
-jq -n --arg r1 "$R1" --arg r2 "$R2" --arg r3 "$R3" --arg r4 "$R4" --arg r5 "$R5" --arg r6 "$R6" --arg r7 "$R7" --arg r8 "$R8" \
+jq -n --arg r1 "$R1" --arg r2 "$R2" --arg r3 "$R3" --arg r4 "$R4" --arg r5 "$R5" --arg r6 "$R6" --arg r7 "$R7" --arg r8 "$R8" --arg r9 "$R9" \
   --argjson t1ms "$T1_MS" --argjson t1lat "$T1_LAT" --argjson t3lat "$T3_LAT" --argjson rss "$RSS_TOTAL" --argjson rssw "$RSS_WORKERD" \
   --argjson c1 "$COLD1" --argjson c2 "$COLD2" --argjson c3 "$COLD3" --arg auto "$AUTO_RESUME" --argjson loc "$LOC" \
   --argjson t2 "$T2" --argjson t3 "$T3" --argjson t4 "$T4" --argjson t5 "$T5" --argjson t6 "$T6_ENGINE" --argjson t7 "$T7" --argjson t8 "$T8" \
+  --argjson t9before "$T9_BEFORE" --argjson t9after "$T9_AFTER" --argjson t9late "$T9_LATE" --argjson t9stale "$T9_STALE" \
+  --argjson t9events "$T9_EVENTS" --argjson t9class "$T9_CLASS" --argjson t9class2 "$T9_CLASS2" \
   --argjson t6stale "$T6_STALE" --arg ver "$(node node_modules/.bin/wrangler --version)" '{
   variant: "cf-workflows-d1", mode: "local (wrangler dev / miniflare), no Cloudflare account", wrangler: $ver,
-  tests: {T1:$r1, T2:$r2, T3:$r3, T4:$r4, T5:$r5, T6:$r6, T7:$r7, T8:$r8},
+  tests: {T1:$r1, T2:$r2, T3:$r3, T4:$r4, T5:$r5, T6:$r6, T7:$r7, T8:$r8, T9:$r9},
   notes: {T2_auto_resume_after_kill9_without_trigger: $auto,
           T2_T3_resume_trigger: "local engine re-runs an interrupted instance only when it receives an event (signal or Port.recover __wake); no timer/alarm wake after kill -9"},
   metrics: {t1_wall_ms:$t1ms, signal_to_apply_ms:$t1lat, signal_to_apply_after_cold_restart_ms:$t3lat,
             rss_alive_total_kb:$rss, rss_alive_workerd_kb:$rssw, dev_ready_ms:[$c1,$c2,$c3],
             adapter_loc:$loc, moving_parts_local:3, moving_parts_prod:"Worker + Workflows + D1 (all managed)"},
-  evidence: {T2:$t2, T3:$t3, T4:$t4, T5:$t5, T6_stale_write:$t6stale, T6_after_signal:$t6, T7:$t7, T8:$t8}}' > results.json
-log "== RESULTS: T1=$R1 T2=$R2 T3=$R3 T4=$R4 T5=$R5 T6=$R6 T7=$R7 T8=$R8"
+  evidence: {T2:$t2, T3:$t3, T4:$t4, T5:$t5, T6_stale_write:$t6stale, T6_after_signal:$t6, T7:$t7, T8:$t8,
+             T9_late_write:{before:$t9before, attempt:$t9late, stale_write:$t9stale, after:$t9after,
+                            events:$t9events, classify_timeout:$t9class, classify_other:$t9class2}}}' > results.json
+log "== RESULTS: T1=$R1 T2=$R2 T3=$R3 T4=$R4 T5=$R5 T6=$R6 T7=$R7 T8=$R8 T9=$R9"

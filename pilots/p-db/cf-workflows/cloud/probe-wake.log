@@ -1,0 +1,204 @@
+07:06:27 == deploy baseline (marker v1, code incl. terminal-status guard + version guard)
+
+ ⛅️ wrangler 4.145.0 (update available 4.146.0)
+───────────────────────────────────────────────
+Total Upload: 17.95 KiB / gzip: 5.75 KiB
+Your Worker has access to the following bindings:
+Binding                         Resource         
+env.WF (TaskWorkflow)           Workflow         
+env.DB (p-db-a1-taskstore)      D1 Database      
+
+Uploaded p-db-a1-cloud-smoke (5.51 sec)
+Deployed p-db-a1-cloud-smoke triggers (3.41 sec)
+  https://p-db-a1-cloud-smoke.skillset-apply.workers.dev
+  workflow: task-workflow
+Current Version ID: 298ee957-4d19-4bca-832f-b99ccefdb082
+07:06:40 == iter 1: task=ut-cf-070557-p1 signal 5s after deploy (marker v1 -> v2), prewarm=1 resend=0
+{
+ "instance": "ut-cf-070557-p1",
+ "created": true
+}
+ ⛅️ wrangler 4.145.0 (update available 4.146.0)
+───────────────────────────────────────────────
+Total Upload: 17.95 KiB / gzip: 5.75 KiB
+Your Worker has access to the following bindings:
+Binding                         Resource         
+env.WF (TaskWorkflow)           Workflow         
+env.DB (p-db-a1-taskstore)      D1 Database      
+
+Uploaded p-db-a1-cloud-smoke (5.69 sec)
+Deployed p-db-a1-cloud-smoke triggers (2.74 sec)
+  https://p-db-a1-cloud-smoke.skillset-apply.workers.dev
+  workflow: task-workflow
+Current Version ID: 68b398cc-04d7-446a-94b1-36b9fb7d7dcf
+07:07:00 iter 1: deploy=12543ms edge_version=v2 after=4415ms
+{
+ "sentAt": 1790924821810,
+ "prewarmMs": 5,
+ "sendMs": 41,
+ "deliveryMs": 57,
+ "prewarmError": null
+}07:07:05 iter 1: status=failed consumed=1 terminal_status=failed start_v=v1 apply_v=none wake=61ms consume=nullms re_sent=0 signal_http=866ms timing={"prewarmMs":5,"sendMs":41,"deliveryMs":57} result={"reason":"version_mismatch","expected":"v2","actual":"v1"} kinds=[{"kind":"status","step":"start"},{"kind":"step_done","step":"prepare"},{"kind":"step_done","step":"run"},{"kind":"status","step":"wait"},{"kind":"version_mismatch","step":"wait"},{"kind":"signal","step":"user_reply"}]
+07:07:06 == iter 2: task=ut-cf-070557-p2 signal 5s after deploy (marker v2 -> v3), prewarm=0 resend=0
+{
+ "instance": "ut-cf-070557-p2",
+ "created": true
+}
+ ⛅️ wrangler 4.145.0 (update available 4.146.0)
+───────────────────────────────────────────────
+Total Upload: 17.95 KiB / gzip: 5.75 KiB
+Your Worker has access to the following bindings:
+Binding                         Resource         
+env.WF (TaskWorkflow)           Workflow         
+env.DB (p-db-a1-taskstore)      D1 Database      
+
+Uploaded p-db-a1-cloud-smoke (5.71 sec)
+Deployed p-db-a1-cloud-smoke triggers (3.43 sec)
+  https://p-db-a1-cloud-smoke.skillset-apply.workers.dev
+  workflow: task-workflow
+Current Version ID: e9c4950a-27f5-4997-b708-efa29cececf0
+07:07:23 iter 2: deploy=13122ms edge_version=v3 after=235ms
+{
+ "sentAt": 1790924848819,
+ "prewarmMs": null,
+ "sendMs": 58,
+ "deliveryMs": 374,
+ "prewarmError": null
+}07:11:47 iter 2: status=awaiting_input consumed=0 terminal_status=awaiting_input start_v=v2 apply_v=none wake=-1790924848819ms consume=nullms re_sent=0 signal_http=256092ms timing={"prewarmMs":null,"sendMs":58,"deliveryMs":374} result= kinds=[{"kind":"status","step":"start"},{"kind":"step_done","step":"prepare"},{"kind":"step_done","step":"run"},{"kind":"status","step":"wait"},{"kind":"signal","step":"user_reply"}]
+07:11:49 == iter 3: task=ut-cf-070557-p3 signal 5s after deploy (marker v3 -> v4), prewarm=1 resend=1
+{
+ "instance": "ut-cf-070557-p3",
+ "created": true
+}
+ ⛅️ wrangler 4.145.0 (update available 4.146.0)
+───────────────────────────────────────────────
+Total Upload: 17.95 KiB / gzip: 5.75 KiB
+Your Worker has access to the following bindings:
+Binding                         Resource         
+env.WF (TaskWorkflow)           Workflow         
+env.DB (p-db-a1-taskstore)      D1 Database      
+
+Uploaded p-db-a1-cloud-smoke (6.02 sec)
+Deployed p-db-a1-cloud-smoke triggers (3.77 sec)
+  https://p-db-a1-cloud-smoke.skillset-apply.workers.dev
+  workflow: task-workflow
+Current Version ID: e491513c-405d-448c-bd27-0942cee60324
+07:12:06 iter 3: deploy=14006ms edge_version=v4 after=245ms
+{
+ "sentAt": 1790925132077,
+ "prewarmMs": 18,
+ "sendMs": 54,
+ "deliveryMs": 372,
+ "prewarmError": null
+}07:12:22 iter 3: not consumed 10s after signal -> re-send
+{
+ "sentAt": 1790925142739,
+ "prewarmMs": 16,
+ "sendMs": 74,
+ "deliveryMs": 106,
+ "prewarmError": null
+}07:16:54 iter 3: status=done consumed=0 terminal_status=done start_v=v3 apply_v=v4 wake=279336ms consume=279235ms re_sent=1 signal_http=280612ms timing={"prewarmMs":18,"sendMs":54,"deliveryMs":372} result={"answer":"да","ok":true,"version":"v4"} kinds=[{"kind":"status","step":"start"},{"kind":"step_done","step":"prepare"},{"kind":"step_done","step":"run"},{"kind":"status","step":"wait"},{"kind":"signal","step":"user_reply"},{"kind":"signal","step":"user_reply"},{"kind":"step_done","step":"wait"},{"kind":"step_done","step":"apply"},{"kind":"step_done","step":"finalize"}]
+07:17:00 == iter 4: task=ut-cf-070557-p4 signal 5s after deploy (marker v4 -> v5), prewarm=0 resend=1
+{
+ "instance": "ut-cf-070557-p4",
+ "created": true
+}
+ ⛅️ wrangler 4.145.0 (update available 4.146.0)
+───────────────────────────────────────────────
+
+Cloudflare collects anonymous telemetry about your usage of Wrangler. Learn more at https://github.com/cloudflare/workers-sdk/tree/main/packages/wrangler/telemetry.md
+Total Upload: 17.95 KiB / gzip: 5.75 KiB
+Your Worker has access to the following bindings:
+Binding                         Resource         
+env.WF (TaskWorkflow)           Workflow         
+env.DB (p-db-a1-taskstore)      D1 Database      
+
+Uploaded p-db-a1-cloud-smoke (6.00 sec)
+Deployed p-db-a1-cloud-smoke triggers (3.28 sec)
+  https://p-db-a1-cloud-smoke.skillset-apply.workers.dev
+  workflow: task-workflow
+Current Version ID: a55d9284-af68-44cd-915a-a0b33b4015ed
+07:17:16 iter 4: deploy=13425ms edge_version=v5 after=286ms
+{
+ "sentAt": 1790925441820,
+ "prewarmMs": null,
+ "sendMs": 62,
+ "deliveryMs": 366,
+ "prewarmError": null
+}07:17:32 iter 4: not consumed 10s after signal -> re-send
+{
+ "sentAt": 1790925452394,
+ "prewarmMs": null,
+ "sendMs": 48,
+ "deliveryMs": 64,
+ "prewarmError": null
+}07:21:54 iter 4: status=awaiting_input consumed=0 terminal_status=awaiting_input start_v=v4 apply_v=none wake=-1790925441820ms consume=nullms re_sent=1 signal_http=271397ms timing={"prewarmMs":null,"sendMs":62,"deliveryMs":366} result= kinds=[{"kind":"status","step":"start"},{"kind":"step_done","step":"prepare"},{"kind":"step_done","step":"run"},{"kind":"status","step":"wait"},{"kind":"signal","step":"user_reply"},{"kind":"signal","step":"user_reply"}]
+07:21:55 == iter 5: task=ut-cf-070557-p5 signal 2s after deploy (marker v5 -> v6), prewarm=1 resend=1
+{
+ "instance": "ut-cf-070557-p5",
+ "created": true
+}
+ ⛅️ wrangler 4.145.0 (update available 4.146.0)
+───────────────────────────────────────────────
+Total Upload: 17.95 KiB / gzip: 5.75 KiB
+Your Worker has access to the following bindings:
+Binding                         Resource         
+env.WF (TaskWorkflow)           Workflow         
+env.DB (p-db-a1-taskstore)      D1 Database      
+
+Uploaded p-db-a1-cloud-smoke (5.75 sec)
+Deployed p-db-a1-cloud-smoke triggers (3.51 sec)
+  https://p-db-a1-cloud-smoke.skillset-apply.workers.dev
+  workflow: task-workflow
+Current Version ID: c21a727e-caed-46ef-9414-51c8de8f42f6
+07:22:11 iter 5: deploy=12431ms edge_version=v6 after=168ms
+{
+ "sentAt": 1790925733141,
+ "prewarmMs": 13,
+ "sendMs": 47,
+ "deliveryMs": 76,
+ "prewarmError": null
+}07:22:16 iter 5: status=failed consumed=1 terminal_status=failed start_v=v5 apply_v=none wake=68ms consume=nullms re_sent=0 signal_http=938ms timing={"prewarmMs":13,"sendMs":47,"deliveryMs":76} result={"reason":"version_mismatch","expected":"v6","actual":"v5"} kinds=[{"kind":"status","step":"start"},{"kind":"step_done","step":"prepare"},{"kind":"step_done","step":"run"},{"kind":"status","step":"wait"},{"kind":"version_mismatch","step":"wait"},{"kind":"signal","step":"user_reply"}]
+07:22:16 == iter 6: task=ut-cf-070557-p6 signal 2s after deploy (marker v6 -> v7), prewarm=0 resend=0
+{
+ "instance": "ut-cf-070557-p6",
+ "created": true
+}
+ ⛅️ wrangler 4.145.0 (update available 4.146.0)
+───────────────────────────────────────────────
+Total Upload: 17.95 KiB / gzip: 5.75 KiB
+Your Worker has access to the following bindings:
+Binding                         Resource         
+env.WF (TaskWorkflow)           Workflow         
+env.DB (p-db-a1-taskstore)      D1 Database      
+
+Uploaded p-db-a1-cloud-smoke (5.59 sec)
+Deployed p-db-a1-cloud-smoke triggers (3.53 sec)
+  https://p-db-a1-cloud-smoke.skillset-apply.workers.dev
+  workflow: task-workflow
+Current Version ID: 7f48f5f7-f0af-458a-aed6-8ff23b86823a
+07:22:31 iter 6: deploy=11869ms edge_version=v7 after=165ms
+{
+ "sentAt": 1790925753974,
+ "prewarmMs": null,
+ "sendMs": 40,
+ "deliveryMs": 377,
+ "prewarmError": null
+}07:26:46 iter 6: status=awaiting_input consumed=0 terminal_status=awaiting_input start_v=v5 apply_v=none wake=-1790925753974ms consume=nullms re_sent=0 signal_http=251399ms timing={"prewarmMs":null,"sendMs":40,"deliveryMs":377} result= kinds=[{"kind":"status","step":"start"},{"kind":"step_done","step":"prepare"},{"kind":"step_done","step":"run"},{"kind":"status","step":"wait"},{"kind":"signal","step":"user_reply"}]
+07:26:47 == final redeploy v1 (repo state == deployed state)
+
+ ⛅️ wrangler 4.145.0 (update available 4.146.0)
+───────────────────────────────────────────────
+Total Upload: 17.95 KiB / gzip: 5.75 KiB
+Your Worker has access to the following bindings:
+Binding                         Resource         
+env.WF (TaskWorkflow)           Workflow         
+env.DB (p-db-a1-taskstore)      D1 Database      
+
+Uploaded p-db-a1-cloud-smoke (5.70 sec)
+Deployed p-db-a1-cloud-smoke triggers (3.42 sec)
+  https://p-db-a1-cloud-smoke.skillset-apply.workers.dev
+  workflow: task-workflow
+Current Version ID: 4522a2b1-927e-46d6-bc3c-59c720a426f4
+07:26:59 == settle: re-reading every task 120 s after the matrix
+07:29:00 == RESULTS: [{"iter":1,"delayAfterDeploySec":5,"prewarm":true,"reSent":false,"status":"failed","applyVersion":"none","eventConsumed":true,"wakeMs":61,"signalToConsumeMs":null,"signalTiming":{"prewarmMs":5,"sendMs":41,"deliveryMs":57}},{"iter":2,"delayAfterDeploySec":5,"prewarm":false,"reSent":false,"status":"awaiting_input","applyVersion":"none","eventConsumed":false,"wakeMs":-1790924848819,"signalToConsumeMs":null,"signalTiming":{"prewarmMs":null,"sendMs":58,"deliveryMs":374}},{"iter":3,"delayAfterDeploySec":5,"prewarm":true,"reSent":true,"status":"done","applyVersion":"v4","eventConsumed":false,"wakeMs":279336,"signalToConsumeMs":279235,"signalTiming":{"prewarmMs":18,"sendMs":54,"deliveryMs":372}},{"iter":4,"delayAfterDeploySec":5,"prewarm":false,"reSent":true,"status":"awaiting_input","applyVersion":"none","eventConsumed":false,"wakeMs":-1790925441820,"signalToConsumeMs":null,"signalTiming":{"prewarmMs":null,"sendMs":62,"deliveryMs":366}},{"iter":5,"delayAfterDeploySec":2,"prewarm":true,"reSent":true,"status":"failed","applyVersion":"none","eventConsumed":true,"wakeMs":68,"signalToConsumeMs":null,"signalTiming":{"prewarmMs":13,"sendMs":47,"deliveryMs":76}},{"iter":6,"delayAfterDeploySec":2,"prewarm":false,"reSent":false,"status":"awaiting_input","applyVersion":"none","eventConsumed":false,"wakeMs":-1790925753974,"signalToConsumeMs":null,"signalTiming":{"prewarmMs":null,"sendMs":40,"deliveryMs":377}}]

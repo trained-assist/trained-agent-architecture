@@ -2,6 +2,38 @@
   {
     "results": [
       {
+        "id": "ut-cf-064632-crash",
+        "status": "done",
+        "generation": 1,
+        "result_json": "{\"answer\":\"да\",\"ok\":true,\"version\":\"v1\"}",
+        "side_effects": "{\"apply\":1,\"prepare\":1,\"run\":1}",
+        "history": "[{\"kind\":\"status\",\"step\":\"start\",\"at\":1790923635391,\"payload\":\"{\\\"instance\\\":\\\"ut-cf-064632-crash\\\"}\"},{\"kind\":\"step_done\",\"step\":\"prepare\",\"at\":1790923637200,\"payload\":null},{\"kind\":\"step_done\",\"step\":\"run\",\"at\":1790923637294,\"payload\":\"{\\\"external\\\":\\\"called\\\",\\\"version\\\":\\\"v1\\\"}\"},{\"kind\":\"step_done\",\"step\":\"guard-crash\",\"at\":1790923639417,\"payload\":\"{\\\"resumedBy\\\":\\\"platform\\\",\\\"attempt\\\":2,\\\"version\\\":\\\"v1\\\"}\"},{\"kind\":\"status\",\"step\":\"wait\",\"at\":1790923639571,\"payload\":\"{\\\"waitingFor\\\":\\\"user_reply\\\",\\\"version\\\":\\\"v1\\\"}\"},{\"kind\":\"signal\",\"step\":\"user_reply\",\"at\":1790923639977,\"payload\":\"{\\\"answer\\\":\\\"да\\\",\\\"__timing\\\":{\\\"prewarmMs\\\":22,\\\"sendMs\\\":50,\\\"deliveryMs\\\":199}}\"},{\"kind\":\"step_done\",\"step\":\"wait\",\"at\":1790923640177,\"payload\":\"{\\\"answer\\\":\\\"да\\\"}\"},{\"kind\":\"step_done\",\"step\":\"apply\",\"at\":1790923640283,\"payload\":\"{\\\"used\\\":\\\"да\\\",\\\"version\\\":\\\"v1\\\"}\"},{\"kind\":\"step_done\",\"step\":\"finalize\",\"at\":1790923640377,\"payload\":null}]"
+      },
+      {
+        "id": "ut-cf-064632-deploy",
+        "status": "done",
+        "generation": 1,
+        "result_json": "{\"answer\":\"да\",\"ok\":true,\"version\":\"v2\"}",
+        "side_effects": "{\"apply\":1,\"prepare\":1,\"run\":1}",
+        "history": "[{\"kind\":\"status\",\"step\":\"start\",\"at\":1790923720904,\"payload\":\"{\\\"instance\\\":\\\"ut-cf-064632-deploy\\\"}\"},{\"kind\":\"step_done\",\"step\":\"prepare\",\"at\":1790923722835,\"payload\":null},{\"kind\":\"step_done\",\"step\":\"run\",\"at\":1790923722938,\"payload\":\"{\\\"external\\\":\\\"called\\\",\\\"version\\\":\\\"v1\\\"}\"},{\"kind\":\"status\",\"step\":\"wait\",\"at\":1790923723053,\"payload\":\"{\\\"waitingFor\\\":\\\"user_reply\\\",\\\"version\\\":\\\"v1\\\"}\"},{\"kind\":\"signal\",\"step\":\"user_reply\",\"at\":1790923808741,\"payload\":\"{\\\"answer\\\":\\\"да\\\",\\\"__timing\\\":{\\\"prewarmMs\\\":13,\\\"sendMs\\\":146,\\\"deliveryMs\\\":171}}\"},{\"kind\":\"step_done\",\"step\":\"wait\",\"at\":1790924023331,\"payload\":\"{\\\"answer\\\":\\\"да\\\"}\"},{\"kind\":\"step_done\",\"step\":\"apply\",\"at\":1790924023434,\"payload\":\"{\\\"used\\\":\\\"да\\\",\\\"version\\\":\\\"v2\\\"}\"},{\"kind\":\"step_done\",\"step\":\"finalize\",\"at\":1790924023535,\"payload\":null}]"
+      },
+      {
+        "id": "ut-cf-064632-sleep",
+        "status": "done",
+        "generation": 1,
+        "result_json": "{\"answer\":\"да\",\"ok\":true,\"version\":\"v1\"}",
+        "side_effects": "{\"apply\":1,\"prepare\":1,\"run\":1}",
+        "history": "[{\"kind\":\"status\",\"step\":\"start\",\"at\":1790923644291,\"payload\":\"{\\\"instance\\\":\\\"ut-cf-064632-sleep\\\"}\"},{\"kind\":\"step_done\",\"step\":\"prepare\",\"at\":1790923646108,\"payload\":null},{\"kind\":\"step_done\",\"step\":\"run\",\"at\":1790923646200,\"payload\":\"{\\\"external\\\":\\\"called\\\",\\\"version\\\":\\\"v1\\\"}\"},{\"kind\":\"status\",\"step\":\"wait\",\"at\":1790923691319,\"payload\":\"{\\\"waitingFor\\\":\\\"user_reply\\\",\\\"version\\\":\\\"v1\\\"}\"},{\"kind\":\"signal\",\"step\":\"user_reply\",\"at\":1790923692431,\"payload\":\"{\\\"answer\\\":\\\"да\\\",\\\"__timing\\\":{\\\"prewarmMs\\\":13,\\\"sendMs\\\":43,\\\"deliveryMs\\\":73}}\"},{\"kind\":\"step_done\",\"step\":\"wait\",\"at\":1790923692513,\"payload\":\"{\\\"answer\\\":\\\"да\\\"}\"},{\"kind\":\"step_done\",\"step\":\"apply\",\"at\":1790923692611,\"payload\":\"{\\\"used\\\":\\\"да\\\",\\\"version\\\":\\\"v1\\\"}\"},{\"kind\":\"step_done\",\"step\":\"finalize\",\"at\":1790923692704,\"payload\":null}]"
+      },
+      {
+        "id": "ut-cf-064632-timeout",
+        "status": "failed",
+        "generation": 1,
+        "result_json": "{\"reason\":\"user_reply_timeout\"}",
+        "side_effects": "{\"prepare\":1,\"run\":1}",
+        "history": "[{\"kind\":\"status\",\"step\":\"start\",\"at\":1790923696830,\"payload\":\"{\\\"instance\\\":\\\"ut-cf-064632-timeout\\\"}\"},{\"kind\":\"step_done\",\"step\":\"prepare\",\"at\":1790923697162,\"payload\":null},{\"kind\":\"step_done\",\"step\":\"run\",\"at\":1790923697264,\"payload\":\"{\\\"external\\\":\\\"called\\\",\\\"version\\\":\\\"v1\\\"}\"},{\"kind\":\"status\",\"step\":\"wait\",\"at\":1790923697369,\"payload\":\"{\\\"waitingFor\\\":\\\"user_reply\\\",\\\"version\\\":\\\"v1\\\"}\"},{\"kind\":\"wait_timeout\",\"step\":\"wait\",\"at\":1790923717440,\"payload\":\"{\\\"timeoutSec\\\":20,\\\"error\\\":\\\"WorkflowTimeoutError: Execution timed out after 20000ms\\\",\\\"version\\\":\\\"v1\\\"}\"}]"
+      },
+      {
         "id": "ut-cf-180635-crash",
         "status": "done",
         "generation": 1,
@@ -177,14 +209,14 @@
       "served_by_colo": "ARN",
       "served_by_primary": true,
       "timings": {
-        "sql_duration_ms": 3.1567
+        "sql_duration_ms": 0.9181
       },
-      "duration": 3.1567,
+      "duration": 0.9181,
       "changes": 0,
-      "last_row_id": 164,
+      "last_row_id": 0,
       "changed_db": false,
-      "size_after": 61440,
-      "rows_read": 284,
+      "size_after": 65536,
+      "rows_read": 337,
       "rows_written": 0,
       "total_attempts": 1
     }
