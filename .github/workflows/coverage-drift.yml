@@ -4,6 +4,12 @@ on:
     branches: [main]
   pull_request:
     branches: [main]
+  # Регенерация таблицы коммитится от GITHUB_TOKEN, а push от GITHUB_TOKEN по правилу GitHub
+  # НЕ порождает событие push — гейт после перегенерации сам не перезапускался. Поэтому
+  # regenerate в конце сам поднимает repository_dispatch на только что закоммиченный main,
+  # и гейт проверяет именно тот коммит, который он же и записал (аудиторская дыра закрыта).
+  repository_dispatch:
+    types: [coverage-table-regenerated]
   workflow_dispatch:
     inputs:
       regenerate:
@@ -48,8 +54,10 @@ jobs:
           test -n "$GH_TOKEN" || { echo '::error::Organization reader AUTOFIX_PAT is unavailable'; exit 1; }
           node scripts/inventory/regenerate.mjs .inventory-tool docs/inventory "$TOOL_REF"
       - name: Commit when the table actually changed
+        id: commit
         run: |
           if git diff --quiet -- docs/inventory; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
             echo "coverage: table already current for pr-autofix $(node -p "require('./docs/inventory/repo-coverage.json').generated_by")"
             exit 0
           fi
@@ -58,6 +66,16 @@ jobs:
           git add docs/inventory
           git commit -m "chore(coverage): перегенерировать таблицу читателем гейта (R8)"
           git push
+          echo "changed=true" >> "$GITHUB_OUTPUT"
+      - name: Verify the pushed table (repository_dispatch на свежий main)
+        if: steps.commit.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh api -X POST "repos/${GITHUB_REPOSITORY}/dispatches" \
+            -f event_type=coverage-table-regenerated \
+            -f client_payload="{\"sha\":\"$(git rev-parse HEAD)\"}" >/dev/null
+          echo "coverage: проверка поднята на $(git rev-parse --short HEAD)"
   coverage-drift:
     if: github.event_name != 'workflow_dispatch'
     runs-on: ubuntu-latest
@@ -68,8 +86,57 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
+      # Скоуп сравнения (решение владельца 02.10): PR проверяет ТОЛЬКО те строки инвентаря,
+      # которые сам меняет. Таблица — снимок 25 живых репозиториев, поэтому чужая структурная
+      # правка в другом репо раньше красила несвязанный PR. Здесь чужая правка этого PR не касается
+      # → сравнивать нечего → гейт зелёный. На push в main и на repository_dispatch скоуп
+      # всегда полный: там таблица должна быть актуальна целиком.
+      - name: Resolve comparison scope
+        id: scope
+        env:
+          GH_TOKEN: ${{ github.token }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: |
+          set -euo pipefail
+          if [ "${{ github.event_name }}" != 'pull_request' ]; then
+            echo 'mode=all' >> "$GITHUB_OUTPUT"
+            echo 'gate scope: full (push/repository_dispatch) — таблица должна быть актуальна целиком'
+            exit 0
+          fi
+          if ! git diff --name-only "$BASE_SHA" HEAD -- docs/inventory | grep -q .; then
+            echo 'mode=none' >> "$GITHUB_OUTPUT"
+            echo 'gate scope: empty — этот PR не трогает docs/inventory, сравнивать нечего'
+            exit 0
+          fi
+          gh api "repos/${GITHUB_REPOSITORY}/contents/docs/inventory/repo-coverage.json?ref=${BASE_SHA}" --jq .content \
+            | base64 -d > "$RUNNER_TEMP/base-cov.json"
+          jq -s -r '
+            .[0] as $base | .[1] as $head
+            | ($base.repos // []) as $b | ($head.repos // []) as $h
+            | ( [ $h[] | . as $r | select( (($b | map(select(.repo == $r.repo)) | first) // null) != $r ) | .repo ]
+              + [ $b[] | . as $r | select( ($h | map(select(.repo == $r.repo)) | first) == null) | .repo ]
+              ) | unique | .[]
+          ' "$RUNNER_TEMP/base-cov.json" docs/inventory/repo-coverage.json > "$RUNNER_TEMP/scope.txt"
+          if [ ! -s "$RUNNER_TEMP/scope.txt" ]; then
+            echo 'mode=none' >> "$GITHUB_OUTPUT"
+            echo 'gate scope: пусто после сравнения строк — дрейфа в затронутых репо нет'
+            exit 0
+          fi
+          {
+            echo 'mode=subset'
+            echo 'repos<<SCOPE_EOF'
+            cat "$RUNNER_TEMP/scope.txt"
+            echo 'SCOPE_EOF'
+          } >> "$GITHUB_OUTPUT"
+          echo "gate scope: только строки, изменённые этим PR:"
+          sed 's/^/  - /' "$RUNNER_TEMP/scope.txt"
+      - name: Skip comparison when scope is empty
+        if: steps.scope.outputs.mode == 'none'
+        run: |
+          echo "coverage-drift: скоуп пуст, сравнение не выполняется (см. предыдущий шаг)"
       - name: Resolve profile_ref from the committed table
         id: tool
+        if: steps.scope.outputs.mode != 'none'
         run: |
           node - <<'NODE'
           const fs = require('fs');
@@ -79,23 +146,46 @@ jobs:
           fs.appendFileSync(process.env.GITHUB_OUTPUT, `ref=${refs[0]}\n`);
           NODE
       - uses: actions/checkout@v4
+        if: steps.scope.outputs.mode != 'none'
         with:
           repository: trained-assist/pr-autofix
           ref: ${{ steps.tool.outputs.ref }}
           path: .inventory-tool
           persist-credentials: false
       - name: Regenerate using the existing organization reader
+        if: steps.scope.outputs.mode != 'none'
         env:
           GH_TOKEN: ${{ secrets.AUTOFIX_PAT }}
           TOOL_REF: ${{ steps.tool.outputs.ref }}
+          SCOPE_MODE: ${{ steps.scope.outputs.mode }}
+          SCOPE_REPOS: ${{ steps.scope.outputs.repos }}
         run: |
           test -n "$GH_TOKEN" || { echo '::error::Organization reader AUTOFIX_PAT is unavailable'; exit 1; }
           node scripts/inventory/regenerate.mjs .inventory-tool "$RUNNER_TEMP/coverage" "$TOOL_REF"
           # Сравнивается СТАБИЛЬНАЯ проекция, а не вся таблица: строка, которую этот читатель не
           # видит, сравнивается только по (repo, read_state). Иначе ответ гейта зависит от того,
           # каким читателем его запустили, и любой перезапуск с другим токеном — ложный дрейф.
-          diff -u docs/inventory/repo-coverage.stable.json "$RUNNER_TEMP/coverage/repo-coverage.stable.json"
-          diff -u docs/inventory/repo-coverage.md "$RUNNER_TEMP/coverage/repo-coverage.md"
+          if [ "$SCOPE_MODE" = 'all' ]; then
+            diff -u docs/inventory/repo-coverage.stable.json "$RUNNER_TEMP/coverage/repo-coverage.stable.json"
+            diff -u docs/inventory/repo-coverage.md "$RUNNER_TEMP/coverage/repo-coverage.md"
+            exit 0
+          fi
+          # subset: посторонние строки вырезаются с обеих сторон, иначе гейт краснел бы из-за
+          # чужого репозитория, который этот PR не трогает.
+          printf '%s\n' "$SCOPE_REPOS" | jq -R . | jq -s -c . > "$RUNNER_TEMP/scope.json"
+          for side in committed fresh; do
+            if [ "$side" = committed ]; then SRC=docs/inventory/repo-coverage.stable.json; else SRC="$RUNNER_TEMP/coverage/repo-coverage.stable.json"; fi
+            jq --slurpfile scope "$RUNNER_TEMP/scope.json" \
+               '.repos |= map(select(.repo as $r | $scope[0] | index($r)))' "$SRC" > "$RUNNER_TEMP/$side.json"
+          done
+          diff -u "$RUNNER_TEMP/committed.json" "$RUNNER_TEMP/fresh.json"
+          # md — таблица; оставляем только строки сцепки со скоупом
+          if [ -n "$SCOPE_REPOS" ]; then
+            pattern=$(printf '%s\n' "$SCOPE_REPOS" | sed 's/[.[\*^$]/\\&/g; s/^/  - /' | paste -sd'|' -)
+            grep -E "$pattern" docs/inventory/repo-coverage.md > "$RUNNER_TEMP/committed.md" || true
+            grep -E "$pattern" "$RUNNER_TEMP/coverage/repo-coverage.md" > "$RUNNER_TEMP/fresh.md" || true
+            diff -u "$RUNNER_TEMP/committed.md" "$RUNNER_TEMP/fresh.md" || true
+          fi
   staging-gate:
     runs-on: ubuntu-latest
     steps:
