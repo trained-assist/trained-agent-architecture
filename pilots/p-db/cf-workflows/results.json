@@ -10,24 +10,25 @@
     "T5": "PASS",
     "T6": "PASS",
     "T7": "PASS",
-    "T8": "PASS"
+    "T8": "PASS",
+    "T9": "PASS"
   },
   "notes": {
     "T2_auto_resume_after_kill9_without_trigger": "no",
     "T2_T3_resume_trigger": "local engine re-runs an interrupted instance only when it receives an event (signal or Port.recover __wake); no timer/alarm wake after kill -9"
   },
   "metrics": {
-    "t1_wall_ms": 708,
-    "signal_to_apply_ms": 163,
-    "signal_to_apply_after_cold_restart_ms": 151,
-    "rss_alive_total_kb": 557432,
-    "rss_alive_workerd_kb": 235716,
+    "t1_wall_ms": 395,
+    "signal_to_apply_ms": 65,
+    "signal_to_apply_after_cold_restart_ms": 124,
+    "rss_alive_total_kb": 244400,
+    "rss_alive_workerd_kb": 68352,
     "dev_ready_ms": [
-      3248,
-      2220,
-      2289
+      2505,
+      8528,
+      6417
     ],
-    "adapter_loc": 238,
+    "adapter_loc": 372,
     "moving_parts_local": 3,
     "moving_parts_prod": "Worker + Workflows + D1 (all managed)"
   },
@@ -134,9 +135,50 @@
       "id": "ut-pilot-2",
       "status": "done",
       "generation": 1,
-      "result_json": "{\"answer\":\"да\",\"ok\":true}",
+      "result_json": "{\"answer\":\"да\",\"ok\":true,\"version\":\"v1\"}",
       "side_effects": "{\"apply\":1,\"prepare\":1,\"run\":1}",
-      "history": "[{\"kind\":\"status\",\"step\":\"start\",\"at\":1790789593973},{\"kind\":\"step_done\",\"step\":\"prepare\",\"at\":1790789594009},{\"kind\":\"step_done\",\"step\":\"run\",\"at\":1790789594045},{\"kind\":\"status\",\"step\":\"wait\",\"at\":1790789607611},{\"kind\":\"signal\",\"step\":\"user_reply\",\"at\":1790789607787},{\"kind\":\"step_done\",\"step\":\"wait\",\"at\":1790789607924},{\"kind\":\"step_done\",\"step\":\"apply\",\"at\":1790789607954},{\"kind\":\"step_done\",\"step\":\"finalize\",\"at\":1790789608005}]"
+      "history": "[{\"kind\":\"status\",\"step\":\"start\",\"at\":1790923224372},{\"kind\":\"step_done\",\"step\":\"prepare\",\"at\":1790923224392},{\"kind\":\"step_done\",\"step\":\"run\",\"at\":1790923224418},{\"kind\":\"status\",\"step\":\"wait\",\"at\":1790923242704},{\"kind\":\"signal\",\"step\":\"user_reply\",\"at\":1790923242857},{\"kind\":\"step_done\",\"step\":\"wait\",\"at\":1790923242919},{\"kind\":\"step_done\",\"step\":\"apply\",\"at\":1790923242937},{\"kind\":\"step_done\",\"step\":\"finalize\",\"at\":1790923242948}]"
+    },
+    "T9_late_write": {
+      "before": {
+        "status": "done",
+        "result": {
+          "answer": "да",
+          "ok": true,
+          "version": "v1"
+        },
+        "gen": 1
+      },
+      "attempt": {
+        "recorded": false,
+        "reason": "terminal",
+        "error": "terminal: task ut-pilot-1 is done; write of step wait rejected",
+        "generation": 1
+      },
+      "stale_write": {
+        "rejected": true,
+        "error": "terminal: task ut-pilot-1 is done; write of step apply rejected"
+      },
+      "after": {
+        "status": "done",
+        "result": {
+          "answer": "да",
+          "ok": true,
+          "version": "v1"
+        },
+        "gen": 1
+      },
+      "events": {
+        "wait_timeout": 0,
+        "ignored": 1,
+        "rejected": 2
+      },
+      "classify_timeout": {
+        "isTimeout": true
+      },
+      "classify_other": {
+        "isTimeout": false
+      }
     }
   }
 }

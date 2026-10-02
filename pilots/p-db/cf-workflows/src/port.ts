@@ -46,12 +46,39 @@ export class CfWorkflowPort {
     }
   }
 
-  async signal(userTaskId: string, eventType: string, payload: unknown) {
+  /**
+   * Deliver a user signal (issue #91/#92 instrumentation).
+   *
+   * `prewarm` (default on) forces the instance's Durable Object to answer an RPC *before* the
+   * event is handed over. Two effects, both measured and recorded on the `signal` event:
+   *   - after `wrangler deploy` the first RPC into the instance is what makes it load the new
+   *     script version, so the event lands on an instance that already has the new code (#92);
+   *   - the split `prewarmMs` / `sendMs` shows where the post-deploy wake latency of tens of
+   *     seconds actually sits (#91).
+   * `signal.at` stays the moment the request arrived (before the prewarm) so the harness's
+   * signal→apply latency remains end-to-end comparable with the pre-instrumentation runs.
+   */
+  async signal(userTaskId: string, eventType: string, payload: unknown, opts: { prewarm?: boolean } = {}) {
     const t0 = Date.now();
-    await this.store.logEvent(userTaskId, 'signal', eventType, payload);
     const inst = await this.wf.get(userTaskId);
+    let prewarmMs: number | null = null;
+    let prewarmError: string | null = null;
+    if (opts.prewarm !== false) {
+      const p0 = Date.now();
+      try {
+        await inst.status();
+      } catch (e: any) {
+        prewarmError = String(e?.message ?? e);
+      }
+      prewarmMs = Date.now() - p0;
+    }
+    const s0 = Date.now();
     await inst.sendEvent({ type: eventType, payload });
-    return { sentAt: t0 };
+    const sendMs = Date.now() - s0;
+    const timing = { prewarmMs, sendMs, deliveryMs: Date.now() - t0 };
+    const logged = payload && typeof payload === 'object' ? { ...(payload as object), __timing: timing } : { value: payload, __timing: timing };
+    await this.store.logEvent(userTaskId, 'signal', eventType, logged, null, t0);
+    return { sentAt: t0, ...timing, prewarmError };
   }
 
   async cancel(userTaskId: string) {
