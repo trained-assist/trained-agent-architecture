@@ -856,12 +856,11 @@
       },
       "ci_present": true,
       "ci_required": null,
-      "staging_present": false,
+      "staging_present": true,
       "staging_required": true,
       "autofix_ref": "v1.7.6",
       "read_state": "read",
       "notes": [
-        "staging: missing — required but absent",
         "adapter: derived (package.json present)",
         "live: tree read from main",
         "scope: domain skill: freelance"
