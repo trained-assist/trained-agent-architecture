@@ -1,22 +1,23 @@
 {
   "variant": "cf-workflows-d1",
-  "run": "064632",
+  "run": "113255",
   "mode": "real Cloudflare account (worker p-db-a1-cloud-smoke, D1 p-db-a1-taskstore)",
   "criteria": {
     "C1_continuation_after_crash_without_trigger": "PASS",
     "C2_durable_sleep_no_external_event": "PASS",
-    "C2_sleep_gap_ms": 45119,
+    "C2_sleep_gap_ms": 45140,
     "C2_wake_after_sleep": "PASS",
     "C2_waitFor_timeout_no_event": "PASS",
     "C3_deploy_while_waiting": "PASS",
-    "C4_late_deploys_never_touch_a_finished_task": "PASS"
+    "C4_late_deploys_never_touch_a_finished_task": "PASS",
+    "C5_durable_outbox_recovery": "PASS"
   },
   "notes": {
-    "c1_signal_to_finalize_ms": 641,
-    "c2_signal_to_apply_ms": 180,
-    "c3_signal_to_apply_after_deploy_ms": 214693,
-    "c1_wall_ms": 7769,
-    "t8_rows": 25
+    "c1_signal_to_finalize_ms": 567,
+    "c2_signal_to_apply_ms": 283,
+    "c3_signal_to_apply_after_deploy_ms": 214466,
+    "c1_wall_ms": 5134,
+    "t8_rows": 44
   },
   "evidence": {
     "C1": {
@@ -77,6 +78,78 @@
       "events": {
         "wait_timeout_after_finalize": 0,
         "late_writes": 0
+      }
+    },
+    "C5_durable_outbox": {
+      "submit": {
+        "accepted": true,
+        "reason": "accepted",
+        "waitId": "ut-cf-113255-outbox#wait#g1",
+        "generation": 1,
+        "eventKey": "ut-cf-113255-outbox#wait#g1#user_reply",
+        "outboxId": 20,
+        "waited": true,
+        "delivered": false,
+        "delivery": null,
+        "fault": "after_commit",
+        "commitMs": 142
+      },
+      "after_fault": {
+        "status": "awaiting_input",
+        "waits": [
+          {
+            "wait_id": "ut-cf-113255-outbox#wait#g1",
+            "step": "wait",
+            "gen": 1,
+            "status": "answered",
+            "expect_version": null,
+            "event_key": "ut-cf-113255-outbox#wait#g1#user_reply",
+            "answer": "\"да\"",
+            "created_at": 1790941471413,
+            "submitted_at": 1790941472948,
+            "consumed_at": null
+          }
+        ],
+        "wakePending": 1,
+        "engine": "running"
+      },
+      "recovery": {
+        "attempted": 12,
+        "delivered": 1,
+        "failed": 0,
+        "remaining": 11,
+        "detail": [
+          {
+            "id": 20,
+            "kind": "wake",
+            "dedup_key": "ut-cf-113255-outbox#wait#g1#wake",
+            "result": "delivered"
+          }
+        ],
+        "profileId": "sandbox-pilot"
+      },
+      "final": {
+        "status": "done",
+        "result": {
+          "answer": "да",
+          "ok": true,
+          "version": "v5"
+        },
+        "waits": [
+          {
+            "wait_id": "ut-cf-113255-outbox#wait#g1",
+            "step": "wait",
+            "gen": 1,
+            "status": "consumed",
+            "expect_version": null,
+            "event_key": "ut-cf-113255-outbox#wait#g1#user_reply",
+            "answer": "\"да\"",
+            "created_at": 1790941471413,
+            "submitted_at": 1790941472948,
+            "consumed_at": 1790941476617
+          }
+        ],
+        "wakeDelivered": 1
       }
     }
   },

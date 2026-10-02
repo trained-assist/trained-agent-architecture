@@ -1,8 +1,14 @@
 // Workflow Port (ARCHITECTURE.md 4.2) — Cloudflare Workflows adapter.
-// Control side: start / signal / cancel / status.  Execution side: step / sleep / waitFor.
+// Control side: start / submit(answer) / deliver / recoverOutbox / cancel / status.
+// Execution side: step / sleep / waitFor.
 // Plan code (plan.ts) only sees the StepCtx interface, never the CF API.
+//
+// Issue #116: `signal` is a WAKE-UP, not the answer. The answer is committed to D1 first
+// (atomically with its continuation intent), and delivery is a pending operation that is
+// replayed until it lands. Delivery is at-least-once; planning is exactly-once per dedup_key.
 import type { WorkflowStep } from 'cloudflare:workers';
 import { TaskStore } from './taskstore';
+import { PROFILE_ID, logCtx } from './ids';
 
 export interface StepAttempt {
   /** 1 on the first try, 2+ on platform retries (cloud smoke crash hook). */
@@ -37,7 +43,7 @@ export class CfWorkflowPort {
     const task = await this.store.getTask(userTaskId);
     try {
       const inst = await this.wf.create({ id: userTaskId, params: { taskId: userTaskId, generation: task.generation, ...input } });
-      await this.store.logEvent(userTaskId, 'status', 'start', { instance: inst.id }, task.generation);
+      await this.store.logEvent(userTaskId, 'status', 'start', logCtx(userTaskId, task.generation, { instance: inst.id }), task.generation);
       return { instance: inst.id, created: true };
     } catch (e: any) {
       // already exists -> return the same instance
@@ -47,47 +53,99 @@ export class CfWorkflowPort {
   }
 
   /**
-   * Deliver a user signal (issue #91/#92 instrumentation).
-   *
-   * `prewarm` (default on) forces the instance's Durable Object to answer an RPC *before* the
-   * event is handed over. Two effects, both measured and recorded on the `signal` event:
-   *   - after `wrangler deploy` the first RPC into the instance is what makes it load the new
-   *     script version, so the event lands on an instance that already has the new code (#92);
-   *   - the split `prewarmMs` / `sendMs` shows where the post-deploy wake latency of tens of
-   *     seconds actually sits (#91).
-   * `signal.at` stays the moment the request arrived (before the prewarm) so the harness's
-   * signal→apply latency remains end-to-end comparable with the pre-instrumentation runs.
+   * Requirement (2) of #116: the answer is committed to D1 together with the continuation intent,
+   * and only THEN is the wake delivered. If the process dies in between, `recoverOutbox` replays
+   * the pending row — the answer is already durable, so recovery never needs the sender.
+   * `deliver:false` skips delivery on purpose (used to reproduce the crash window).
    */
-  async signal(userTaskId: string, eventType: string, payload: unknown, opts: { prewarm?: boolean } = {}) {
+  async submit(userTaskId: string, eventType: string, answer: unknown, opts: { eventKey?: string | null; expectVersion?: string | null; deliver?: boolean } = {}) {
     const t0 = Date.now();
-    const inst = await this.wf.get(userTaskId);
-    let prewarmMs: number | null = null;
-    let prewarmError: string | null = null;
-    if (opts.prewarm !== false) {
-      const p0 = Date.now();
-      try {
-        await inst.status();
-      } catch (e: any) {
-        prewarmError = String(e?.message ?? e);
-      }
-      prewarmMs = Date.now() - p0;
+    const res = await this.store.submitAnswer({
+      taskId: userTaskId,
+      eventType,
+      eventKey: opts.eventKey ?? null,
+      answer,
+      expectVersion: opts.expectVersion ?? null,
+    });
+    const fault = await this.store.consumeFault('after_commit');
+    if (fault && res.accepted) {
+      await this.store.logEvent(
+        userTaskId,
+        'delivery_skipped',
+        'wait',
+        logCtx(userTaskId, res.generation, { waitId: res.waitId, eventKey: res.eventKey, reason: 'fault_after_commit' }),
+        res.generation,
+      );
+      return { ...res, delivered: false, delivery: null, fault: 'after_commit', commitMs: Date.now() - t0 };
     }
-    const s0 = Date.now();
+    if (!res.accepted) return { ...res, delivered: false, delivery: null, commitMs: Date.now() - t0 };
+    if (opts.deliver === false) return { ...res, delivered: false, delivery: null, commitMs: Date.now() - t0 };
+    const delivery = await this.deliverPending({ taskId: userTaskId, kinds: ['wake'] });
+    return { ...res, delivered: delivery.delivered > 0, delivery, commitMs: Date.now() - t0 };
+  }
+
+  /** Test-only: raw engine event with an arbitrary payload (bypasses the outbox). */
+  async rawWake(userTaskId: string, eventType: string, payload: unknown) {
+    const inst = await this.wf.get(userTaskId);
     await inst.sendEvent({ type: eventType, payload });
-    const sendMs = Date.now() - s0;
-    const timing = { prewarmMs, sendMs, deliveryMs: Date.now() - t0 };
-    const logged = payload && typeof payload === 'object' ? { ...(payload as object), __timing: timing } : { value: payload, __timing: timing };
-    await this.store.logEvent(userTaskId, 'signal', eventType, logged, null, t0);
-    return { sentAt: t0, ...timing, prewarmError };
+    return { sent: true, userTaskId, eventType, profileId: PROFILE_ID };
+  }
+
+  /**
+   * Requirement (3) of #116: deliver every pending operation. `wake` goes to the engine; a
+   * `wait_opened` notice is for the host (UI/channel) and is acknowledged explicitly, so an
+   * unacked notice stays visible as a pending operation instead of disappearing.
+   */
+  async deliverPending(filter: { taskId?: string; kinds?: string[]; limit?: number } = {}) {
+    const rows = await this.store.pendingOutbox({ limit: filter.limit ?? 20, taskId: filter.taskId, kinds: filter.kinds });
+    let delivered = 0;
+    let failed = 0;
+    const detail: unknown[] = [];
+    for (const r of rows) {
+      if (r.kind !== 'wake') continue; // host notices are polled + acked by the host
+      try {
+        const inst = await this.wf.get(r.task_id);
+        // payload carries keys only — the answer itself stays in the Task Store (#116)
+        await inst.sendEvent({ type: r.event_type, payload: { wake: true, eventKey: r.dedup_key } });
+        await this.store.markDelivered(r.id);
+        await this.store.logEvent(
+          r.task_id,
+          'wake_delivered',
+          'wait',
+          logCtx(r.task_id, 0, { waitId: r.wait_id, dedup_key: r.dedup_key, reason: r.reason, run_id: r.run_id }),
+        );
+        delivered++;
+        detail.push({ id: r.id, kind: r.kind, dedup_key: r.dedup_key, result: 'delivered' });
+      } catch (e: any) {
+        await this.store.markDeliveryFailed(r.id, String(e?.message ?? e));
+        failed++;
+        detail.push({ id: r.id, kind: r.kind, dedup_key: r.dedup_key, result: 'failed', error: String(e?.message ?? e) });
+      }
+    }
+    const left = await this.store.pendingOutbox({ limit: 50, taskId: filter.taskId, kinds: filter.kinds });
+    return { attempted: rows.length, delivered, failed, remaining: left.length, detail, profileId: PROFILE_ID };
+  }
+
+  /** Recovery entry point: replay pending operations for every task (called on start-up in a real control plane). */
+  async recoverOutbox() {
+    return this.deliverPending({});
+  }
+
+  async pendingNotices(taskId: string) {
+    return { profileId: PROFILE_ID, outbox: await this.store.outboxRows(taskId) };
+  }
+
+  async ackNotice(dedupKey: string) {
+    return { acked: await this.store.ackOutbox(dedupKey) };
   }
 
   async cancel(userTaskId: string) {
-    // Task Store first: status=cancelled + generation bump fences any in-flight step.
-    const gen = await this.store.bumpGeneration(userTaskId, 'cancelled');
-    await this.store.logEvent(userTaskId, 'cancel', null, null, gen ?? null);
+    // Task Store first, atomically: status=cancelled, wait -> cancelled, pending operations dropped,
+    // generation bump fences any in-flight step AND any late answer (its consume guard fails).
+    const out = await this.store.cancelTask(userTaskId);
     const inst = await this.wf.get(userTaskId);
     await inst.terminate();
-    return { generation: gen };
+    return { generation: out.generation, status: out.status };
   }
 
   /**
@@ -110,12 +168,13 @@ export class CfWorkflowPort {
 
   async status(userTaskId: string) {
     const row = await this.store.statusRow(userTaskId);
+    const durable = await this.store.stateRow(userTaskId);
     let engine: unknown = null;
     try {
       engine = await (await this.wf.get(userTaskId)).status();
     } catch (e: any) {
       engine = { error: String(e?.message ?? e) };
     }
-    return { taskStore: row, engine };
+    return { taskStore: row, durable: durable ? { waits: JSON.parse(durable.waits ?? '[]'), outbox: JSON.parse(durable.outbox ?? '[]') } : null, engine };
   }
 }

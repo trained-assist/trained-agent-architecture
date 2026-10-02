@@ -151,6 +151,94 @@ R9=$(pass '[ "$(jq -r .recorded <<<"$T9_LATE")" = false ] && [ "$T9_BEFORE" = "$
   && [ "$(jq -r .rejected <<<"$T9_EVENTS")" = 2 ] \
   && [ "$(jq -r .isTimeout <<<"$T9_CLASS")" = true ] && [ "$(jq -r .isTimeout <<<"$T9_CLASS2")" = false ]')
 
+# ---------------- T10 #116 outbox: crash AFTER the answer is durable, BEFORE the wake is delivered
+log "== T10 #116: answer committed, delivery faulted, recovery replays the pending operation"
+api POST /start '{"taskId":"ut-pilot-10"}' >/dev/null; wait_until ut-pilot-10 "$AWAIT" 20
+api POST /fault '{"name":"after_commit","value":"on"}' >> run.log
+T10_SUBMIT=$(api POST /signal '{"taskId":"ut-pilot-10","answer":"да"}' | jq -c .)
+sleep 3
+T10_MID=$(st ut-pilot-10 | jq -c '{status:.taskStore.status, waits:.durable.waits, outbox:.durable.outbox}')
+log "T10 submit=$T10_SUBMIT"
+log "T10 after fault (delivery must NOT have happened): $T10_MID"
+T10_RECOVER=$(api POST /recover-outbox '{}' | jq -c .)
+wait_until ut-pilot-10 "$DONE" 20
+T10_END=$(st ut-pilot-10 | jq -c '{status:.taskStore.status,result:(.taskStore.result_json|fromjson?),
+  waits:.durable.waits,outbox:[.durable.outbox[]|{kind,status,attempts,dedup_key}]}')
+log "T10 recover=$T10_RECOVER"
+log "T10 final: $T10_END"
+R10=$(pass '[ "$(jq -r .accepted <<<"$T10_SUBMIT")" = true ] && [ "$(jq -r .delivered <<<"$T10_SUBMIT")" = false ] \
+  && [ "$(jq -r .status <<<"$T10_MID")" = awaiting_input ] \
+  && [ "$(jq -r "[.outbox[]|select(.kind==\"wake\" and .status==\"pending\")]|length" <<<"$T10_MID")" = 1 ] \
+  && [ "$(jq -r .delivered <<<"$T10_RECOVER")" = 1 ] && [ "$(jq -r .status <<<"$T10_END")" = done ] \
+  && [ "$(jq -r .result.answer <<<"$T10_END")" = "да" ]')
+
+# ---------------- T11 #116 duplicate answer does not create a second attempt
+log "== T11 #116: duplicate + late submissions"
+api POST /start '{"taskId":"ut-pilot-11"}' >/dev/null; wait_until ut-pilot-11 "$AWAIT" 20
+T11_A=$(api POST /signal '{"taskId":"ut-pilot-11","answer":"да","eventKey":"msg-1"}' | jq -c .)
+T11_B=$(api POST /signal '{"taskId":"ut-pilot-11","answer":"да","eventKey":"msg-1"}' | jq -c .)
+T11_C=$(api POST /signal '{"taskId":"ut-pilot-11","answer":"НЕТ","eventKey":"msg-2"}' | jq -c .)
+wait_until ut-pilot-11 "$DONE" 20; sleep 1
+T11_END=$(st ut-pilot-11 | jq -c '{status:.taskStore.status,result:(.taskStore.result_json|fromjson?),fx:(.taskStore.side_effects|fromjson?),
+  waits:.durable.waits,wakeRows:([.durable.outbox[]|select(.kind=="wake")]|length),
+  accepted:([.taskStore.history|fromjson? | .[] | select(.kind=="answer_accepted")]|length),
+  rejected:([.taskStore.history|fromjson? | .[] | select(.kind=="answer_rejected")]|length)}')
+log "T11 first=$T11_A"; log "T11 duplicate=$T11_B"; log "T11 second-key=$T11_C"
+log "T11 final: $T11_END"
+R11=$(pass '[ "$(jq -r .accepted <<<"$T11_A")" = true ] \
+  && { [ "$(jq -r .reason <<<"$T11_B")" = duplicate ] || [ "$(jq -r .reason <<<"$T11_B")" = already_consumed ]; } \
+  && [ "$(jq -r .accepted <<<"$T11_C")" = false ] && [ "$(jq -r .wakeRows <<<"$T11_END")" = 1 ] \
+  && [ "$(jq -r .accepted <<<"$T11_END")" = 1 ] && [ "$(jq -r .rejected <<<"$T11_END")" = 2 ] \
+  && [ "$(jq -r .fx.apply <<<"$T11_END")" = 1 ] && [ "$(jq -r .result.answer <<<"$T11_END")" = "да" ]')
+
+# ---------------- T12 #116 cancel race: a late answer must not resume the task
+log "== T12 #116: answer after cancel"
+api POST /start '{"taskId":"ut-pilot-12"}' >/dev/null; wait_until ut-pilot-12 "$AWAIT" 20
+T12_CANCEL=$(api POST /cancel '{"taskId":"ut-pilot-12"}' | jq -c .)
+T12_LATE=$(api POST /signal '{"taskId":"ut-pilot-12","answer":"да"}' | jq -c .)
+sleep 2
+T12_END=$(st ut-pilot-12 | jq -c '{status:.taskStore.status,gen:.taskStore.generation,
+  waits:.durable.waits,wakeRows:([.durable.outbox[]|select(.kind=="wake" and .status=="pending")]|length),
+  engine:.engine.status,fx:(.taskStore.side_effects|fromjson?)}')
+log "T12 cancel=$T12_CANCEL"; log "T12 late answer=$T12_LATE"; log "T12 final: $T12_END"
+R12=$(pass '[ "$(jq -r .status <<<"$T12_CANCEL")" = cancelled ] && [ "$(jq -r .accepted <<<"$T12_LATE")" = false ] \
+  && [ "$(jq -r .reason <<<"$T12_LATE")" = cancelled ] && [ "$(jq -r .status <<<"$T12_END")" = cancelled ] \
+  && [ "$(jq -r .wakeRows <<<"$T12_END")" = 0 ] && [ "$(jq -r .fx.apply <<<"$T12_END")" = null ]')
+
+# ---------------- T13 #116 durable crash inside the plan: the resumed instance re-reads state
+log "== T13 #116: crash right after the durable wait commit; continuation from durable state, no wake"
+api POST /fault '{"name":"after_open_wait","value":"on"}' >> run.log
+api POST /start '{"taskId":"ut-pilot-13"}' >/dev/null
+# the fault fires INSIDE the step after openWait, so the durable wait must already exist
+wait_until ut-pilot-13 '.durable.waits|length>=1' 20
+# commit the answer durably and DO NOT deliver any wake: the engine's step retry must read it back
+api POST /answer '{"taskId":"ut-pilot-13","answer":"да","deliver":false}' >/dev/null
+T13_MID=$(st ut-pilot-13 | jq -c '{status:.taskStore.status,waits:.durable.waits,outbox:[.durable.outbox[]|{kind,status}]}')
+wait_until ut-pilot-13 "$DONE" 30
+T13_END=$(st ut-pilot-13 | jq -c '{status:.taskStore.status,result:(.taskStore.result_json|fromjson?),
+  waits:.durable.waits, outbox:[.durable.outbox[]|{kind,status,attempts}],
+  wakeDelivered:([.taskStore.history|fromjson? | .[] | select(.kind=="wake_delivered")]|length)}')
+log "T13 after durable answer, before any wake: $T13_MID"
+log "T13 final: $T13_END"
+R13=$(pass '[ "$(jq -r "[.waits[]|select(.status==\"answered\")]|length" <<<"$T13_MID")" = 1 ] \
+  && [ "$(jq -r .status <<<"$T13_END")" = done ] && [ "$(jq -r .result.answer <<<"$T13_END")" = "да" ] \
+  && [ "$(jq -r "[.waits[]|select(.status==\"consumed\")]|length" <<<"$T13_END")" = 1 ] \
+  && [ "$(jq -r .wakeDelivered <<<"$T13_END")" = 0 ] \
+  && [ "$(jq -r "[.outbox[]|select(.kind==\"wake\" and .status==\"pending\")]|length" <<<"$T13_END")" = 1 ]')
+
+# ---------------- T14 #116 the signal payload is NOT the answer: durable state wins
+log "== T14 #116: wake event carrying a WRONG answer, durable answer must win"
+api POST /start '{"taskId":"ut-pilot-14"}' >/dev/null; wait_until ut-pilot-14 "$AWAIT" 20
+T14_COMMIT=$(api POST /answer '{"taskId":"ut-pilot-14","answer":"да","deliver":false}' | jq -c .)
+api POST /wake '{"taskId":"ut-pilot-14","type":"user_reply","payload":{"answer":"НЕТ"}}' >> run.log
+wait_until ut-pilot-14 "$DONE" 20
+T14_END=$(st ut-pilot-14 | jq -c '{status:.taskStore.status,result:(.taskStore.result_json|fromjson?),
+  applied:([.taskStore.history|fromjson? | .[] | select(.kind=="step_done" and .step=="apply") | (.payload|fromjson?) | {used,wokeBy,eventKey}] | first)}')
+log "T14 durable commit=$T14_COMMIT"; log "T14 final: $T14_END"
+R14=$(pass '[ "$(jq -r .accepted <<<"$T14_COMMIT")" = true ] && [ "$(jq -r .delivered <<<"$T14_COMMIT")" = false ] \
+  && [ "$(jq -r .status <<<"$T14_END")" = done ] && [ "$(jq -r .result.answer <<<"$T14_END")" = "да" ] \
+  && [ "$(jq -r .applied.used <<<"$T14_END")" = "да" ]')
+
 kill_dev
 
 # ---------------- T8 one SQL query straight from the Task Store (D1 local file, dev stopped)
@@ -167,20 +255,34 @@ R8=$(pass '[ "$(jq -r .status <<<"$T8")" = done ]')
 
 LOC=$(cat src/*.ts | grep -cvE '^\s*(//|\*|/\*|$)')
 jq -n --arg r1 "$R1" --arg r2 "$R2" --arg r3 "$R3" --arg r4 "$R4" --arg r5 "$R5" --arg r6 "$R6" --arg r7 "$R7" --arg r8 "$R8" --arg r9 "$R9" \
+  --arg r10 "$R10" --arg r11 "$R11" --arg r12 "$R12" --arg r13 "$R13" --arg r14 "$R14" \
   --argjson t1ms "$T1_MS" --argjson t1lat "$T1_LAT" --argjson t3lat "$T3_LAT" --argjson rss "$RSS_TOTAL" --argjson rssw "$RSS_WORKERD" \
   --argjson c1 "$COLD1" --argjson c2 "$COLD2" --argjson c3 "$COLD3" --arg auto "$AUTO_RESUME" --argjson loc "$LOC" \
   --argjson t2 "$T2" --argjson t3 "$T3" --argjson t4 "$T4" --argjson t5 "$T5" --argjson t6 "$T6_ENGINE" --argjson t7 "$T7" --argjson t8 "$T8" \
   --argjson t9before "$T9_BEFORE" --argjson t9after "$T9_AFTER" --argjson t9late "$T9_LATE" --argjson t9stale "$T9_STALE" \
   --argjson t9events "$T9_EVENTS" --argjson t9class "$T9_CLASS" --argjson t9class2 "$T9_CLASS2" \
+  --argjson t10submit "$T10_SUBMIT" --argjson t10mid "$T10_MID" --argjson t10recover "$T10_RECOVER" --argjson t10end "$T10_END" \
+  --argjson t11a "$T11_A" --argjson t11b "$T11_B" --argjson t11c "$T11_C" --argjson t11end "$T11_END" \
+  --argjson t12cancel "$T12_CANCEL" --argjson t12late "$T12_LATE" --argjson t12end "$T12_END" \
+  --argjson t13mid "$T13_MID" --argjson t13end "$T13_END" \
+  --argjson t14commit "$T14_COMMIT" --argjson t14end "$T14_END" \
   --argjson t6stale "$T6_STALE" --arg ver "$(node node_modules/.bin/wrangler --version)" '{
   variant: "cf-workflows-d1", mode: "local (wrangler dev / miniflare), no Cloudflare account", wrangler: $ver,
-  tests: {T1:$r1, T2:$r2, T3:$r3, T4:$r4, T5:$r5, T6:$r6, T7:$r7, T8:$r8, T9:$r9},
+  tests: {T1:$r1, T2:$r2, T3:$r3, T4:$r4, T5:$r5, T6:$r6, T7:$r7, T8:$r8, T9:$r9,
+          T10_outbox_recovery:$r10, T11_duplicate_answer:$r11, T12_cancel_race:$r12,
+          T13_crash_after_durable_wait:$r13, T14_signal_is_not_the_answer:$r14},
   notes: {T2_auto_resume_after_kill9_without_trigger: $auto,
-          T2_T3_resume_trigger: "local engine re-runs an interrupted instance only when it receives an event (signal or Port.recover __wake); no timer/alarm wake after kill -9"},
+          T2_T3_resume_trigger: "local engine re-runs an interrupted instance only when it receives an event (signal or Port.recover __wake); no timer/alarm wake after kill -9",
+          durable_wait: "task_waits + task_outbox: wait/answer/continuation intent are one D1 batch; delivery is a pending operation replayed by /recover-outbox"},
   metrics: {t1_wall_ms:$t1ms, signal_to_apply_ms:$t1lat, signal_to_apply_after_cold_restart_ms:$t3lat,
             rss_alive_total_kb:$rss, rss_alive_workerd_kb:$rssw, dev_ready_ms:[$c1,$c2,$c3],
             adapter_loc:$loc, moving_parts_local:3, moving_parts_prod:"Worker + Workflows + D1 (all managed)"},
   evidence: {T2:$t2, T3:$t3, T4:$t4, T5:$t5, T6_stale_write:$t6stale, T6_after_signal:$t6, T7:$t7, T8:$t8,
              T9_late_write:{before:$t9before, attempt:$t9late, stale_write:$t9stale, after:$t9after,
-                            events:$t9events, classify_timeout:$t9class, classify_other:$t9class2}}}' > results.json
-log "== RESULTS: T1=$R1 T2=$R2 T3=$R3 T4=$R4 T5=$R5 T6=$R6 T7=$R7 T8=$R8 T9=$R9"
+                            events:$t9events, classify_timeout:$t9class, classify_other:$t9class2},
+             T10_outbox_recovery:{submit:$t10submit, after_fault:$t10mid, recovery:$t10recover, final:$t10end},
+             T11_duplicate_answer:{first:$t11a, duplicate:$t11b, second_key:$t11c, final:$t11end},
+             T12_cancel_race:{cancel:$t12cancel, late_answer:$t12late, final:$t12end},
+             T13_crash_after_durable_wait:{after_durable_answer:$t13mid, final:$t13end},
+             T14_signal_is_not_the_answer:{commit:$t14commit, final:$t14end}}}' > results.json
+log "== RESULTS: T1=$R1 T2=$R2 T3=$R3 T4=$R4 T5=$R5 T6=$R6 T7=$R7 T8=$R8 T9=$R9 T10=$R10 T11=$R11 T12=$R12 T13=$R13 T14=$R14"

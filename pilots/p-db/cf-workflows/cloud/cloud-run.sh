@@ -46,6 +46,14 @@ kill -0 "$TAIL_PID" 2>/dev/null && log "wrangler tail connected (pid $TAIL_PID)"
 
 log "== deploy v1"; "$W" -c "$CFG" deploy 2>&1 | tee -a "$LOG" | tail -3
 log "== /init"; req /init | tee -a "$LOG"
+# D1 read replication can lag behind the DDL run by /init: the next read may hit a replica that
+# does not see the new tables yet ("no such table: task_waits"). Wait until the schema is visible.
+INIT_OK=no
+for i in $(seq 1 60); do
+  if row __probe | grep -q '"taskStore"'; then INIT_OK=yes; break; fi
+  sleep 2
+done
+log "schema visible to the worker: $INIT_OK"
 
 # ---------------- C1 (а) interruption after step 2, resume WITHOUT a trigger
 log "== C1 crash between steps (crashRunOnce) task=$U-crash"
@@ -161,6 +169,34 @@ C4_LATE=$(row "$U-deploy" | jq -c --argjson fin "$C4_FIN" '{wait_timeout_after_f
 R_C4=$(jq -r 'if .status=="done" then "PASS" else "FAIL" end' <<<"$C4_AFTER")
 log "C4 before=$C4_BEFORE after=$C4_AFTER changed=$C4_CHANGED late=$C4_LATE verdict=$R_C4 (3 deploys while done)"
 
+# ---------------- C5 (#116): durable outbox — answer committed, delivery faulted, recovery delivers
+log "== C5 #116: fault after commit; recover-outbox delivers the pending wake"
+C5_TASK="$U-outbox"
+req /start "{\"taskId\":\"$C5_TASK\"}" >> "$LOG"
+wait_status "$C5_TASK" awaiting_input 90 || log "C5: not awaiting in 90s"
+req /fault '{"name":"after_commit","value":"on"}' >> "$LOG"
+C5_SUB=$(req /signal "{\"taskId\":\"$C5_TASK\",\"answer\":\"да\"}")
+sleep 3
+C5_MID=$(row "$C5_TASK" | jq -c '{status:.taskStore.status, waits:.durable.waits,
+  wakePending:([.durable.outbox[]|select(.kind=="wake" and .status=="pending")]|length), engine:.engine.status}')
+log "C5 submit=$C5_SUB"
+log "C5 after fault (answer durable, no wake): $C5_MID"
+C5_REC=$(req /recover-outbox '{}')
+wait_status "$C5_TASK" done 120 || log "C5: not done in 120s"
+C5_END=$(row "$C5_TASK" | jq -c '{status:.taskStore.status, result:(.taskStore.result_json|fromjson?),
+  waits:.durable.waits, wakeDelivered:([.durable.outbox[]|select(.kind=="wake" and .status=="delivered")]|length)}')
+log "C5 recover=$C5_REC"; log "C5 final=$C5_END"
+R_C5=$(python3 -c '
+import json,sys
+sub,mid,rec,end=json.loads(sys.argv[1]),json.loads(sys.argv[2]),json.loads(sys.argv[3]),json.loads(sys.argv[4])
+ok = (sub.get("accepted") is True and sub.get("delivered") is False
+      and mid.get("status")=="awaiting_input" and mid.get("wakePending")==1
+      and rec.get("delivered",0)>=1
+      and end.get("status")=="done" and (end.get("result") or {}).get("answer")=="да"
+      and end.get("wakeDelivered")==1)
+print("PASS" if ok else "FAIL")' "$C5_SUB" "$C5_MID" "$C5_REC" "$C5_END")
+log "C5 verdict=$R_C5 (answer durable before delivery; recovery replays the wake; instance re-reads D1)"
+
 # ---------------- leave the worker as the repo is (v1)
 log "== final redeploy v1 (repo state == deployed state)"
 "$W" -c "$CFG" deploy 2>&1 | tee -a "$LOG" | tail -2
@@ -179,11 +215,12 @@ log "T8 rows: $D1_ROWS"
 kill "$TAIL_PID" 2>/dev/null; TAIL_PID=""
 
 jq -n --arg run "$RUN" --arg c1 "$R_C1" --arg sleep "$R_C2_SLEEP" --arg wake "$R_C2_WAKE" \
-  --arg to "$R_C2B" --arg c3 "$R_C3" --arg c4 "$R_C4" --argjson gap "$C2_GAP" --argjson rows "$D1_ROWS" \
+  --arg to "$R_C2B" --arg c3 "$R_C3" --arg c4 "$R_C4" --arg c5 "$R_C5" --argjson gap "$C2_GAP" --argjson rows "$D1_ROWS" \
   --argjson c1lat "$((C1_FIN - C1_SIG_T))" --argjson c3lat "$C3_LAT" --argjson c2lat "$C2_LAT" --argjson wall1 "$((C1_T1-C1_T0))" \
   --argjson sleepmid "$C2_MID" --argjson timeoutstate "$C2B" --argjson before "$C3_BEFORE" \
   --argjson mid "$C3_MID" --argjson after "$C3_AFTER" --argjson c4before "$C4_BEFORE" \
   --argjson c4after "$C4_AFTER" --argjson c4late "$C4_LATE" --argjson c4changed "$([ "$C4_CHANGED" = yes ] && echo true || echo false)" \
+  --argjson c5sub "$C5_SUB" --argjson c5mid "$C5_MID" --argjson c5rec "$C5_REC" --argjson c5end "$C5_END" \
   '{variant:"cf-workflows-d1", run:$run, mode:"real Cloudflare account (worker p-db-a1-cloud-smoke, D1 p-db-a1-taskstore)",
     criteria:{ "C1_continuation_after_crash_without_trigger":$c1,
                "C2_durable_sleep_no_external_event":$sleep,
@@ -191,12 +228,14 @@ jq -n --arg run "$RUN" --arg c1 "$R_C1" --arg sleep "$R_C2_SLEEP" --arg wake "$R
                "C2_wake_after_sleep":$wake,
                "C2_waitFor_timeout_no_event":$to,
                "C3_deploy_while_waiting":$c3,
-               "C4_late_deploys_never_touch_a_finished_task":$c4 },
+               "C4_late_deploys_never_touch_a_finished_task":$c4,
+               "C5_durable_outbox_recovery":$c5 },
     notes:{ c1_signal_to_finalize_ms:$c1lat, c2_signal_to_apply_ms:$c2lat, c3_signal_to_apply_after_deploy_ms:$c3lat, c1_wall_ms:$wall1, t8_rows:$rows },
     evidence:{ C1:$sleepmid, C2b:$timeoutstate, C3_before:$before, C3_mid:$mid, C3_after:$after,
-               C4_repro_90:{before:$c4before, after:$c4after, changed:$c4changed, events:$c4late} },
+               C4_repro_90:{before:$c4before, after:$c4after, changed:$c4changed, events:$c4late},
+               C5_durable_outbox:{submit:$c5sub, after_fault:$c5mid, recovery:$c5rec, final:$c5end} },
     files:["cloud-run.log","evidence-tail.jsonl","evidence-c1-instance.txt","evidence-c2-instance.txt",
            "evidence-c2b-instance.txt","evidence-c3-instance.txt","evidence-d1-status.json","evidence-instances-list.txt"]}' \
   > "$HERE/results.cloud.json"
-log "== RESULTS: C1=$R_C1 C2-sleep=$R_C2_SLEEP C2-wake=$R_C2_WAKE C2-timeout=$R_C2B C3=$R_C3 C4=$R_C4"
+log "== RESULTS: C1=$R_C1 C2-sleep=$R_C2_SLEEP C2-wake=$R_C2_WAKE C2-timeout=$R_C2B C3=$R_C3 C4=$R_C4 C5=$R_C5"
 cat "$HERE/results.cloud.json"
