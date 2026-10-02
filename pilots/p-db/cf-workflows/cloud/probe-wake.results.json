@@ -1,0 +1,366 @@
+{
+  "variant": "cf-workflows-d1",
+  "run": "070557",
+  "kind": "deploy-during-wait probe (#91 wake latency, #92 code propagation)",
+  "notes": {
+    "noDeployBaseline": "280-495ms signal->apply (issue #91, 8 observations)",
+    "diagnosisRun064632": "signal accepted in 171ms (prewarm 13 + send 146) but step_done wait 214.7s later; tail: the blocked run() of the instance was canceled by the runtime at wall=300.4s and re-invoked on the NEW scriptVersion 192ms before the wake -> the wait is in the platform handling of the blocked invocation, not in our request path",
+    "variants": "prewarm = one RPC into the instance before delivery; retransmission = a second POST /signal 10s later when the event was not consumed (at-least-once delivery)",
+    "guard": "signal carries expectVersion; old code at wake -> explicit reason=version_mismatch instead of a silent old-code result"
+  },
+  "iterations": [
+    {
+      "iter": 1,
+      "task": "ut-cf-070557-p1",
+      "delayAfterDeploySec": 5,
+      "prewarm": true,
+      "reSent": false,
+      "markerWaiting": "v1",
+      "markerDeployed": "v2",
+      "status": "failed",
+      "applyVersion": "none",
+      "eventConsumed": false,
+      "retransmissions": 0,
+      "signalToConsumeMs": null,
+      "wakeMs": 61,
+      "deployMs": 12543,
+      "edgePropagationMs": 4415,
+      "signalHttpMs": 866,
+      "signalTiming": {
+        "prewarmMs": 5,
+        "sendMs": 41,
+        "deliveryMs": 57
+      },
+      "result": {
+        "reason": "version_mismatch",
+        "expected": "v2",
+        "actual": "v1"
+      },
+      "events": [
+        {
+          "kind": "status",
+          "step": "start"
+        },
+        {
+          "kind": "step_done",
+          "step": "prepare"
+        },
+        {
+          "kind": "step_done",
+          "step": "run"
+        },
+        {
+          "kind": "status",
+          "step": "wait"
+        },
+        {
+          "kind": "version_mismatch",
+          "step": "wait"
+        },
+        {
+          "kind": "signal",
+          "step": "user_reply"
+        }
+      ],
+      "waitStartToConsumeMs": null,
+      "settledAt": "2026-10-02T07:37:28Z"
+    },
+    {
+      "iter": 2,
+      "task": "ut-cf-070557-p2",
+      "delayAfterDeploySec": 5,
+      "prewarm": false,
+      "reSent": false,
+      "markerWaiting": "v2",
+      "markerDeployed": "v3",
+      "status": "awaiting_input",
+      "applyVersion": "none",
+      "eventConsumed": false,
+      "retransmissions": 0,
+      "signalToConsumeMs": null,
+      "wakeMs": null,
+      "deployMs": 13122,
+      "edgePropagationMs": 235,
+      "signalHttpMs": 256092,
+      "signalTiming": {
+        "prewarmMs": null,
+        "sendMs": 58,
+        "deliveryMs": 374
+      },
+      "result": null,
+      "events": [
+        {
+          "kind": "status",
+          "step": "start"
+        },
+        {
+          "kind": "step_done",
+          "step": "prepare"
+        },
+        {
+          "kind": "step_done",
+          "step": "run"
+        },
+        {
+          "kind": "status",
+          "step": "wait"
+        },
+        {
+          "kind": "signal",
+          "step": "user_reply"
+        }
+      ],
+      "waitStartToConsumeMs": null,
+      "settledAt": "2026-10-02T07:37:28Z"
+    },
+    {
+      "iter": 3,
+      "task": "ut-cf-070557-p3",
+      "delayAfterDeploySec": 5,
+      "prewarm": true,
+      "reSent": true,
+      "markerWaiting": "v3",
+      "markerDeployed": "v4",
+      "status": "done",
+      "applyVersion": "v4",
+      "eventConsumed": true,
+      "retransmissions": 1,
+      "signalToConsumeMs": 279235,
+      "wakeMs": 279336,
+      "deployMs": 14006,
+      "edgePropagationMs": 245,
+      "signalHttpMs": 280612,
+      "signalTiming": {
+        "prewarmMs": 18,
+        "sendMs": 54,
+        "deliveryMs": 372
+      },
+      "result": {
+        "answer": "да",
+        "ok": true,
+        "version": "v4"
+      },
+      "events": [
+        {
+          "kind": "status",
+          "step": "start"
+        },
+        {
+          "kind": "step_done",
+          "step": "prepare"
+        },
+        {
+          "kind": "step_done",
+          "step": "run"
+        },
+        {
+          "kind": "status",
+          "step": "wait"
+        },
+        {
+          "kind": "signal",
+          "step": "user_reply"
+        },
+        {
+          "kind": "signal",
+          "step": "user_reply"
+        },
+        {
+          "kind": "step_done",
+          "step": "wait"
+        },
+        {
+          "kind": "step_done",
+          "step": "apply"
+        },
+        {
+          "kind": "step_done",
+          "step": "finalize"
+        }
+      ],
+      "waitStartToConsumeMs": 300281,
+      "settledAt": "2026-10-02T07:37:28Z"
+    },
+    {
+      "iter": 4,
+      "task": "ut-cf-070557-p4",
+      "delayAfterDeploySec": 5,
+      "prewarm": false,
+      "reSent": true,
+      "markerWaiting": "v4",
+      "markerDeployed": "v5",
+      "status": "done",
+      "applyVersion": "v5",
+      "eventConsumed": true,
+      "retransmissions": 1,
+      "signalToConsumeMs": 279996,
+      "wakeMs": 280096,
+      "deployMs": 13425,
+      "edgePropagationMs": 286,
+      "signalHttpMs": 271397,
+      "signalTiming": {
+        "prewarmMs": null,
+        "sendMs": 62,
+        "deliveryMs": 366
+      },
+      "result": {
+        "answer": "да",
+        "ok": true,
+        "version": "v5"
+      },
+      "events": [
+        {
+          "kind": "status",
+          "step": "start"
+        },
+        {
+          "kind": "step_done",
+          "step": "prepare"
+        },
+        {
+          "kind": "step_done",
+          "step": "run"
+        },
+        {
+          "kind": "status",
+          "step": "wait"
+        },
+        {
+          "kind": "signal",
+          "step": "user_reply"
+        },
+        {
+          "kind": "signal",
+          "step": "user_reply"
+        },
+        {
+          "kind": "step_done",
+          "step": "wait"
+        },
+        {
+          "kind": "step_done",
+          "step": "apply"
+        },
+        {
+          "kind": "step_done",
+          "step": "finalize"
+        }
+      ],
+      "waitStartToConsumeMs": 300249,
+      "settledAt": "2026-10-02T07:37:29Z"
+    },
+    {
+      "iter": 5,
+      "task": "ut-cf-070557-p5",
+      "delayAfterDeploySec": 2,
+      "prewarm": true,
+      "reSent": true,
+      "markerWaiting": "v5",
+      "markerDeployed": "v6",
+      "status": "failed",
+      "applyVersion": "none",
+      "eventConsumed": false,
+      "retransmissions": 0,
+      "signalToConsumeMs": null,
+      "wakeMs": 68,
+      "deployMs": 12431,
+      "edgePropagationMs": 168,
+      "signalHttpMs": 938,
+      "signalTiming": {
+        "prewarmMs": 13,
+        "sendMs": 47,
+        "deliveryMs": 76
+      },
+      "result": {
+        "reason": "version_mismatch",
+        "expected": "v6",
+        "actual": "v5"
+      },
+      "events": [
+        {
+          "kind": "status",
+          "step": "start"
+        },
+        {
+          "kind": "step_done",
+          "step": "prepare"
+        },
+        {
+          "kind": "step_done",
+          "step": "run"
+        },
+        {
+          "kind": "status",
+          "step": "wait"
+        },
+        {
+          "kind": "version_mismatch",
+          "step": "wait"
+        },
+        {
+          "kind": "signal",
+          "step": "user_reply"
+        }
+      ],
+      "waitStartToConsumeMs": null,
+      "settledAt": "2026-10-02T07:37:29Z"
+    },
+    {
+      "iter": 6,
+      "task": "ut-cf-070557-p6",
+      "delayAfterDeploySec": 2,
+      "prewarm": false,
+      "reSent": false,
+      "markerWaiting": "v5",
+      "markerDeployed": "v7",
+      "status": "failed",
+      "applyVersion": "none",
+      "eventConsumed": false,
+      "retransmissions": 0,
+      "signalToConsumeMs": null,
+      "wakeMs": 284576,
+      "deployMs": 11869,
+      "edgePropagationMs": 165,
+      "signalHttpMs": 251399,
+      "signalTiming": {
+        "prewarmMs": null,
+        "sendMs": 40,
+        "deliveryMs": 377
+      },
+      "result": {
+        "reason": "version_mismatch",
+        "expected": "v7",
+        "actual": "v1"
+      },
+      "events": [
+        {
+          "kind": "status",
+          "step": "start"
+        },
+        {
+          "kind": "step_done",
+          "step": "prepare"
+        },
+        {
+          "kind": "step_done",
+          "step": "run"
+        },
+        {
+          "kind": "status",
+          "step": "wait"
+        },
+        {
+          "kind": "signal",
+          "step": "user_reply"
+        },
+        {
+          "kind": "version_mismatch",
+          "step": "wait"
+        }
+      ],
+      "waitStartToConsumeMs": null,
+      "settledAt": "2026-10-02T07:37:29Z"
+    }
+  ],
+  "settled": true
+}

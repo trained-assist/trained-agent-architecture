@@ -1,18 +1,18 @@
 # P-DB: вариант Cloudflare Workflows + D1
 
-Где запускалось: **локально**, `wrangler dev` 4.145.0 (miniflare/workerd), `--persist-to state/`, Node 22 скачан в `bin/` (на машине Node 20, а wrangler 4 требует ≥ 22). **Облачный прогон на настоящем аккаунте — см. [../CLOUD-SMOKE.md](../CLOUD-SMOKE.md)** (критерии (а)(б)(в) пройдены там; `./cloud/cloud-run.sh`).
-Запуск: `./run.sh`. Скрипт пишет `run.log` и `results.json` и сам убивает свои процессы (`trap` → `kill -9` по группе процессов).
+Где запускалось: **локально**, `wrangler dev` 4.145.0 (miniflare/workerd), `--persist-to state/`, Node ≥ 22 (если системный старше — скрипт качает сборку под свою OS/arch в `bin/`). **Облачный прогон на настоящем аккаунте — см. [../CLOUD-SMOKE.md](../CLOUD-SMOKE.md)** (критерии (а)(б)(в)(г) пройдены там; `./cloud/cloud-run.sh`).
+Запуск: `./run.sh`. Скрипт пишет `run.log` и `results.json` и сам убивает свои процессы (`trap` → рекурсивный kill дерева wrangler dev).
 
 ## Код
 
 | Файл | Что внутри |
 |---|---|
-| `src/taskstore.ts` | Task Store (репозиторий над D1). Таблицы: `tasks` (колонка status, generation), `task_events`, `side_effects`. `commitStep` — один `db.batch`, то есть одна транзакция. Каждое выражение в нём защищено условием `EXISTS(... generation = ?)`. |
-| `src/port.ts` | Workflow Port. Управление: `start` (идемпотентен, id экземпляра = userTaskId), `signal` (сначала пишет событие в Task Store, затем `sendEvent`), `cancel` (в Task Store `cancelled` и generation+1, затем `terminate`), `status` (строка из Task Store плюс статус движка). Исполнение: `StepCtx` со `step`, `sleep`, `waitFor`. Там же `recover()` — обход ограничения эмулятора, см. ниже. |
-| `src/plan.ts` | План из 5 шагов. Зависит только от `StepCtx` и `TaskStore`, API Cloudflare не видит. |
-| `src/index.ts` | Класс `TaskWorkflow` и HTTP-эндпоинты: `/init /start /signal /cancel /status /recover`, плюс для T6 `/bump-generation /stale-write`. |
+| `src/taskstore.ts` | Task Store (репозиторий над D1). Таблицы: `tasks` (колонка status, generation), `task_events`, `side_effects`. `commitStep` — один `db.batch`, то есть одна транзакция, и **два независимых фенса**: `EXISTS(... generation = ?)` (INV-02) и `status NOT IN ('done','failed','cancelled')` (INV-03, issue #90). Порядок внутри batch: история и счётчики **до** status-UPDATE, иначе `finalize` (running → done) отфильтровал бы собственную строку истории. Отклонённая поздняя запись оставляет аудит-строку (`late_write_rejected`/`wait_timeout_ignored`) и бросает `TerminalStateError`. |
+| `src/port.ts` | Workflow Port. Управление: `start` (идемпотентен, id экземпляра = userTaskId), `signal` (prewarm-вызов `status()` в инстанс до `sendEvent`, тайминги `prewarmMs/sendMs/deliveryMs` пишутся в событие `signal`, само `signal.at` остаётся моментом прихода запроса), `cancel` (в Task Store `cancelled` и generation+1, затем `terminate`), `status` (строка из Task Store плюс статус движка). Исполнение: `StepCtx` со `step`, `sleep`, `waitFor`. Там же `recover()` — обход ограничения эмулятора, см. ниже. |
+| `src/plan.ts` | План из 5 шагов. Зависит только от `StepCtx` и `TaskStore`, API Cloudflare не видит. `catch` вокруг `waitForEvent` различает дедлайн (`isWaitTimeoutError` → `wait_timeout`/`user_reply_timeout`) и любую другую ошибку (`wait_error`/`wait_error`); запись ведёт `recordWaitFailure`, поздняя запись в терминальную задачу превращается в аудит-строку. Guard версии `expectVersion` (issue #92): расхождение → явный `version_mismatch` вместо тихого результата со старой логикой. |
+| `src/index.ts` | Класс `TaskWorkflow` (`FencedError`/`TerminalStateError` → `NonRetryableError`) и HTTP-эндпоинты: `/init /start /signal /cancel /status /recover /version`, плюс для тестов `/bump-generation /stale-write /late-wait-timeout /classify-wait-error`. |
 
-## T1–T8 (вывод из `run.log`)
+## T1–T9 (вывод из `run.log`)
 
 | Тест | Итог | Доказательство |
 |---|---|---|
@@ -24,6 +24,9 @@
 | T6 fencing | **PASS** | Generation поднят до 2. Запись от generation 1 отвергнута: `{"rejected":true,"error":"fenced: task ut-pilot-6 step apply gen 1 != current 2"}`. Status и счётчики до и после совпадают (`awaiting_input`, `{"prepare":1,"run":1}`). Сам экземпляр тоже держит generation 1: после signal его шаг `apply` отбит, выброшен `NonRetryableError`, движок в `errored`, `apply=0`, статус в Task Store не изменился. |
 | T7 cancel | **PASS** | После cancel: `cancelled / terminated`. Затем сигнал, два рестарта (kill -9), `recover()` и ещё один сигнал — итог `cancelled, gen 2, engine terminated, apply 0`. |
 | T8 наблюдаемость | **PASS** | Один SQL-запрос через `wrangler d1 execute taskstore --local` (текст запроса ниже) вернул status, generation, результат, счётчики и полную историю. |
+| T9 терминальный статус неизменяем (issue #90) | **PASS** | На задаче `ut-pilot-1`, ставшей `done` в T1, воспроизведены обе поздние записи из issue: плановый `wait_timeout` с её собственным generation (`/late-wait-timeout`, тот же код, что `catch` в плане) и статусная запись `/stale-write`. Обе отклонены: `{"recorded":false,"reason":"terminal","error":"terminal: task ut-pilot-1 is done; write of step wait rejected"}` и `{"rejected":true,...}`. `before == after` байт в байт (`done`, `{"answer":"да","ok":true,"version":"v1"}`, gen 1), строк `kind=wait_timeout` — 0, аудит-строк `wait_timeout_ignored` — 1 и `late_write_rejected` — 2. Плюс классификатор ошибок ожидания: `Execution timed out after 20000ms` → `isTimeout:true`, `could not load the Durable Object` → `isTimeout:false`. |
+
+Итог прогона 02.10.2026: **T1..T9 = 9/9 PASS** (`results.json`, `run.log`).
 
 T8, запрос и вывод для задачи, пережившей kill -9:
 ```sql
@@ -67,7 +70,12 @@ FROM tasks t WHERE t.id = 'ut-pilot-2'
 
 - **Если на Cloudflare (по документации, не проверено):** своих серверов, апгрейдов и бэкапов движка нет. Для D1 есть Time Travel (восстановление на момент времени, 30 дней на платном тарифе) и `wrangler d1 export`. Мониторинг: дашборд и GraphQL-метрики Workflows и D1 плюс свой алерт по SQL к Task Store («задачи в running/awaiting дольше N»). История экземпляров Workflows хранится ограниченно (по ARCHITECTURE.md — 30 дней), поэтому всё, что нужно дольше, пишется в D1 внутри шагов, как в этом пилоте. Лимиты из документации: результат шага до 1 МиБ, до 10k шагов, CPU шага до 5 мин, `waitForEvent` до 365 дней, D1 до 10 ГБ на базу. Цена: Workers Paid от $5 в месяц, оплата за CPU, запросы и хранение. При нашем объёме (сотни задач) это почти бесплатно. Лимиты и цены **не проверены**.
 - **Главные риски:** локальная отладка не совпадает с продакшеном (пункт 1 выводов) — для crash-сценариев нужен staging-аккаунт. Появляется привязка к вендору, но её ограничивает Port: план зависит только от `StepCtx`.
-- **Деплой новых версий на лету:** в продакшене ожидающий экземпляр переживает деплой и при пробуждении исполняет код, актуальный к этому моменту (**проверено на реальном аккаунте**, [../CLOUD-SMOKE.md](../CLOUD-SMOKE.md)): пропагация версии до инстансов занимает ≥6 с после возврата `wrangler deploy` ([issue #92](https://github.com/trained-assist/trained-agent-architecture/issues/92)), а пробуждение сразу после деплоя наблюдалось от 316 мс до 270 с ([issue #91](https://github.com/trained-assist/trained-agent-architecture/issues/91)). Поэтому имена шагов и их порядок в плане — это контракт: переименование шага приведёт к его повторному выполнению; логические изменения шагов должны быть additive-совместимыми.
+- **Деплой новых версий на лету:** ожидающий экземпляр переживает деплой, но **какой именно код он выполнит после сигнала — гонка** ([#91](https://github.com/trained-assist/trained-agent-architecture/issues/91), [#92](https://github.com/trained-agent-architecture/issues/92), замеры 02.10.2026 в [../CLOUD-SMOKE.md](../CLOUD-SMOKE.md) и `cloud/deploy-wake-probe.sh`):
+  - **пропагация:** edge отдаёт новый маркер через **165–286 мс** (первый замер после включения tail — 4415 мс); **новая** задача, созданная через **5 с** после деплоя, пошла на старом коде, через **6 с** — уже на новом;
+  - **пробуждение:** либо **~61–68 мс** и тогда инстанс исполняет **старый** код (ловится guard'ом `expectVersion` → `version_mismatch`), либо **ровно 300.0–300.3 с от входа в `waitForEvent`** — платформа отменяет заблокированный `run()` и возобновляет экземпляр уже на новом коде. Середины нет; `wrangler tail` фиксирует три независимых отмены с `wall=300 384 / 300 391 / 300 412 мс`;
+  - **наш путь запроса не виноват:** prewarm 5–18 мс, `sendEvent` 40–62 мс, доставка ≤377 мс; повторная отправка события через 10 с не ускоряет (279–280 с);
+  - **решение:** (1) деплоить в паузах, когда нет задач в `awaiting_input` — тогда базовые 180–641 мс; (2) если деплой уже случился, закладывать SLO пробуждения 300 с и не ретраить сигнал — ретраи не помогают; (3) логику шагов менять только additive-деплоями, а `version_mismatch` считать в control plane поводом пересоздать задачу (новый инстанс гарантированно на новом коде).
+  - Имена шагов и их порядок в плане остаются контрактом: переименование шага приводит к его повторному выполнению.
 
 ## Перенос прод-схемы `durable-tasks/state.db` в D1
 
@@ -86,5 +94,5 @@ D1 — это SQLite, поэтому DDL переносится почти 1:1. 
 
 ## Что проверено, а что только по документации
 
-- **Проверено локально (miniflare / workerd, wrangler 4.145.0):** T1–T8; буферизация раннего события; отсутствие повторного выполнения завершённых шагов после kill -9 (шаги проигрываются из кэша); **отсутствие** самостоятельного продолжения после kill -9 без входящего события; fencing через D1 batch; запросы к Task Store одним SQL; RSS; время подъёма около 2,3–2,5 с.
+- **Проверено локально (miniflare / workerd, wrangler 4.145.0):** T1–T9; буферизация раннего события; отсутствие повторного выполнения завершённых шагов после kill -9 (шаги проигрываются из кэша); **отсутствие** самостоятельного продолжения после kill -9 без входящего события; fencing через D1 batch; неизменяемость терминальных статусов (T9); запросы к Task Store одним SQL; RSS; время подъёма около 2,3–2,5 с. Харнесс переносим: `setsid`/`ss`/GNU `date %N`/coreutils `timeout` больше не нужны, `run.sh` проходит и на macOS.
 - **Только документация или issues (не проверено):** лимиты (1 МиБ, 10k шагов, 365 дней, 5 мин CPU, 10 ГБ D1); цены; хранение истории экземпляров; Time Travel у D1. **Проверено на реальном аккаунте (01.10.2026):** возобновление после сбоев и по таймерам, тайм-аут ожидания, деплой во время ожидания — см. [../CLOUD-SMOKE.md](../CLOUD-SMOKE.md). Связанные issues про расхождения локального эмулятора и продакшена: [cloudflare/agents#823](https://github.com/cloudflare/agents/issues/823) (pause/resume/restart локально, исправлено в марте 2026), [workers-sdk#14926](https://github.com/cloudflare/workers-sdk/issues/14926) (wrangler dev не восстанавливается после рестарта workerd), [workers-sdk#15809](https://github.com/cloudflare/workers-sdk/issues/15809) (утечка файловых дескрипторов у экземпляров в miniflare), [Workflows changelog](https://developers.cloudflare.com/workflows/reference/changelog).
