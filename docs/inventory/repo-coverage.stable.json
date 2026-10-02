@@ -29,17 +29,25 @@
       "type": "node",
       "profile": "node",
       "profile_ref": "v1.7.6",
-      "adapter": "derived",
+      "adapter": "file",
       "build": false,
       "check": [
         "node {{devbaseline}} run-derived-check --dir ."
       ],
       "fix": {
         "autofix_callable": ".github/workflows/autofix-callable.yml",
-        "installation": "absent",
-        "fixer_present": false,
-        "observed_refs": [],
-        "callers": [],
+        "installation": "remote_caller",
+        "fixer_present": true,
+        "observed_refs": [
+          "v1.7.8"
+        ],
+        "callers": [
+          {
+            "workflow": ".github/workflows/pr-autofix.yml",
+            "job": "autofix",
+            "ref": "v1.7.8"
+          }
+        ],
         "desired_ref": "v1.7.6",
         "evidence_complete": true,
         "execution_verified": false,
@@ -62,13 +70,10 @@
       "ci_present": true,
       "ci_required": null,
       "staging_present": false,
-      "staging_required": true,
+      "staging_required": false,
       "autofix_ref": "v1.7.6",
       "read_state": "read",
       "notes": [
-        "fix: missing — repository has no .github/workflows/autofix-callable.yml",
-        "staging: missing — required but absent",
-        "adapter: derived (package.json present)",
         "live: tree read from main",
         "scope: Runner / API / artifact adapters (Scope границ, I00)"
       ]
@@ -291,13 +296,13 @@
         "installation": "remote_caller",
         "fixer_present": true,
         "observed_refs": [
-          "v1.5.3"
+          "v1.7.8"
         ],
         "callers": [
           {
-            "workflow": ".github/workflows/ci.yml",
+            "workflow": ".github/workflows/pr-autofix.yml",
             "job": "autofix",
-            "ref": "v1.5.3"
+            "ref": "v1.7.8"
           }
         ],
         "desired_ref": "v1.7.6",
@@ -600,34 +605,41 @@
     {
       "repo": "trained-assist/trained-assist-control-plane",
       "owner": "trained-assist",
-      "type": "docs",
-      "profile": "docs",
+      "type": "node",
+      "profile": "node",
       "profile_ref": "v1.7.6",
       "adapter": "derived",
       "build": false,
       "check": [
-        "node {{devbaseline}} check-docs --dir ."
+        "node {{devbaseline}} run-derived-check --dir ."
       ],
       "fix": {
-        "autofix_callable": null,
-        "installation": "unsupported",
-        "fixer_present": false,
-        "observed_refs": [],
-        "callers": [],
-        "desired_ref": null,
+        "autofix_callable": ".github/workflows/autofix-callable.yml",
+        "installation": "remote_caller",
+        "fixer_present": true,
+        "observed_refs": [
+          "v1.7.8"
+        ],
+        "callers": [
+          {
+            "workflow": ".github/workflows/pr-autofix.yml",
+            "job": "autofix",
+            "ref": "v1.7.8"
+          }
+        ],
+        "desired_ref": "v1.7.6",
         "evidence_complete": true,
         "execution_verified": false,
-        "cap": 0,
-        "supported": false
+        "cap": 3,
+        "supported": true
       },
       "verify": [
-        "node {{devbaseline}} check-docs --dir ."
+        "node {{devbaseline}} run-derived-check --dir ."
       ],
       "context": {
         "builder": "external",
         "entrypoints_present": [
-          "README.md",
-          "AGENTS.md"
+          "package.json"
         ]
       },
       "logs": {
@@ -637,13 +649,12 @@
       "ci_present": true,
       "ci_required": null,
       "staging_present": false,
-      "staging_required": false,
-      "autofix_ref": null,
+      "staging_required": true,
+      "autofix_ref": "v1.7.6",
       "read_state": "read",
       "notes": [
-        "staging_required=false: docs_only",
-        "fix: unsupported_by_profile (profile docs declares no fixer)",
-        "adapter: derived (no code stack, README.md present)",
+        "staging: missing — required but absent",
+        "adapter: derived (package.json present)",
         "live: tree read from main",
         "scope: control plane (new repo 30.09.2026, I08 scope)"
       ]
