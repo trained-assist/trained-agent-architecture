@@ -24,17 +24,17 @@
     "durable_wait": "task_waits + task_outbox: wait/answer/continuation intent are one D1 batch; delivery is a pending operation replayed by /recover-outbox"
   },
   "metrics": {
-    "t1_wall_ms": 116,
+    "t1_wall_ms": 109,
     "signal_to_apply_ms": 13,
-    "signal_to_apply_after_cold_restart_ms": 15,
-    "rss_alive_total_kb": 300656,
-    "rss_alive_workerd_kb": 137312,
+    "signal_to_apply_after_cold_restart_ms": 20,
+    "rss_alive_total_kb": 306080,
+    "rss_alive_workerd_kb": 138896,
     "dev_ready_ms": [
-      773,
-      694,
-      636
+      725,
+      1374,
+      702
     ],
-    "adapter_loc": 809,
+    "adapter_loc": 819,
     "moving_parts_local": 3,
     "moving_parts_prod": "Worker + Workflows + D1 (all managed)"
   },
@@ -143,7 +143,7 @@
       "generation": 1,
       "result_json": "{\"answer\":\"да\",\"ok\":true,\"version\":\"v1\"}",
       "side_effects": "{\"apply\":1,\"prepare\":1,\"run\":1}",
-      "history": "[{\"kind\":\"status\",\"step\":\"start\",\"at\":1790939175057},{\"kind\":\"step_done\",\"step\":\"prepare\",\"at\":1790939175059},{\"kind\":\"step_done\",\"step\":\"run\",\"at\":1790939175062},{\"kind\":\"status\",\"step\":\"wait\",\"at\":1790939186424},{\"kind\":\"signal\",\"step\":\"user_reply\",\"at\":1790939186451},{\"kind\":\"answer_accepted\",\"step\":\"wait\",\"at\":1790939186451},{\"kind\":\"wake_delivered\",\"step\":\"wait\",\"at\":1790939186459},{\"kind\":\"step_done\",\"step\":\"wait\",\"at\":1790939186459},{\"kind\":\"step_done\",\"step\":\"apply\",\"at\":1790939186461},{\"kind\":\"step_done\",\"step\":\"finalize\",\"at\":1790939186463}]"
+      "history": "[{\"kind\":\"status\",\"step\":\"start\",\"at\":1790940720522},{\"kind\":\"step_done\",\"step\":\"prepare\",\"at\":1790940720527},{\"kind\":\"step_done\",\"step\":\"run\",\"at\":1790940720530},{\"kind\":\"status\",\"step\":\"wait\",\"at\":1790940732025},{\"kind\":\"signal\",\"step\":\"user_reply\",\"at\":1790940732056},{\"kind\":\"answer_accepted\",\"step\":\"wait\",\"at\":1790940732056},{\"kind\":\"wake_delivered\",\"step\":\"wait\",\"at\":1790940732064},{\"kind\":\"step_done\",\"step\":\"wait\",\"at\":1790940732065},{\"kind\":\"step_done\",\"step\":\"apply\",\"at\":1790940732066},{\"kind\":\"step_done\",\"step\":\"finalize\",\"at\":1790940732069}]"
     },
     "T9_late_write": {
       "before": {
@@ -211,8 +211,8 @@
             "expect_version": null,
             "event_key": "ut-pilot-10#wait#g1#user_reply",
             "answer": "\"да\"",
-            "created_at": 1790939190823,
-            "submitted_at": 1790939190879,
+            "created_at": 1790940736448,
+            "submitted_at": 1790940736483,
             "consumed_at": null
           }
         ],
@@ -227,7 +227,7 @@
             "reason": "wait_opened",
             "run_id": "run_ut-pilot-10#g1",
             "profile_id": "sandbox-pilot",
-            "created_at": 1790939190823,
+            "created_at": 1790940736448,
             "delivered_at": null
           },
           {
@@ -240,7 +240,7 @@
             "reason": "answer_accepted",
             "run_id": "run_ut-pilot-10#g1",
             "profile_id": "sandbox-pilot",
-            "created_at": 1790939190879,
+            "created_at": 1790940736483,
             "delivered_at": null
           }
         ]
@@ -276,9 +276,9 @@
             "expect_version": null,
             "event_key": "ut-pilot-10#wait#g1#user_reply",
             "answer": "\"да\"",
-            "created_at": 1790939190823,
-            "submitted_at": 1790939190879,
-            "consumed_at": 1790939193952
+            "created_at": 1790940736448,
+            "submitted_at": 1790940736483,
+            "consumed_at": 1790940739582
           }
         ],
         "outbox": [
@@ -322,7 +322,7 @@
           ],
           "profileId": "sandbox-pilot"
         },
-        "commitMs": 9
+        "commitMs": 11
       },
       "duplicate": {
         "accepted": false,
@@ -334,7 +334,7 @@
         "waited": false,
         "delivered": false,
         "delivery": null,
-        "commitMs": 3
+        "commitMs": 2
       },
       "second_key": {
         "accepted": false,
@@ -346,7 +346,7 @@
         "waited": false,
         "delivered": false,
         "delivery": null,
-        "commitMs": 2
+        "commitMs": 3
       },
       "final": {
         "status": "done",
@@ -369,9 +369,9 @@
             "expect_version": null,
             "event_key": "msg-1",
             "answer": "\"да\"",
-            "created_at": 1790939194036,
-            "submitted_at": 1790939194059,
-            "consumed_at": 1790939194066
+            "created_at": 1790940739691,
+            "submitted_at": 1790940739714,
+            "consumed_at": 1790940739722
           }
         ],
         "wakeRows": 1,
@@ -408,7 +408,7 @@
             "expect_version": null,
             "event_key": null,
             "answer": null,
-            "created_at": 1790939195197,
+            "created_at": 1790940740886,
             "submitted_at": null,
             "consumed_at": null
           }
@@ -433,8 +433,8 @@
             "expect_version": null,
             "event_key": "ut-pilot-13#wait#g1#user_reply",
             "answer": "\"да\"",
-            "created_at": 1790939197348,
-            "submitted_at": 1790939197372,
+            "created_at": 1790940743050,
+            "submitted_at": 1790940743076,
             "consumed_at": null
           }
         ],
@@ -465,9 +465,9 @@
             "expect_version": null,
             "event_key": "ut-pilot-13#wait#g1#user_reply",
             "answer": "\"да\"",
-            "created_at": 1790939197348,
-            "submitted_at": 1790939197372,
-            "consumed_at": 1790939202359
+            "created_at": 1790940743050,
+            "submitted_at": 1790940743076,
+            "consumed_at": 1790940748088
           }
         ],
         "outbox": [
@@ -496,7 +496,7 @@
         "waited": true,
         "delivered": false,
         "delivery": null,
-        "commitMs": 2
+        "commitMs": 1
       },
       "final": {
         "status": "done",

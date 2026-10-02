@@ -1,22 +1,23 @@
 {
   "variant": "cf-workflows-d1",
-  "run": "064632",
+  "run": "111410",
   "mode": "real Cloudflare account (worker p-db-a1-cloud-smoke, D1 p-db-a1-taskstore)",
   "criteria": {
     "C1_continuation_after_crash_without_trigger": "PASS",
     "C2_durable_sleep_no_external_event": "PASS",
-    "C2_sleep_gap_ms": 45119,
+    "C2_sleep_gap_ms": 45140,
     "C2_wake_after_sleep": "PASS",
     "C2_waitFor_timeout_no_event": "PASS",
-    "C3_deploy_while_waiting": "PASS",
-    "C4_late_deploys_never_touch_a_finished_task": "PASS"
+    "C3_deploy_while_waiting": "FAIL",
+    "C4_late_deploys_never_touch_a_finished_task": "FAIL",
+    "C5_durable_outbox_recovery": "PASS"
   },
   "notes": {
-    "c1_signal_to_finalize_ms": 641,
-    "c2_signal_to_apply_ms": 180,
-    "c3_signal_to_apply_after_deploy_ms": 214693,
-    "c1_wall_ms": 7769,
-    "t8_rows": 25
+    "c1_signal_to_finalize_ms": 892,
+    "c2_signal_to_apply_ms": 300,
+    "c3_signal_to_apply_after_deploy_ms": -1790939838878,
+    "c1_wall_ms": 5466,
+    "t8_rows": 39
   },
   "evidence": {
     "C1": {
@@ -39,44 +40,110 @@
     "C3_before": {
       "status": "awaiting_input",
       "engine": "running",
-      "version": "v1"
+      "version": null
     },
     "C3_mid": {
       "status": "awaiting_input",
       "engine": "running"
     },
     "C3_after": {
-      "status": "done",
+      "status": "failed",
       "result": {
-        "answer": "да",
-        "ok": true,
-        "version": "v2"
+        "reason": "wait_error"
       },
-      "apply_version": "v2"
+      "apply_version": null
     },
     "C4_repro_90": {
       "before": {
-        "status": "done",
+        "status": "failed",
         "result": {
-          "answer": "да",
-          "ok": true,
-          "version": "v2"
+          "reason": "wait_error"
         },
         "gen": 1
       },
       "after": {
-        "status": "done",
+        "status": "failed",
         "result": {
-          "answer": "да",
-          "ok": true,
-          "version": "v2"
+          "reason": "wait_error"
         },
         "gen": 1
       },
       "changed": false,
       "events": {
         "wait_timeout_after_finalize": 0,
-        "late_writes": 0
+        "late_writes": 1
+      }
+    },
+    "C5_durable_outbox": {
+      "submit": {
+        "accepted": true,
+        "reason": "accepted",
+        "waitId": "ut-cf-111410-outbox#wait#g1",
+        "generation": 1,
+        "eventKey": "ut-cf-111410-outbox#wait#g1#user_reply",
+        "outboxId": 11,
+        "waited": true,
+        "delivered": false,
+        "delivery": null,
+        "fault": "after_commit",
+        "commitMs": 128
+      },
+      "after_fault": {
+        "status": "awaiting_input",
+        "waits": [
+          {
+            "wait_id": "ut-cf-111410-outbox#wait#g1",
+            "step": "wait",
+            "gen": 1,
+            "status": "answered",
+            "expect_version": null,
+            "event_key": "ut-cf-111410-outbox#wait#g1#user_reply",
+            "answer": "\"да\"",
+            "created_at": 1790940548614,
+            "submitted_at": 1790940550191,
+            "consumed_at": null
+          }
+        ],
+        "wakePending": 1,
+        "engine": "running"
+      },
+      "recovery": {
+        "attempted": 7,
+        "delivered": 1,
+        "failed": 0,
+        "remaining": 6,
+        "detail": [
+          {
+            "id": 11,
+            "kind": "wake",
+            "dedup_key": "ut-cf-111410-outbox#wait#g1#wake",
+            "result": "delivered"
+          }
+        ],
+        "profileId": "sandbox-pilot"
+      },
+      "final": {
+        "status": "done",
+        "result": {
+          "answer": "да",
+          "ok": true,
+          "version": "v5"
+        },
+        "waits": [
+          {
+            "wait_id": "ut-cf-111410-outbox#wait#g1",
+            "step": "wait",
+            "gen": 1,
+            "status": "consumed",
+            "expect_version": null,
+            "event_key": "ut-cf-111410-outbox#wait#g1#user_reply",
+            "answer": "\"да\"",
+            "created_at": 1790940548614,
+            "submitted_at": 1790940550191,
+            "consumed_at": 1790940553849
+          }
+        ],
+        "wakeDelivered": 1
       }
     }
   },

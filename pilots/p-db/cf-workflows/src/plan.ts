@@ -88,7 +88,7 @@ export async function pilotPlan(ctx: StepCtx, store: TaskStore, p: PlanParams) {
   await ctx.step(
     'mark-awaiting',
     async () => {
-      await store.openWait(taskId, gen, { step: 'wait' });
+      await store.openWait(taskId, gen, { step: 'wait', version: PILOT_VERSION });
       // Controlled failure point (issue #116): crash AFTER the wait is durable and BEFORE blocking.
       // The throw lives INSIDE the step on purpose, so the engine's own retry re-runs the plan and
       // re-reads durable state — the resumed instance needs no signal to continue (requirement 4).
@@ -101,15 +101,18 @@ export async function pilotPlan(ctx: StepCtx, store: TaskStore, p: PlanParams) {
   // (4) of issue #116: the answer lives in the Task Store. The Workflows signal is only a wake-up:
   // its payload is never read, and a durable answer that arrived early is used without any signal.
   const timeoutSec = p.waitForTimeoutSec ?? 24 * 3600;
-  let wokeBy: 'durable_answer' | 'engine_event' = 'durable_answer';
+  let wokeBy: 'durable_answer' | 'engine_event' | 'reattach' = 'durable_answer';
   let durable = await store.readAnswer(taskId, waitId);
-  if (!durable) {
+  let rewaits = 0;
+  while (!durable) {
     try {
       await ctx.waitFor<unknown>('wait', 'user_reply', timeoutSec);
       wokeBy = 'engine_event';
     } catch (e) {
-      // Only the engine's own deadline closes the task as `user_reply_timeout`; every other error
-      // from waitForEvent is a different failure and must keep its own reason (issue #90).
+      // ANY interruption re-reads durable state first — the signal is never the only copy (#116).
+      durable = await store.readAnswer(taskId, waitId);
+      if (durable) break;
+      // Only the engine's own deadline closes the task as `user_reply_timeout` (issue #90).
       if (isWaitTimeoutError(e)) {
         const r = await recordWaitFailure(store, p, {
           kind: 'wait_timeout',
@@ -118,15 +121,26 @@ export async function pilotPlan(ctx: StepCtx, store: TaskStore, p: PlanParams) {
         });
         return { ok: false, reason: r.recorded ? 'user_reply_timeout' : 'late_wait_timeout_ignored' };
       }
-      const r = await recordWaitFailure(store, p, {
-        kind: 'wait_error',
-        reason: 'wait_error',
-        payload: logCtx(taskId, gen, { waitId, timeoutSec, error: String((e as Error)?.message ?? e), errorName: (e as Error)?.name ?? null }),
-      });
-      return { ok: false, reason: r.recorded ? 'wait_error' : 'late_wait_error_ignored' };
+      // Not a deadline: the runtime canceled the blocked invocation (deploy / hibernation) or the
+      // engine failed transiently. That is NOT a task failure while no durable answer exists — the
+      // platform re-invokes the instance, so re-attach to the wait instead of writing `failed`.
+      if (++rewaits > 3) {
+        const r = await recordWaitFailure(store, p, {
+          kind: 'wait_error',
+          reason: 'wait_error',
+          payload: logCtx(taskId, gen, { waitId, timeoutSec, rewaits, error: String((e as Error)?.message ?? e), errorName: (e as Error)?.name ?? null }),
+        });
+        return { ok: false, reason: r.recorded ? 'wait_error' : 'late_wait_error_ignored' };
+      }
+      await store.logEvent(taskId, 'wait_reattach', 'wait', logCtx(taskId, gen, {
+        waitId, rewait: rewaits, error: String((e as Error)?.message ?? e), errorName: (e as Error)?.name ?? null,
+      }), gen);
+      wokeBy = 'reattach';
+      continue;
     }
     durable = await store.readAnswer(taskId, waitId);
     if (!durable) {
+      // Woken by a delivered event, but the durable wait has no answer: the signal is not enough (#116).
       await store.logEvent(taskId, 'answer_missing', 'wait', logCtx(taskId, gen, { waitId, reason: 'no_durable_answer', wokeBy }), gen);
       throw new MissingAnswerError(`woken by event but the durable wait ${waitId} has no answer`);
     }

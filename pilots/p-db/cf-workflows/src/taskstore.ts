@@ -228,12 +228,12 @@ FROM tasks t WHERE t.id = ?`;
    * second wait nor a second delivery intent, and an answer submitted BEFORE the wait was opened
    * (early answer) survives — the row is reused and read back as `answered`.
    */
-  async openWait(taskId: string, generation: number, opts: { step: string }) {
+  async openWait(taskId: string, generation: number, opts: { step: string; version?: string | null }) {
     const now = Date.now();
     const waitId = waitIdFor(taskId, opts.step, generation);
     const runId = runIdFor(taskId, generation);
     const guard = `EXISTS (SELECT 1 FROM tasks WHERE id=? AND generation=? AND ${TERMINAL_SQL})`;
-    const notice = JSON.stringify(logCtx(taskId, generation, { waitId, waitFor: opts.step, intent: 'deliver_wait_notice' }));
+    const notice = JSON.stringify(logCtx(taskId, generation, { waitId, waitFor: opts.step, version: opts.version ?? null, intent: 'deliver_wait_notice' }));
     const res = await this.db.batch([
       this.db
         .prepare(

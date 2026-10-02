@@ -1,5 +1,160 @@
-11:08:50 wrangler tail connected (pid 40327)
-11:08:50 == deploy v1
+11:14:18 wrangler tail connected (pid 43921)
+11:14:18 == deploy v1
+
+ ⛅️ wrangler 4.145.0 (update available 4.146.0)
+───────────────────────────────────────────────
+
+Cloudflare collects anonymous telemetry about your usage of Wrangler. Learn more at https://github.com/cloudflare/workers-sdk/tree/main/packages/wrangler/telemetry.md
+Total Upload: 39.94 KiB / gzip: 10.34 KiB
+Your Worker has access to the following bindings:
+Binding                         Resource         
+env.WF (TaskWorkflow)           Workflow         
+env.DB (p-db-a1-taskstore)      D1 Database      
+
+Uploaded p-db-a1-cloud-smoke (5.83 sec)
+Deployed p-db-a1-cloud-smoke triggers (3.46 sec)
+  https://p-db-a1-cloud-smoke.skillset-apply.workers.dev
+  workflow: task-workflow
+Current Version ID: b5eeb5d0-b1ca-46f8-9f0c-28cac605e022
+11:14:30 == /init
+{
+ "ok": true,
+ "profileId": "sandbox-pilot"
+}11:14:31 schema visible to the worker: yes
+11:14:31 == C1 crash between steps (crashRunOnce) task=ut-cf-111410-crash
+{
+ "instance": "ut-cf-111410-crash",
+ "created": true
+}{
+ "accepted": true,
+ "reason": "accepted",
+ "waitId": "ut-cf-111410-crash#wait#g1",
+ "generation": 1,
+ "eventKey": "ut-cf-111410-crash#wait#g1#user_reply",
+ "outboxId": 4,
+ "waited": true,
+ "delivered": true,
+ "delivery": {
+  "attempted": 1,
+  "delivered": 1,
+  "failed": 0,
+  "remaining": 0,
+  "detail": [
+   {
+    "id": 4,
+    "kind": "wake",
+    "dedup_key": "ut-cf-111410-crash#wait#g1#wake",
+    "result": "delivered"
+   }
+  ],
+  "profileId": "sandbox-pilot"
+ },
+ "commitMs": 577
+}11:14:37 C1 state: {"status":"done","fx":{"apply":1,"prepare":1,"run":1},"steps":["prepare","run","guard-crash","wait","apply","finalize"],"result":{"answer":"да","ok":true,"version":"v1"},"engine":"complete"} (signal->done 892ms, wall 5466ms)
+11:14:37 == C2 sleep 45s, no events sent task=ut-cf-111410-sleep
+{
+ "instance": "ut-cf-111410-sleep",
+ "created": true
+}11:14:49 C2 mid-sleep (t+10s): {"status":"running","steps":["prepare","run"],"signals":0}
+{
+ "accepted": true,
+ "reason": "accepted",
+ "waitId": "ut-cf-111410-sleep#wait#g1",
+ "generation": 1,
+ "eventKey": "ut-cf-111410-sleep#wait#g1#user_reply",
+ "outboxId": 6,
+ "waited": true,
+ "delivered": true,
+ "delivery": {
+  "attempted": 1,
+  "delivered": 1,
+  "failed": 0,
+  "remaining": 0,
+  "detail": [
+   {
+    "id": 6,
+    "kind": "wake",
+    "dedup_key": "ut-cf-111410-sleep#wait#g1#wake",
+    "result": "delivered"
+   }
+  ],
+  "profileId": "sandbox-pilot"
+ },
+ "commitMs": 269
+}11:15:27 C2 signal->apply (no deploy) = 300ms
+11:15:27 C2: durable sleep run->wait gap = 45140ms; instance woke at 47259ms from start with 0 events sent
+11:15:27 == C2b waitFor timeout 20s, NO signal ever task=ut-cf-111410-timeout
+{
+ "instance": "ut-cf-111410-timeout",
+ "created": true
+}11:15:50 C2b state after 22731ms: {"status":"failed","result":{"reason":"user_reply_timeout"},"wait_timeout":1,"signals":0,"engine":"complete"}
+11:15:51 == C3 deploy during awaiting_input task=ut-cf-111410-deploy
+{
+ "instance": "ut-cf-111410-deploy",
+ "created": true
+}
+ ⛅️ wrangler 4.145.0 (update available 4.146.0)
+───────────────────────────────────────────────
+
+Cloudflare collects anonymous telemetry about your usage of Wrangler. Learn more at https://github.com/cloudflare/workers-sdk/tree/main/packages/wrangler/telemetry.md
+Total Upload: 39.94 KiB / gzip: 10.34 KiB
+Your Worker has access to the following bindings:
+Binding                         Resource         
+env.WF (TaskWorkflow)           Workflow         
+env.DB (p-db-a1-taskstore)      D1 Database      
+
+Uploaded p-db-a1-cloud-smoke (7.03 sec)
+Deployed p-db-a1-cloud-smoke triggers (3.62 sec)
+  https://p-db-a1-cloud-smoke.skillset-apply.workers.dev
+  workflow: task-workflow
+Current Version ID: a0117d83-3ea7-4f70-96d9-6d3ed31c5067
+11:17:18 C3 before={"status":"awaiting_input","engine":"running","version":null} deploy=13603ms after={"status":"awaiting_input","engine":"running"}
+{
+ "accepted": true,
+ "reason": "accepted",
+ "waitId": "ut-cf-111410-deploy#wait#g1",
+ "generation": 1,
+ "eventKey": "ut-cf-111410-deploy#wait#g1#user_reply",
+ "outboxId": 9,
+ "waited": true,
+ "delivered": true,
+ "delivery": {
+  "attempted": 1,
+  "delivered": 1,
+  "failed": 0,
+  "remaining": 0,
+  "detail": [
+   {
+    "id": 9,
+    "kind": "wake",
+    "dedup_key": "ut-cf-111410-deploy#wait#g1#wake",
+    "result": "delivered"
+   }
+  ],
+  "profileId": "sandbox-pilot"
+ },
+ "commitMs": 199
+}11:24:19 C3: not done in 420s
+11:24:19 C3 signal->apply after deploy = -1790939838878ms
+11:24:19 C3 after={"status":"failed","result":{"reason":"wait_error"},"apply_version":null}
+11:24:21 C3 verdict=FAIL (waiting instance survived deploy; resumed steps carry version v2); engine pre={"status":"awaiting_input","engine":"running","version":null} mid={"status":"awaiting_input","engine":"running"}
+11:24:21 == C4 #90 repro: 3 deploys while ut-cf-111410-deploy is already done
+
+ ⛅️ wrangler 4.145.0 (update available 4.146.0)
+───────────────────────────────────────────────
+
+Cloudflare collects anonymous telemetry about your usage of Wrangler. Learn more at https://github.com/cloudflare/workers-sdk/tree/main/packages/wrangler/telemetry.md
+Total Upload: 39.94 KiB / gzip: 10.34 KiB
+Your Worker has access to the following bindings:
+Binding                         Resource         
+env.WF (TaskWorkflow)           Workflow         
+env.DB (p-db-a1-taskstore)      D1 Database      
+
+Uploaded p-db-a1-cloud-smoke (6.49 sec)
+Deployed p-db-a1-cloud-smoke triggers (2.88 sec)
+  https://p-db-a1-cloud-smoke.skillset-apply.workers.dev
+  workflow: task-workflow
+Current Version ID: c1a9276b-6275-4e52-952c-6f2581553391
 
  ⛅️ wrangler 4.145.0 (update available 4.146.0)
 ───────────────────────────────────────────────
@@ -9,32 +164,81 @@ Binding                         Resource
 env.WF (TaskWorkflow)           Workflow         
 env.DB (p-db-a1-taskstore)      D1 Database      
 
-Uploaded p-db-a1-cloud-smoke (5.74 sec)
-Deployed p-db-a1-cloud-smoke triggers (3.43 sec)
+Uploaded p-db-a1-cloud-smoke (6.29 sec)
+Deployed p-db-a1-cloud-smoke triggers (3.37 sec)
   https://p-db-a1-cloud-smoke.skillset-apply.workers.dev
   workflow: task-workflow
-Current Version ID: 9d262eab-9bf9-4f5e-be77-1b108242022a
-11:09:02 == /init
+Current Version ID: fe6dc74a-24f3-4f60-b406-24f02760d511
+
+ ⛅️ wrangler 4.145.0 (update available 4.146.0)
+───────────────────────────────────────────────
+Total Upload: 39.94 KiB / gzip: 10.34 KiB
+Your Worker has access to the following bindings:
+Binding                         Resource         
+env.WF (TaskWorkflow)           Workflow         
+env.DB (p-db-a1-taskstore)      D1 Database      
+
+Uploaded p-db-a1-cloud-smoke (6.18 sec)
+Deployed p-db-a1-cloud-smoke triggers (3.34 sec)
+  https://p-db-a1-cloud-smoke.skillset-apply.workers.dev
+  workflow: task-workflow
+Current Version ID: 262b03f4-c1f2-44d5-83bb-e39579fe5d04
+11:29:07 C4 before={"status":"failed","result":{"reason":"wait_error"},"gen":1} after={"status":"failed","result":{"reason":"wait_error"},"gen":1} changed=no late={"wait_timeout_after_finalize":0,"late_writes":1} verdict=FAIL (3 deploys while done)
+11:29:07 == C5 #116: fault after commit; recover-outbox delivers the pending wake
 {
- "ok": true
-}11:09:02 == C1 crash between steps (crashRunOnce) task=ut-cf-110842-crash
-{
- "instance": "ut-cf-110842-crash",
+ "instance": "ut-cf-111410-outbox",
  "created": true
 }{
- "sentAt": 1790939348755,
- "prewarmMs": 9,
- "sendMs": 44,
- "deliveryMs": 248,
- "prewarmError": null
-}11:09:10 C1 state:  (signal->done -1790939348593ms, wall 7004ms)
-11:09:11 == C2 sleep 45s, no events sent task=ut-cf-110842-sleep
-{
- "instance": "ut-cf-110842-sleep",
- "created": true
-}11:09:22 C2 mid-sleep (t+10s): 
-11:10:52 C2: sleep did not wake the instance in 90s
-{
- "error": "D1_ERROR: no such table: task_waits: SQLITE_ERROR"
-}11:11:53 C2: not done in 60s
-11:11:54 C2 signal->apply (no deploy) = 0ms
+ "name": "after_commit",
+ "value": "on"
+}11:29:13 C5 submit={
+ "accepted": true,
+ "reason": "accepted",
+ "waitId": "ut-cf-111410-outbox#wait#g1",
+ "generation": 1,
+ "eventKey": "ut-cf-111410-outbox#wait#g1#user_reply",
+ "outboxId": 11,
+ "waited": true,
+ "delivered": false,
+ "delivery": null,
+ "fault": "after_commit",
+ "commitMs": 128
+}
+11:29:13 C5 after fault (answer durable, no wake): {"status":"awaiting_input","waits":[{"wait_id":"ut-cf-111410-outbox#wait#g1","step":"wait","gen":1,"status":"answered","expect_version":null,"event_key":"ut-cf-111410-outbox#wait#g1#user_reply","answer":"\"да\"","created_at":1790940548614,"submitted_at":1790940550191,"consumed_at":null}],"wakePending":1,"engine":"running"}
+11:29:15 C5 recover={
+ "attempted": 7,
+ "delivered": 1,
+ "failed": 0,
+ "remaining": 6,
+ "detail": [
+  {
+   "id": 11,
+   "kind": "wake",
+   "dedup_key": "ut-cf-111410-outbox#wait#g1#wake",
+   "result": "delivered"
+  }
+ ],
+ "profileId": "sandbox-pilot"
+}
+11:29:15 C5 final={"status":"done","result":{"answer":"да","ok":true,"version":"v5"},"waits":[{"wait_id":"ut-cf-111410-outbox#wait#g1","step":"wait","gen":1,"status":"consumed","expect_version":null,"event_key":"ut-cf-111410-outbox#wait#g1#user_reply","answer":"\"да\"","created_at":1790940548614,"submitted_at":1790940550191,"consumed_at":1790940553849}],"wakeDelivered":1}
+11:29:15 C5 verdict=PASS (answer durable before delivery; recovery replays the wake; instance re-reads D1)
+11:29:15 == final redeploy v1 (repo state == deployed state)
+
+ ⛅️ wrangler 4.145.0 (update available 4.146.0)
+───────────────────────────────────────────────
+
+Cloudflare collects anonymous telemetry about your usage of Wrangler. Learn more at https://github.com/cloudflare/workers-sdk/tree/main/packages/wrangler/telemetry.md
+Total Upload: 39.94 KiB / gzip: 10.34 KiB
+Your Worker has access to the following bindings:
+Binding                         Resource         
+env.WF (TaskWorkflow)           Workflow         
+env.DB (p-db-a1-taskstore)      D1 Database      
+
+Uploaded p-db-a1-cloud-smoke (5.99 sec)
+Deployed p-db-a1-cloud-smoke triggers (3.64 sec)
+  https://p-db-a1-cloud-smoke.skillset-apply.workers.dev
+  workflow: task-workflow
+Current Version ID: 6e85b583-f55e-4dca-981f-310650996120
+11:29:28 == T8 remote D1 one-SQL query
+11:29:29 T8 rows: 39
+11:29:30 == RESULTS: C1=PASS C2-sleep=PASS C2-wake=PASS C2-timeout=PASS C3=FAIL C4=FAIL C5=PASS
