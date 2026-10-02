@@ -1,0 +1,28 @@
+name: CI
+
+# Docs-only profile (pr-autofix R-04): a check without an application build. The job delegates
+# to the pinned devbaseline callable, which derives the `docs` profile from this tree and runs
+# `check-docs` — relative links resolve, JSON parses, top-level heading present. There is no
+# build step because the profile declares `check.build: null`.
+#
+# No staging-gate job (R-13): the docs profile declares staging not required, and the coverage
+# inventory records `staging_required=false: docs_only` for this repository. R-13 stays binding
+# for repositories with a staging target; this one has none to gate on.
+#
+# Why a workflow named "CI": `workflow_run.workflows` matches the watched workflow by its
+# `name:`, and "CI" is the canonical default of the pr-autofix service — so the installed
+# `.github/workflows/pr-autofix.yml` watches exactly this gate instead of one of three
+# partial-coverage checks. Decision and evidence: trained-assist/trained-agent-architecture#96.
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  devbaseline:
+    uses: trained-assist/pr-autofix/.github/workflows/devbaseline-callable.yml@v1.7.8
+    with:
+      mode: ci
