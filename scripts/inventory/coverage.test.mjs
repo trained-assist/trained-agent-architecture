@@ -29,6 +29,18 @@ test('pinned generator: unchanged repo passes; adapter edit changes coverage and
   fs.writeFileSync(newFile, changed);
   assert.equal(spawnSync('diff', ['-u', oldFile, newFile]).status, 1);
 });
+// Регрессия #119: `-f client_payload=...` отправляет payload строкой, и GitHub отвечает
+// 422 "properties/client_payload ... is not an object" — self-verify падал уже ПОСЛЕ того, как
+// регенерация закоммитила таблицу, то есть прогон был красным при успешной работе. Объект
+// собирается только брекет-схемой -F client_payload[sha]=..., поэтому форма флага проверяется здесь.
+test('self-verify dispatch sends client_payload as an object, not as a JSON string', () => {
+  const wf = fs.readFileSync('.github/workflows/coverage-drift.yml', 'utf8');
+  const call = wf.split('\n').filter(l => /gh api .*dispatches|^\s+-f |^\s+-F /.test(l));
+  const payloadFlags = call.filter(l => /client_payload/.test(l));
+  assert.equal(payloadFlags.length, 1, 'ожидается ровно один флаг client_payload в dispatch');
+  assert.match(payloadFlags[0], /-F "client_payload\[sha\]=/, payloadFlags[0]);
+  assert.doesNotMatch(wf, /-f "?client_payload=/, 'payload нельзя отправлять -f: это строка, а GitHub ждёт объект');
+});
 test('credential names pass, synthetic credential value fails without printing it', t => {
   const root = fs.mkdtempSync(path.join(process.env.RUNNER_TEMP || os.tmpdir(), 'credential-scan-'));
   t.after(() => fs.rmSync(root, { recursive: true, force: true }));

@@ -72,9 +72,12 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
+          # client_payload обязан быть ОБЪЕКТОМ: -f отправляет значение строкой, и GitHub
+          # отвечает 422 "properties/client_payload ... is not an object". Поэтому payload
+          # собирается брекет-схемой -F client_payload[sha]=..., а не склейкой JSON в строку.
           gh api -X POST "repos/${GITHUB_REPOSITORY}/dispatches" \
             -f event_type=coverage-table-regenerated \
-            -f client_payload="{\"sha\":\"$(git rev-parse HEAD)\"}" >/dev/null
+            -F "client_payload[sha]=$(git rev-parse HEAD)" >/dev/null
           echo "coverage: проверка поднята на $(git rev-parse --short HEAD)"
   coverage-drift:
     if: github.event_name != 'workflow_dispatch'
