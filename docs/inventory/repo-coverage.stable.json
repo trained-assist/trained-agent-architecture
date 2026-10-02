@@ -1,5 +1,5 @@
 {
-  "generated_by": "pr-autofix v1.7.8",
+  "generated_by": "pr-autofix v1.7.6",
   "columns": [
     "repo",
     "owner",
@@ -28,7 +28,7 @@
       "owner": "trained-assist",
       "type": "node",
       "profile": "node",
-      "profile_ref": "v1.7.8",
+      "profile_ref": "v1.7.6",
       "adapter": "file",
       "build": false,
       "check": [
@@ -48,7 +48,7 @@
             "ref": "v1.7.8"
           }
         ],
-        "desired_ref": "v1.7.8",
+        "desired_ref": "v1.7.6",
         "evidence_complete": true,
         "execution_verified": false,
         "cap": 3,
@@ -71,7 +71,7 @@
       "ci_required": null,
       "staging_present": false,
       "staging_required": false,
-      "autofix_ref": "v1.7.8",
+      "autofix_ref": "v1.7.6",
       "read_state": "read",
       "notes": [
         "live: tree read from main",
@@ -83,7 +83,7 @@
       "owner": "trained-assist",
       "type": "node",
       "profile": "node",
-      "profile_ref": "v1.7.8",
+      "profile_ref": "v1.7.6",
       "adapter": "derived",
       "build": false,
       "check": [
@@ -95,7 +95,7 @@
         "fixer_present": false,
         "observed_refs": [],
         "callers": [],
-        "desired_ref": "v1.7.8",
+        "desired_ref": "v1.7.6",
         "evidence_complete": true,
         "execution_verified": false,
         "cap": 3,
@@ -118,7 +118,7 @@
       "ci_required": null,
       "staging_present": false,
       "staging_required": true,
-      "autofix_ref": "v1.7.8",
+      "autofix_ref": "v1.7.6",
       "read_state": "read",
       "notes": [
         "fix: missing — repository has no .github/workflows/autofix-callable.yml",
@@ -133,7 +133,7 @@
       "owner": "trained-assist",
       "type": "docs",
       "profile": "docs",
-      "profile_ref": "v1.7.8",
+      "profile_ref": "v1.7.6",
       "adapter": "derived",
       "build": false,
       "check": [
@@ -184,7 +184,7 @@
       "owner": "trained-assist",
       "type": "node",
       "profile": "node",
-      "profile_ref": "v1.7.8",
+      "profile_ref": "v1.7.6",
       "adapter": "derived",
       "build": false,
       "check": [
@@ -196,7 +196,7 @@
         "fixer_present": false,
         "observed_refs": [],
         "callers": [],
-        "desired_ref": "v1.7.8",
+        "desired_ref": "v1.7.6",
         "evidence_complete": true,
         "execution_verified": false,
         "cap": 3,
@@ -219,7 +219,7 @@
       "ci_required": null,
       "staging_present": false,
       "staging_required": true,
-      "autofix_ref": "v1.7.8",
+      "autofix_ref": "v1.7.6",
       "read_state": "read",
       "notes": [
         "fix: missing — repository has no .github/workflows/autofix-callable.yml",
@@ -234,7 +234,7 @@
       "owner": "trained-assist",
       "type": "docs",
       "profile": "docs",
-      "profile_ref": "v1.7.8",
+      "profile_ref": "v1.7.6",
       "adapter": "derived",
       "build": false,
       "check": [
@@ -285,7 +285,7 @@
       "owner": "trained-assist",
       "type": "node",
       "profile": "node",
-      "profile_ref": "v1.7.8",
+      "profile_ref": "v1.7.6",
       "adapter": "derived",
       "build": false,
       "check": [
@@ -305,7 +305,7 @@
             "ref": "v1.7.8"
           }
         ],
-        "desired_ref": "v1.7.8",
+        "desired_ref": "v1.7.6",
         "evidence_complete": true,
         "execution_verified": false,
         "cap": 3,
@@ -328,7 +328,7 @@
       "ci_required": null,
       "staging_present": false,
       "staging_required": true,
-      "autofix_ref": "v1.7.8",
+      "autofix_ref": "v1.7.6",
       "read_state": "read",
       "notes": [
         "staging: missing — required but absent",
@@ -342,7 +342,7 @@
       "owner": "trained-assist",
       "type": "node",
       "profile": "node",
-      "profile_ref": "v1.7.8",
+      "profile_ref": "v1.7.6",
       "adapter": "derived",
       "build": false,
       "check": [
@@ -362,7 +362,7 @@
             "ref": "v1.7.8"
           }
         ],
-        "desired_ref": "v1.7.8",
+        "desired_ref": "v1.7.6",
         "evidence_complete": true,
         "execution_verified": false,
         "cap": 3,
@@ -385,7 +385,7 @@
       "ci_required": null,
       "staging_present": true,
       "staging_required": true,
-      "autofix_ref": "v1.7.8",
+      "autofix_ref": "v1.7.6",
       "read_state": "read",
       "notes": [
         "adapter: derived (package.json present)",
@@ -398,7 +398,7 @@
       "owner": "trained-assist",
       "type": "docs",
       "profile": "docs",
-      "profile_ref": "v1.7.8",
+      "profile_ref": "v1.7.6",
       "adapter": "derived",
       "build": false,
       "check": [
@@ -449,7 +449,7 @@
       "owner": "trained-assist",
       "type": "node",
       "profile": "node",
-      "profile_ref": "v1.7.8",
+      "profile_ref": "v1.7.6",
       "adapter": "derived",
       "build": false,
       "check": [
@@ -475,7 +475,7 @@
             "ref": "v1.7.8"
           }
         ],
-        "desired_ref": "v1.7.8",
+        "desired_ref": "v1.7.6",
         "evidence_complete": true,
         "execution_verified": false,
         "cap": 3,
@@ -499,7 +499,7 @@
       "ci_required": null,
       "staging_present": true,
       "staging_required": true,
-      "autofix_ref": "v1.7.8",
+      "autofix_ref": "v1.7.6",
       "read_state": "read",
       "notes": [
         "adapter: derived (package.json present)",
@@ -512,7 +512,7 @@
       "owner": "trained-assist",
       "type": "node",
       "profile": "node",
-      "profile_ref": "v1.7.8",
+      "profile_ref": "v1.7.6",
       "adapter": "derived",
       "build": false,
       "check": [
@@ -532,7 +532,7 @@
             "ref": "v1.7.8"
           }
         ],
-        "desired_ref": "v1.7.8",
+        "desired_ref": "v1.7.6",
         "evidence_complete": true,
         "execution_verified": false,
         "cap": 3,
@@ -555,7 +555,7 @@
       "ci_required": null,
       "staging_present": false,
       "staging_required": true,
-      "autofix_ref": "v1.7.8",
+      "autofix_ref": "v1.7.6",
       "read_state": "read",
       "notes": [
         "staging: missing — required but absent",
@@ -569,7 +569,7 @@
       "owner": "trained-assist",
       "type": "docs",
       "profile": "docs",
-      "profile_ref": "v1.7.8",
+      "profile_ref": "v1.7.6",
       "adapter": "derived",
       "build": false,
       "check": [
@@ -620,7 +620,7 @@
       "owner": "trained-assist",
       "type": "node",
       "profile": "node",
-      "profile_ref": "v1.7.8",
+      "profile_ref": "v1.7.6",
       "adapter": "derived",
       "build": false,
       "check": [
@@ -640,7 +640,7 @@
             "ref": "v1.7.8"
           }
         ],
-        "desired_ref": "v1.7.8",
+        "desired_ref": "v1.7.6",
         "evidence_complete": true,
         "execution_verified": false,
         "cap": 3,
@@ -663,7 +663,7 @@
       "ci_required": null,
       "staging_present": false,
       "staging_required": true,
-      "autofix_ref": "v1.7.8",
+      "autofix_ref": "v1.7.6",
       "read_state": "read",
       "notes": [
         "staging: missing — required but absent",
@@ -677,7 +677,7 @@
       "owner": "trained-assist",
       "type": "node",
       "profile": "node",
-      "profile_ref": "v1.7.8",
+      "profile_ref": "v1.7.6",
       "adapter": "derived",
       "build": false,
       "check": [
@@ -697,7 +697,7 @@
             "ref": "v1.7.8"
           }
         ],
-        "desired_ref": "v1.7.8",
+        "desired_ref": "v1.7.6",
         "evidence_complete": true,
         "execution_verified": false,
         "cap": 3,
@@ -720,7 +720,7 @@
       "ci_required": null,
       "staging_present": false,
       "staging_required": true,
-      "autofix_ref": "v1.7.8",
+      "autofix_ref": "v1.7.6",
       "read_state": "read",
       "notes": [
         "staging: missing — required but absent",
@@ -734,7 +734,7 @@
       "owner": "trained-assist",
       "type": "docs",
       "profile": "docs",
-      "profile_ref": "v1.7.8",
+      "profile_ref": "v1.7.6",
       "adapter": "derived",
       "build": false,
       "check": [
@@ -785,7 +785,7 @@
       "owner": "trained-assist",
       "type": "docs",
       "profile": "docs",
-      "profile_ref": "v1.7.8",
+      "profile_ref": "v1.7.6",
       "adapter": "derived",
       "build": false,
       "check": [
@@ -835,7 +835,7 @@
       "owner": "trained-assist",
       "type": "node",
       "profile": "node",
-      "profile_ref": "v1.7.8",
+      "profile_ref": "v1.7.6",
       "adapter": "derived",
       "build": false,
       "check": [
@@ -855,7 +855,7 @@
             "ref": "v1.7.8"
           }
         ],
-        "desired_ref": "v1.7.8",
+        "desired_ref": "v1.7.6",
         "evidence_complete": true,
         "execution_verified": false,
         "cap": 3,
@@ -878,7 +878,7 @@
       "ci_required": null,
       "staging_present": true,
       "staging_required": true,
-      "autofix_ref": "v1.7.8",
+      "autofix_ref": "v1.7.6",
       "read_state": "read",
       "notes": [
         "adapter: derived (package.json present)",
@@ -891,7 +891,7 @@
       "owner": "trained-assist",
       "type": "node",
       "profile": "node",
-      "profile_ref": "v1.7.8",
+      "profile_ref": "v1.7.6",
       "adapter": "derived",
       "build": false,
       "check": [
@@ -911,7 +911,7 @@
             "ref": "v1.7.8"
           }
         ],
-        "desired_ref": "v1.7.8",
+        "desired_ref": "v1.7.6",
         "evidence_complete": true,
         "execution_verified": false,
         "cap": 3,
@@ -934,7 +934,7 @@
       "ci_required": null,
       "staging_present": true,
       "staging_required": true,
-      "autofix_ref": "v1.7.8",
+      "autofix_ref": "v1.7.6",
       "read_state": "read",
       "notes": [
         "adapter: derived (package.json present)",
@@ -947,7 +947,7 @@
       "owner": "trained-assist",
       "type": "docs",
       "profile": "docs",
-      "profile_ref": "v1.7.8",
+      "profile_ref": "v1.7.6",
       "adapter": "derived",
       "build": false,
       "check": [
@@ -998,7 +998,7 @@
       "owner": "trained-assist",
       "type": "node",
       "profile": "node",
-      "profile_ref": "v1.7.8",
+      "profile_ref": "v1.7.6",
       "adapter": "derived",
       "build": false,
       "check": [
@@ -1018,7 +1018,7 @@
             "ref": "v1.7.8"
           }
         ],
-        "desired_ref": "v1.7.8",
+        "desired_ref": "v1.7.6",
         "evidence_complete": true,
         "execution_verified": false,
         "cap": 3,
@@ -1042,7 +1042,7 @@
       "ci_required": null,
       "staging_present": false,
       "staging_required": true,
-      "autofix_ref": "v1.7.8",
+      "autofix_ref": "v1.7.6",
       "read_state": "read",
       "notes": [
         "staging: missing — required but absent",
@@ -1056,7 +1056,7 @@
       "owner": "trained-assist",
       "type": "node",
       "profile": "node",
-      "profile_ref": "v1.7.8",
+      "profile_ref": "v1.7.6",
       "adapter": "derived",
       "build": false,
       "check": [
@@ -1076,7 +1076,7 @@
             "ref": "v1.7.8"
           }
         ],
-        "desired_ref": "v1.7.8",
+        "desired_ref": "v1.7.6",
         "evidence_complete": true,
         "execution_verified": false,
         "cap": 3,
@@ -1099,7 +1099,7 @@
       "ci_required": null,
       "staging_present": false,
       "staging_required": true,
-      "autofix_ref": "v1.7.8",
+      "autofix_ref": "v1.7.6",
       "read_state": "read",
       "notes": [
         "staging: missing — required but absent",
@@ -1113,7 +1113,7 @@
       "owner": "trained-assist",
       "type": "node",
       "profile": "node",
-      "profile_ref": "v1.7.8",
+      "profile_ref": "v1.7.6",
       "adapter": "derived",
       "build": false,
       "check": [
@@ -1133,7 +1133,7 @@
             "ref": "v1.7.8"
           }
         ],
-        "desired_ref": "v1.7.8",
+        "desired_ref": "v1.7.6",
         "evidence_complete": true,
         "execution_verified": false,
         "cap": 3,
@@ -1156,7 +1156,7 @@
       "ci_required": null,
       "staging_present": false,
       "staging_required": true,
-      "autofix_ref": "v1.7.8",
+      "autofix_ref": "v1.7.6",
       "read_state": "read",
       "notes": [
         "staging: missing — required but absent",
@@ -1170,7 +1170,7 @@
       "owner": "trained-assist",
       "type": "node",
       "profile": "node",
-      "profile_ref": "v1.7.8",
+      "profile_ref": "v1.7.6",
       "adapter": "derived",
       "build": false,
       "check": [
@@ -1190,7 +1190,7 @@
             "ref": "v1.7.8"
           }
         ],
-        "desired_ref": "v1.7.8",
+        "desired_ref": "v1.7.6",
         "evidence_complete": true,
         "execution_verified": false,
         "cap": 3,
@@ -1213,7 +1213,7 @@
       "ci_required": null,
       "staging_present": false,
       "staging_required": true,
-      "autofix_ref": "v1.7.8",
+      "autofix_ref": "v1.7.6",
       "read_state": "read",
       "notes": [
         "staging: missing — required but absent",
@@ -1227,7 +1227,7 @@
       "owner": "trained-assist",
       "type": "node",
       "profile": "node",
-      "profile_ref": "v1.7.8",
+      "profile_ref": "v1.7.6",
       "adapter": "derived",
       "build": false,
       "check": [
@@ -1247,7 +1247,7 @@
             "ref": "v1.7.8"
           }
         ],
-        "desired_ref": "v1.7.8",
+        "desired_ref": "v1.7.6",
         "evidence_complete": true,
         "execution_verified": false,
         "cap": 3,
@@ -1270,7 +1270,7 @@
       "ci_required": null,
       "staging_present": false,
       "staging_required": true,
-      "autofix_ref": "v1.7.8",
+      "autofix_ref": "v1.7.6",
       "read_state": "read",
       "notes": [
         "staging: missing — required but absent",
@@ -1284,7 +1284,7 @@
       "owner": "trained-assist",
       "type": "node",
       "profile": "node",
-      "profile_ref": "v1.7.8",
+      "profile_ref": "v1.7.6",
       "adapter": "derived",
       "build": false,
       "check": [
@@ -1310,7 +1310,7 @@
             "ref": "v1.7.8"
           }
         ],
-        "desired_ref": "v1.7.8",
+        "desired_ref": "v1.7.6",
         "evidence_complete": true,
         "execution_verified": false,
         "cap": 3,
@@ -1334,7 +1334,7 @@
       "ci_required": null,
       "staging_present": true,
       "staging_required": true,
-      "autofix_ref": "v1.7.8",
+      "autofix_ref": "v1.7.6",
       "read_state": "read",
       "notes": [
         "adapter: derived (package.json present)",
@@ -1347,7 +1347,7 @@
       "owner": "trained-assist",
       "type": "node",
       "profile": "node",
-      "profile_ref": "v1.7.8",
+      "profile_ref": "v1.7.6",
       "adapter": "derived",
       "build": false,
       "check": [
@@ -1373,7 +1373,7 @@
             "ref": "v1.7.8"
           }
         ],
-        "desired_ref": "v1.7.8",
+        "desired_ref": "v1.7.6",
         "evidence_complete": true,
         "execution_verified": false,
         "cap": 3,
@@ -1396,7 +1396,7 @@
       "ci_required": null,
       "staging_present": true,
       "staging_required": true,
-      "autofix_ref": "v1.7.8",
+      "autofix_ref": "v1.7.6",
       "read_state": "read",
       "notes": [
         "adapter: derived (package.json present)",
