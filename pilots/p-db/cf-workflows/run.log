@@ -1,11 +1,11 @@
 == start wrangler dev (4.145.0) persist=state/
-dev ready in 785ms at http://127.0.0.1:8795
+dev ready in 773ms at http://127.0.0.1:8795
 == T1 happy path
 {
  "instance": "ut-pilot-1",
  "created": true
 }T1 state: {"status":"done","gen":1,"fx":{"apply":1,"prepare":1,"run":1},"engine":"complete","steps":["prepare","run","wait","apply","finalize"]}
-T1 wall=134ms signal->apply=14ms
+T1 wall=116ms signal->apply=13ms
 == T4 early signal
 {
  "accepted": true,
@@ -31,33 +31,33 @@ T1 wall=134ms signal->apply=14ms
   ],
   "profileId": "sandbox-pilot"
  },
- "commitMs": 10
-}T4 state: {"status":"done","gen":1,"fx":{"apply":1,"prepare":1,"run":1},"engine":"complete","steps":["prepare","run","wait","apply","finalize"]} ; signal.at=1790933450319 waitFor-reached.at=1790933453323 (signal earlier by 3004ms)
+ "commitMs": 8
+}T4 state: {"status":"done","gen":1,"fx":{"apply":1,"prepare":1,"run":1},"engine":"complete","steps":["prepare","run","wait","apply","finalize"]} ; signal.at=1790939159756 waitFor-reached.at=1790939162757 (signal earlier by 3001ms)
 == T5 duplicate signal
-T5 state: {"status":"done","gen":1,"fx":{"apply":1,"prepare":1,"run":1},"engine":"complete","steps":["prepare","run","wait","apply","finalize"]} ; signals logged=3 ; 3rd signal after done -> {"accepted":false,"reason":"already_consumed","waitId":"ut-pilot-5#wait#g1","generation":1,"eventKey":"ut-pilot-5#wait#g1#user_reply","outboxId":6,"waited":false,"delivered":false,"delivery":null,"commitMs":12}
+T5 state: {"status":"done","gen":1,"fx":{"apply":1,"prepare":1,"run":1},"engine":"complete","steps":["prepare","run","wait","apply","finalize"]} ; signals logged=3 ; 3rd signal after done -> {"accepted":false,"reason":"already_consumed","waitId":"ut-pilot-5#wait#g1","generation":1,"eventKey":"ut-pilot-5#wait#g1#user_reply","outboxId":6,"waited":false,"delivered":false,"delivery":null,"commitMs":4}
 == T6 fencing
 T6 before={"status":"awaiting_input","gen":1,"fx":{"prepare":1,"run":1},"engine":"running","steps":["prepare","run"]} bump={"generation":2} stale-write(gen1)={"rejected":true,"error":"fenced: task ut-pilot-6 step apply gen 1 != current 2"} after={"status":"awaiting_input","gen":2,"fx":{"prepare":1,"run":1},"engine":"running","steps":["prepare","run"]}
 T6 after stale instance signalled: {"status":"awaiting_input","gen":2,"fx":{"prepare":1,"run":1},"engine":"errored","steps":["prepare","run"]} err={"name":"WorkflowFatalError","message":"The execution of the Workflow instance was terminated, as a step threw an NonRetryableError and it was not handled"} fenced_events=1
 == T7 cancel
-T7 cancel={"generation":2,"status":"cancelled"} signal-after-cancel={"accepted":false,"reason":"cancelled","waitId":"ut-pilot-7#wait#g2","generation":2,"eventKey":"ut-pilot-7#wait#g2#user_reply","outboxId":null,"waited":false,"delivered":false,"delivery":null,"commitMs":7} state={"status":"cancelled","gen":2,"fx":{"prepare":1,"run":1},"engine":"terminated","steps":["prepare","run"]}
+T7 cancel={"generation":2,"status":"cancelled"} signal-after-cancel={"accepted":false,"reason":"cancelled","waitId":"ut-pilot-7#wait#g2","generation":2,"eventKey":"ut-pilot-7#wait#g2#user_reply","outboxId":null,"waited":false,"delivered":false,"delivery":null,"commitMs":3} state={"status":"cancelled","gen":2,"fx":{"prepare":1,"run":1},"engine":"terminated","steps":["prepare","run"]}
 == T3 wait with executor fully stopped
-alive while waiting: RSS total(node wrangler+esbuild+workerd)=303088kB workerd-only=137760kB
-   37840 node
-   95824 /Users/vova/.nvm/versions/node/v24.13.0/bin/node
-   21712 /Users/vova/Code/trained-agent-architecture/pilots/p-db/cf-workflows/node_modules/@esbuild/darwin-arm64/bin/esbuild
-   44640 /Users/vova/Code/trained-agent-architecture/pilots/p-db/cf-workflows/node_modules/@cloudflare/workerd-darwin-arm64/bin/workerd
-   93120 /Users/vova/Code/trained-agent-architecture/pilots/p-db/cf-workflows/node_modules/@cloudflare/workerd-darwin-arm64/bin/workerd
-   10000 /Users/vova/Code/trained-agent-architecture/pilots/p-db/cf-workflows/node_modules/@esbuild/darwin-arm64/bin/esbuild
+alive while waiting: RSS total(node wrangler+esbuild+workerd)=300656kB workerd-only=137312kB
+   37920 node
+   94288 /Users/vova/.nvm/versions/node/v24.13.0/bin/node
+   21504 /Users/vova/Code/trained-agent-architecture/pilots/p-db/cf-workflows/node_modules/@esbuild/darwin-arm64/bin/esbuild
+   44080 /Users/vova/Code/trained-agent-architecture/pilots/p-db/cf-workflows/node_modules/@cloudflare/workerd-darwin-arm64/bin/workerd
+   93232 /Users/vova/Code/trained-agent-architecture/pilots/p-db/cf-workflows/node_modules/@cloudflare/workerd-darwin-arm64/bin/workerd
+    9904 /Users/vova/Code/trained-agent-architecture/pilots/p-db/cf-workflows/node_modules/@esbuild/darwin-arm64/bin/esbuild
 kill tree of wrangler dev; processes left: 0
-restart ready in 699ms
+restart ready in 694ms
 T3 after restart, before signal: {"status":"awaiting_input","gen":1,"fx":{"prepare":1,"run":1},"engine":"running","steps":["prepare","run"]}
-T3 state: {"status":"done","gen":1,"fx":{"apply":1,"prepare":1,"run":1},"engine":"complete","steps":["prepare","run","wait","apply","finalize"]} ; signal->apply after cold restart=20ms
+T3 state: {"status":"done","gen":1,"fx":{"apply":1,"prepare":1,"run":1},"engine":"complete","steps":["prepare","run","wait","apply","finalize"]} ; signal->apply after cold restart=15ms
 == T2 kill -9 right after step 2 (engine has persisted 'run' output), before step 3
 killed at: {"status":"running","gen":1,"fx":{"prepare":1,"run":1},"engine":"running","steps":["prepare","run"]}
 T2 10s after restart, no external trigger: {"status":"running","gen":1,"fx":{"prepare":1,"run":1},"engine":"running","steps":["prepare","run"]}
 no automatic resume -> Port.recover() (sends no-op __wake event to unfinished instances): [{"id":"ut-pilot-6","engineStatus":"errored"},{"id":"ut-pilot-2","engineStatus":"running"}]
 T2 final: {"status":"done","gen":1,"fx":{"apply":1,"prepare":1,"run":1},"engine":"complete","steps":["prepare","run","wait","apply","finalize"]}
-T7 after 2 restarts + recover + signal({"accepted":false,"reason":"cancelled","waitId":"ut-pilot-7#wait#g2","generation":2,"eventKey":"ut-pilot-7#wait#g2#user_reply","outboxId":null,"waited":false,"delivered":false,"delivery":null,"commitMs":7}): {"status":"cancelled","gen":2,"fx":{"prepare":1,"run":1},"engine":"terminated","steps":["prepare","run"]}
+T7 after 2 restarts + recover + signal({"accepted":false,"reason":"cancelled","waitId":"ut-pilot-7#wait#g2","generation":2,"eventKey":"ut-pilot-7#wait#g2#user_reply","outboxId":null,"waited":false,"delivered":false,"delivery":null,"commitMs":4}): {"status":"cancelled","gen":2,"fx":{"prepare":1,"run":1},"engine":"terminated","steps":["prepare","run"]}
 == T9 late wait_timeout after done must not change status or result
 T9 before={"status":"done","result":{"answer":"да","ok":true,"version":"v1"},"gen":1} late={"recorded":false,"reason":"terminal","error":"terminal: task ut-pilot-1 is done; write of step wait rejected","generation":1} stale={"rejected":true,"error":"terminal: task ut-pilot-1 is done; write of step apply rejected"} after={"status":"done","result":{"answer":"да","ok":true,"version":"v1"},"gen":1} events={"wait_timeout":0,"ignored":1,"rejected":2}
 T9 classify: timeout={"isTimeout":true} other={"isTimeout":false}
@@ -65,39 +65,38 @@ T9 classify: timeout={"isTimeout":true} other={"isTimeout":false}
 {
  "name": "after_commit",
  "value": "on"
-}T10 submit={"accepted":true,"reason":"accepted","waitId":"ut-pilot-10#wait#g1","generation":1,"eventKey":"ut-pilot-10#wait#g1#user_reply","outboxId":15,"waited":true,"delivered":false,"delivery":null,"fault":"after_commit","commitMs":8}
-T10 after fault (delivery must NOT have happened): {"status":"awaiting_input","waits":[{"wait_id":"ut-pilot-10#wait#g1","step":"wait","gen":1,"status":"answered","expect_version":null,"event_key":"ut-pilot-10#wait#g1#user_reply","answer":"\"да\"","created_at":1790933482402,"submitted_at":1790933482473,"consumed_at":null}],"outbox":[{"id":14,"dedup_key":"ut-pilot-10#wait#g1#opened","kind":"wait_opened","event_type":"user_reply_requested","status":"pending","attempts":0,"reason":"wait_opened","run_id":"run_ut-pilot-10#g1","profile_id":"sandbox-pilot","created_at":1790933482402,"delivered_at":null},{"id":15,"dedup_key":"ut-pilot-10#wait#g1#wake","kind":"wake","event_type":"user_reply","status":"pending","attempts":0,"reason":"answer_accepted","run_id":"run_ut-pilot-10#g1","profile_id":"sandbox-pilot","created_at":1790933482473,"delivered_at":null}]}
+}T10 submit={"accepted":true,"reason":"accepted","waitId":"ut-pilot-10#wait#g1","generation":1,"eventKey":"ut-pilot-10#wait#g1#user_reply","outboxId":15,"waited":true,"delivered":false,"delivery":null,"fault":"after_commit","commitMs":3}
+T10 after fault (delivery must NOT have happened): {"status":"awaiting_input","waits":[{"wait_id":"ut-pilot-10#wait#g1","step":"wait","gen":1,"status":"answered","expect_version":null,"event_key":"ut-pilot-10#wait#g1#user_reply","answer":"\"да\"","created_at":1790939190823,"submitted_at":1790939190879,"consumed_at":null}],"outbox":[{"id":14,"dedup_key":"ut-pilot-10#wait#g1#opened","kind":"wait_opened","event_type":"user_reply_requested","status":"pending","attempts":0,"reason":"wait_opened","run_id":"run_ut-pilot-10#g1","profile_id":"sandbox-pilot","created_at":1790939190823,"delivered_at":null},{"id":15,"dedup_key":"ut-pilot-10#wait#g1#wake","kind":"wake","event_type":"user_reply","status":"pending","attempts":0,"reason":"answer_accepted","run_id":"run_ut-pilot-10#g1","profile_id":"sandbox-pilot","created_at":1790939190879,"delivered_at":null}]}
 T10 recover={"attempted":8,"delivered":1,"failed":0,"remaining":7,"detail":[{"id":15,"kind":"wake","dedup_key":"ut-pilot-10#wait#g1#wake","result":"delivered"}],"profileId":"sandbox-pilot"}
-T10 final: {"status":"done","result":{"answer":"да","ok":true,"version":"v1"},"waits":[{"wait_id":"ut-pilot-10#wait#g1","step":"wait","gen":1,"status":"consumed","expect_version":null,"event_key":"ut-pilot-10#wait#g1#user_reply","answer":"\"да\"","created_at":1790933482402,"submitted_at":1790933482473,"consumed_at":1790933485555}],"outbox":[{"kind":"wait_opened","status":"pending","attempts":0,"dedup_key":"ut-pilot-10#wait#g1#opened"},{"kind":"wake","status":"delivered","attempts":1,"dedup_key":"ut-pilot-10#wait#g1#wake"}]}
+T10 final: {"status":"done","result":{"answer":"да","ok":true,"version":"v1"},"waits":[{"wait_id":"ut-pilot-10#wait#g1","step":"wait","gen":1,"status":"consumed","expect_version":null,"event_key":"ut-pilot-10#wait#g1#user_reply","answer":"\"да\"","created_at":1790939190823,"submitted_at":1790939190879,"consumed_at":1790939193952}],"outbox":[{"kind":"wait_opened","status":"pending","attempts":0,"dedup_key":"ut-pilot-10#wait#g1#opened"},{"kind":"wake","status":"delivered","attempts":1,"dedup_key":"ut-pilot-10#wait#g1#wake"}]}
 == T11 #116: duplicate + late submissions
-T11 first={"accepted":true,"reason":"accepted","waitId":"ut-pilot-11#wait#g1","generation":1,"eventKey":"msg-1","outboxId":17,"waited":true,"delivered":true,"delivery":{"attempted":1,"delivered":1,"failed":0,"remaining":0,"detail":[{"id":17,"kind":"wake","dedup_key":"ut-pilot-11#wait#g1#wake","result":"delivered"}],"profileId":"sandbox-pilot"},"commitMs":13}
+T11 first={"accepted":true,"reason":"accepted","waitId":"ut-pilot-11#wait#g1","generation":1,"eventKey":"msg-1","outboxId":17,"waited":true,"delivered":true,"delivery":{"attempted":1,"delivered":1,"failed":0,"remaining":0,"detail":[{"id":17,"kind":"wake","dedup_key":"ut-pilot-11#wait#g1#wake","result":"delivered"}],"profileId":"sandbox-pilot"},"commitMs":9}
 T11 duplicate={"accepted":false,"reason":"already_consumed","waitId":"ut-pilot-11#wait#g1","generation":1,"eventKey":"msg-1","outboxId":17,"waited":false,"delivered":false,"delivery":null,"commitMs":3}
-T11 second-key={"accepted":false,"reason":"already_consumed","waitId":"ut-pilot-11#wait#g1","generation":1,"eventKey":"msg-2","outboxId":17,"waited":false,"delivered":false,"delivery":null,"commitMs":3}
-T11 final: {"status":"done","result":{"answer":"да","ok":true,"version":"v1"},"fx":{"apply":1,"prepare":1,"run":1},"waits":[{"wait_id":"ut-pilot-11#wait#g1","step":"wait","gen":1,"status":"consumed","expect_version":null,"event_key":"msg-1","answer":"\"да\"","created_at":1790933485677,"submitted_at":1790933485712,"consumed_at":1790933485722}],"wakeRows":1,"accepted":1,"rejected":2}
+T11 second-key={"accepted":false,"reason":"already_consumed","waitId":"ut-pilot-11#wait#g1","generation":1,"eventKey":"msg-2","outboxId":17,"waited":false,"delivered":false,"delivery":null,"commitMs":2}
+T11 final: {"status":"done","result":{"answer":"да","ok":true,"version":"v1"},"fx":{"apply":1,"prepare":1,"run":1},"waits":[{"wait_id":"ut-pilot-11#wait#g1","step":"wait","gen":1,"status":"consumed","expect_version":null,"event_key":"msg-1","answer":"\"да\"","created_at":1790939194036,"submitted_at":1790939194059,"consumed_at":1790939194066}],"wakeRows":1,"accepted":1,"rejected":2}
 == T12 #116: answer after cancel
 T12 cancel={"generation":2,"status":"cancelled"}
-T12 late answer={"accepted":false,"reason":"cancelled","waitId":"ut-pilot-12#wait#g2","generation":2,"eventKey":"ut-pilot-12#wait#g2#user_reply","outboxId":null,"waited":false,"delivered":false,"delivery":null,"commitMs":3}
-T12 final: {"status":"cancelled","gen":2,"waits":[{"wait_id":"ut-pilot-12#wait#g1","step":"wait","gen":1,"status":"cancelled","expect_version":null,"event_key":null,"answer":null,"created_at":1790933486828,"submitted_at":null,"consumed_at":null}],"wakeRows":0,"engine":"terminated","fx":{"prepare":1,"run":1}}
-== T13 #116: engine crash right after the durable wait commit
+T12 late answer={"accepted":false,"reason":"cancelled","waitId":"ut-pilot-12#wait#g2","generation":2,"eventKey":"ut-pilot-12#wait#g2#user_reply","outboxId":null,"waited":false,"delivered":false,"delivery":null,"commitMs":4}
+T12 final: {"status":"cancelled","gen":2,"waits":[{"wait_id":"ut-pilot-12#wait#g1","step":"wait","gen":1,"status":"cancelled","expect_version":null,"event_key":null,"answer":null,"created_at":1790939195197,"submitted_at":null,"consumed_at":null}],"wakeRows":0,"engine":"terminated","fx":{"prepare":1,"run":1}}
+== T13 #116: crash right after the durable wait commit; continuation from durable state, no wake
 {
  "name": "after_open_wait",
  "value": "on"
-}T13 before recovery: {"status":"awaiting_input","engine":"errored","waits":[{"wait_id":"ut-pilot-13#wait#g1","step":"wait","gen":1,"status":"answered","expect_version":null,"event_key":"ut-pilot-13#wait#g1#user_reply","answer":"\"да\"","created_at":1790933488947,"submitted_at":1790933488978,"consumed_at":null}]}
-T13 recover={"attempted":10,"delivered":1,"failed":0,"remaining":9,"detail":[{"id":20,"kind":"wake","dedup_key":"ut-pilot-13#wait#g1#wake","result":"delivered"}],"profileId":"sandbox-pilot"}
-T13 final: 
+}T13 after durable answer, before any wake: {"status":"awaiting_input","waits":[{"wait_id":"ut-pilot-13#wait#g1","step":"wait","gen":1,"status":"answered","expect_version":null,"event_key":"ut-pilot-13#wait#g1#user_reply","answer":"\"да\"","created_at":1790939197348,"submitted_at":1790939197372,"consumed_at":null}],"outbox":[{"kind":"wait_opened","status":"pending"},{"kind":"wake","status":"pending"}]}
+T13 final: {"status":"done","result":{"answer":"да","ok":true,"version":"v1"},"waits":[{"wait_id":"ut-pilot-13#wait#g1","step":"wait","gen":1,"status":"consumed","expect_version":null,"event_key":"ut-pilot-13#wait#g1#user_reply","answer":"\"да\"","created_at":1790939197348,"submitted_at":1790939197372,"consumed_at":1790939202359}],"outbox":[{"kind":"wait_opened","status":"pending","attempts":0},{"kind":"wake","status":"pending","attempts":0}],"wakeDelivered":0}
 == T14 #116: wake event carrying a WRONG answer, durable answer must win
 {
  "sent": true,
  "userTaskId": "ut-pilot-14",
  "eventType": "user_reply",
  "profileId": "sandbox-pilot"
-}T14 durable commit={"accepted":true,"reason":"accepted","waitId":"ut-pilot-14#wait#g1","generation":1,"eventKey":"ut-pilot-14#wait#g1#user_reply","outboxId":22,"waited":true,"delivered":false,"delivery":null,"commitMs":6}
+}T14 durable commit={"accepted":true,"reason":"accepted","waitId":"ut-pilot-14#wait#g1","generation":1,"eventKey":"ut-pilot-14#wait#g1#user_reply","outboxId":23,"waited":true,"delivered":false,"delivery":null,"commitMs":2}
 T14 final: {"status":"done","result":{"answer":"да","ok":true,"version":"v1"},"applied":{"used":"да","wokeBy":"engine_event","eventKey":"ut-pilot-14#wait#g1#user_reply"}}
 == T8 one SQL query over Task Store
 SQL: SELECT t.id, t.status, t.generation, t.result_json,
  (SELECT json_group_object(name, count) FROM side_effects s WHERE s.task_id = t.id) AS side_effects,
  (SELECT json_group_array(json_object('kind', e.kind, 'step', e.step, 'at', e.at)) FROM (SELECT * FROM task_events WHERE task_id = t.id ORDER BY id) e) AS history
 FROM tasks t WHERE t.id = 'ut-pilot-2'
-T8 row: {"id":"ut-pilot-2","status":"done","generation":1,"result_json":"{\"answer\":\"да\",\"ok\":true,\"version\":\"v1\"}","side_effects":"{\"apply\":1,\"prepare\":1,\"run\":1}","history":"[{\"kind\":\"status\",\"step\":\"start\",\"at\":1790933466298},{\"kind\":\"step_done\",\"step\":\"prepare\",\"at\":1790933466300},{\"kind\":\"step_done\",\"step\":\"run\",\"at\":1790933466303},{\"kind\":\"status\",\"step\":\"wait\",\"at\":1790933477881},{\"kind\":\"signal\",\"step\":\"user_reply\",\"at\":1790933477922},{\"kind\":\"answer_accepted\",\"step\":\"wait\",\"at\":1790933477922},{\"kind\":\"wake_delivered\",\"step\":\"wait\",\"at\":1790933477936},{\"kind\":\"step_done\",\"step\":\"wait\",\"at\":1790933477938},{\"kind\":\"step_done\",\"step\":\"apply\",\"at\":1790933477941},{\"kind\":\"step_done\",\"step\":\"finalize\",\"at\":1790933477947}]"}
-all tasks: [{"id":"ut-pilot-1","status":"done","generation":1,"fx":"{\"apply\":1,\"prepare\":1,\"run\":1}"},{"id":"ut-pilot-10","status":"done","generation":1,"fx":"{\"apply\":1,\"prepare\":1,\"run\":1}"},{"id":"ut-pilot-11","status":"done","generation":1,"fx":"{\"apply\":1,\"prepare\":1,\"run\":1}"},{"id":"ut-pilot-12","status":"cancelled","generation":2,"fx":"{\"prepare\":1,\"run\":1}"},{"id":"ut-pilot-13","status":"awaiting_input","generation":1,"fx":"{\"prepare\":1,\"run\":1}"},{"id":"ut-pilot-14","status":"done","generation":1,"fx":"{\"apply\":1,\"prepare\":1,\"run\":1}"},{"id":"ut-pilot-2","status":"done","generation":1,"fx":"{\"apply\":1,\"prepare\":1,\"run\":1}"},{"id":"ut-pilot-3","status":"done","generation":1,"fx":"{\"apply\":1,\"prepare\":1,\"run\":1}"},{"id":"ut-pilot-4","status":"done","generation":1,"fx":"{\"apply\":1,\"prepare\":1,\"run\":1}"},{"id":"ut-pilot-5","status":"done","generation":1,"fx":"{\"apply\":1,\"prepare\":1,\"run\":1}"},{"id":"ut-pilot-6","status":"awaiting_input","generation":2,"fx":"{\"prepare\":1,\"run\":1}"},{"id":"ut-pilot-7","status":"cancelled","generation":2,"fx":"{\"prepare\":1,\"run\":1}"}]
-== RESULTS: T1=PASS T2=PASS T3=PASS T4=PASS T5=PASS T6=PASS T7=PASS T8=PASS T9=PASS T10=PASS T11=FAIL T12=PASS T13=FAIL T14=FAIL
+T8 row: {"id":"ut-pilot-2","status":"done","generation":1,"result_json":"{\"answer\":\"да\",\"ok\":true,\"version\":\"v1\"}","side_effects":"{\"apply\":1,\"prepare\":1,\"run\":1}","history":"[{\"kind\":\"status\",\"step\":\"start\",\"at\":1790939175057},{\"kind\":\"step_done\",\"step\":\"prepare\",\"at\":1790939175059},{\"kind\":\"step_done\",\"step\":\"run\",\"at\":1790939175062},{\"kind\":\"status\",\"step\":\"wait\",\"at\":1790939186424},{\"kind\":\"signal\",\"step\":\"user_reply\",\"at\":1790939186451},{\"kind\":\"answer_accepted\",\"step\":\"wait\",\"at\":1790939186451},{\"kind\":\"wake_delivered\",\"step\":\"wait\",\"at\":1790939186459},{\"kind\":\"step_done\",\"step\":\"wait\",\"at\":1790939186459},{\"kind\":\"step_done\",\"step\":\"apply\",\"at\":1790939186461},{\"kind\":\"step_done\",\"step\":\"finalize\",\"at\":1790939186463}]"}
+all tasks: [{"id":"ut-pilot-1","status":"done","generation":1,"fx":"{\"apply\":1,\"prepare\":1,\"run\":1}"},{"id":"ut-pilot-10","status":"done","generation":1,"fx":"{\"apply\":1,\"prepare\":1,\"run\":1}"},{"id":"ut-pilot-11","status":"done","generation":1,"fx":"{\"apply\":1,\"prepare\":1,\"run\":1}"},{"id":"ut-pilot-12","status":"cancelled","generation":2,"fx":"{\"prepare\":1,\"run\":1}"},{"id":"ut-pilot-13","status":"done","generation":1,"fx":"{\"apply\":1,\"prepare\":1,\"run\":1}"},{"id":"ut-pilot-14","status":"done","generation":1,"fx":"{\"apply\":1,\"prepare\":1,\"run\":1}"},{"id":"ut-pilot-2","status":"done","generation":1,"fx":"{\"apply\":1,\"prepare\":1,\"run\":1}"},{"id":"ut-pilot-3","status":"done","generation":1,"fx":"{\"apply\":1,\"prepare\":1,\"run\":1}"},{"id":"ut-pilot-4","status":"done","generation":1,"fx":"{\"apply\":1,\"prepare\":1,\"run\":1}"},{"id":"ut-pilot-5","status":"done","generation":1,"fx":"{\"apply\":1,\"prepare\":1,\"run\":1}"},{"id":"ut-pilot-6","status":"awaiting_input","generation":2,"fx":"{\"prepare\":1,\"run\":1}"},{"id":"ut-pilot-7","status":"cancelled","generation":2,"fx":"{\"prepare\":1,\"run\":1}"}]
+== RESULTS: T1=PASS T2=PASS T3=PASS T4=PASS T5=PASS T6=PASS T7=PASS T8=PASS T9=PASS T10=PASS T11=PASS T12=PASS T13=PASS T14=PASS

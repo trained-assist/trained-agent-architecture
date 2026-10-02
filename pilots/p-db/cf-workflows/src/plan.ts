@@ -85,10 +85,18 @@ export async function pilotPlan(ctx: StepCtx, store: TaskStore, p: PlanParams) {
   // (1) of issue #116: wait + task transition + delivery intent are ONE atomic D1 batch, and the
   // wait row is keyed by (userTaskId, generation), so a stale attempt can never touch a newer wait.
   const waitId = waitIdFor(taskId, 'wait', gen);
-  await ctx.step('mark-awaiting', async () => store.openWait(taskId, gen, { step: 'wait' }));
-  // Controlled failure point: die AFTER the wait is durable, BEFORE blocking on the event.
-  if (await store.consumeFault('after_open_wait'))
-    throw new Error('injected crash after the durable wait commit (fault: after_open_wait)');
+  await ctx.step(
+    'mark-awaiting',
+    async () => {
+      await store.openWait(taskId, gen, { step: 'wait' });
+      // Controlled failure point (issue #116): crash AFTER the wait is durable and BEFORE blocking.
+      // The throw lives INSIDE the step on purpose, so the engine's own retry re-runs the plan and
+      // re-reads durable state — the resumed instance needs no signal to continue (requirement 4).
+      if (await store.consumeFault('after_open_wait'))
+        throw new Error('injected crash after the durable wait commit (fault: after_open_wait)');
+    },
+    { limit: 3, delaySec: 5 },
+  );
 
   // (4) of issue #116: the answer lives in the Task Store. The Workflows signal is only a wake-up:
   // its payload is never read, and a durable answer that arrived early is used without any signal.

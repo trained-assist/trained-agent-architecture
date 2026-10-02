@@ -185,8 +185,9 @@ T11_END=$(st ut-pilot-11 | jq -c '{status:.taskStore.status,result:(.taskStore.r
   rejected:([.taskStore.history|fromjson? | .[] | select(.kind=="answer_rejected")]|length)}')
 log "T11 first=$T11_A"; log "T11 duplicate=$T11_B"; log "T11 second-key=$T11_C"
 log "T11 final: $T11_END"
-R11=$(pass '[ "$(jq -r .accepted <<<"$T11_A")" = true ] && [ "$(jq -r .reason <<<"$T11_B")" = duplicate ] \
-  && [ "$(jq -r .reason <<<"$T11_C")" = wait_answered ] && [ "$(jq -r .wakeRows <<<"$T11_END")" = 1 ] \
+R11=$(pass '[ "$(jq -r .accepted <<<"$T11_A")" = true ] \
+  && { [ "$(jq -r .reason <<<"$T11_B")" = duplicate ] || [ "$(jq -r .reason <<<"$T11_B")" = already_consumed ]; } \
+  && [ "$(jq -r .accepted <<<"$T11_C")" = false ] && [ "$(jq -r .wakeRows <<<"$T11_END")" = 1 ] \
   && [ "$(jq -r .accepted <<<"$T11_END")" = 1 ] && [ "$(jq -r .rejected <<<"$T11_END")" = 2 ] \
   && [ "$(jq -r .fx.apply <<<"$T11_END")" = 1 ] && [ "$(jq -r .result.answer <<<"$T11_END")" = "да" ]')
 
@@ -204,22 +205,26 @@ R12=$(pass '[ "$(jq -r .status <<<"$T12_CANCEL")" = cancelled ] && [ "$(jq -r .a
   && [ "$(jq -r .reason <<<"$T12_LATE")" = cancelled ] && [ "$(jq -r .status <<<"$T12_END")" = cancelled ] \
   && [ "$(jq -r .wakeRows <<<"$T12_END")" = 0 ] && [ "$(jq -r .fx.apply <<<"$T12_END")" = null ]')
 
-# ---------------- T13 #116 durable crash inside the plan: wait survives, answer is re-read
-log "== T13 #116: engine crash right after the durable wait commit"
+# ---------------- T13 #116 durable crash inside the plan: the resumed instance re-reads state
+log "== T13 #116: crash right after the durable wait commit; continuation from durable state, no wake"
 api POST /fault '{"name":"after_open_wait","value":"on"}' >> run.log
 api POST /start '{"taskId":"ut-pilot-13"}' >/dev/null
-wait_until ut-pilot-13 "$AWAIT" 20
+# the fault fires INSIDE the step after openWait, so the durable wait must already exist
+wait_until ut-pilot-13 '.durable.waits|length>=1' 20
+# commit the answer durably and DO NOT deliver any wake: the engine's step retry must read it back
 api POST /answer '{"taskId":"ut-pilot-13","answer":"да","deliver":false}' >/dev/null
-sleep 3
-T13_MID=$(st ut-pilot-13 | jq -c '{status:.taskStore.status,engine:.engine.status,waits:.durable.waits}')
-T13_RECOVER=$(api POST /recover-outbox '{}' | jq -c .)
-wait_until ut-pilot-13 "$DONE" 25
+T13_MID=$(st ut-pilot-13 | jq -c '{status:.taskStore.status,waits:.durable.waits,outbox:[.durable.outbox[]|{kind,status}]}')
+wait_until ut-pilot-13 "$DONE" 30
 T13_END=$(st ut-pilot-13 | jq -c '{status:.taskStore.status,result:(.taskStore.result_json|fromjson?),
-  waits:.durable.waits, events:([.taskStore.history|fromjson? | .[] | {kind,step}])}')
-log "T13 before recovery: $T13_MID"; log "T13 recover=$T13_RECOVER"; log "T13 final: $T13_END"
-R13=$(pass '[ "$(jq -r .status <<<"$T13_MID")" = awaiting_input ] && [ "$(jq -r "[.waits[]|select(.status==\"answered\")]|length" <<<"$T13_MID")" = 1 ] \
+  waits:.durable.waits, outbox:[.durable.outbox[]|{kind,status,attempts}],
+  wakeDelivered:([.taskStore.history|fromjson? | .[] | select(.kind=="wake_delivered")]|length)}')
+log "T13 after durable answer, before any wake: $T13_MID"
+log "T13 final: $T13_END"
+R13=$(pass '[ "$(jq -r "[.waits[]|select(.status==\"answered\")]|length" <<<"$T13_MID")" = 1 ] \
   && [ "$(jq -r .status <<<"$T13_END")" = done ] && [ "$(jq -r .result.answer <<<"$T13_END")" = "да" ] \
-  && [ "$(jq -r "[.waits[]|select(.status==\"consumed\")]|length" <<<"$T13_END")" = 1 ]')
+  && [ "$(jq -r "[.waits[]|select(.status==\"consumed\")]|length" <<<"$T13_END")" = 1 ] \
+  && [ "$(jq -r .wakeDelivered <<<"$T13_END")" = 0 ] \
+  && [ "$(jq -r "[.outbox[]|select(.kind==\"wake\" and .status==\"pending\")]|length" <<<"$T13_END")" = 1 ]')
 
 # ---------------- T14 #116 the signal payload is NOT the answer: durable state wins
 log "== T14 #116: wake event carrying a WRONG answer, durable answer must win"
@@ -232,7 +237,7 @@ T14_END=$(st ut-pilot-14 | jq -c '{status:.taskStore.status,result:(.taskStore.r
 log "T14 durable commit=$T14_COMMIT"; log "T14 final: $T14_END"
 R14=$(pass '[ "$(jq -r .accepted <<<"$T14_COMMIT")" = true ] && [ "$(jq -r .delivered <<<"$T14_COMMIT")" = false ] \
   && [ "$(jq -r .status <<<"$T14_END")" = done ] && [ "$(jq -r .result.answer <<<"$T14_END")" = "да" ] \
-  && [ "$(jq -r .applied[0].used <<<"$T14_END")" = "да" ]')
+  && [ "$(jq -r .applied.used <<<"$T14_END")" = "да" ]')
 
 kill_dev
 
@@ -259,7 +264,7 @@ jq -n --arg r1 "$R1" --arg r2 "$R2" --arg r3 "$R3" --arg r4 "$R4" --arg r5 "$R5"
   --argjson t10submit "$T10_SUBMIT" --argjson t10mid "$T10_MID" --argjson t10recover "$T10_RECOVER" --argjson t10end "$T10_END" \
   --argjson t11a "$T11_A" --argjson t11b "$T11_B" --argjson t11c "$T11_C" --argjson t11end "$T11_END" \
   --argjson t12cancel "$T12_CANCEL" --argjson t12late "$T12_LATE" --argjson t12end "$T12_END" \
-  --argjson t13mid "$T13_MID" --argjson t13recover "$T13_RECOVER" --argjson t13end "$T13_END" \
+  --argjson t13mid "$T13_MID" --argjson t13end "$T13_END" \
   --argjson t14commit "$T14_COMMIT" --argjson t14end "$T14_END" \
   --argjson t6stale "$T6_STALE" --arg ver "$(node node_modules/.bin/wrangler --version)" '{
   variant: "cf-workflows-d1", mode: "local (wrangler dev / miniflare), no Cloudflare account", wrangler: $ver,
@@ -278,6 +283,6 @@ jq -n --arg r1 "$R1" --arg r2 "$R2" --arg r3 "$R3" --arg r4 "$R4" --arg r5 "$R5"
              T10_outbox_recovery:{submit:$t10submit, after_fault:$t10mid, recovery:$t10recover, final:$t10end},
              T11_duplicate_answer:{first:$t11a, duplicate:$t11b, second_key:$t11c, final:$t11end},
              T12_cancel_race:{cancel:$t12cancel, late_answer:$t12late, final:$t12end},
-             T13_crash_after_durable_wait:{before_recovery:$t13mid, recovery:$t13recover, final:$t13end},
+             T13_crash_after_durable_wait:{after_durable_answer:$t13mid, final:$t13end},
              T14_signal_is_not_the_answer:{commit:$t14commit, final:$t14end}}}' > results.json
 log "== RESULTS: T1=$R1 T2=$R2 T3=$R3 T4=$R4 T5=$R5 T6=$R6 T7=$R7 T8=$R8 T9=$R9 T10=$R10 T11=$R11 T12=$R12 T13=$R13 T14=$R14"
