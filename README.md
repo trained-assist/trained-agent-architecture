@@ -46,6 +46,7 @@ Fast-path research: [алгоритм до запуска агента и про
 | [Stories](stories/README.md) | Истории: кто, ценность, шаги, «готово, когда», на каком этапе рождаются |
 | [Project «Trained Assist — Migration»](https://github.com/orgs/trained-assist/projects/1) | Статус карточек и эпиков, чек-листы приёмки, блокеры и пробелы (issues) |
 | [Implementation and Integration Plan](IMPLEMENTATION-AND-INTEGRATION-PLAN.md) | Решения владельца, путь интеграции, этапы, зависимости, таблица карточек со ссылками на issues, scope, риски |
+| [Agent launch and data persistence](AGENT-RUNNER-DATA-PERSISTENCE-IMPLEMENTATION.md) | Запуск агента с сохранением данных: протокол materialize/persist/sweep, целостность, блокировки, маппинг legacy → целевая модель |
 | [Task Store v1 schema](TASK-STORE-SCHEMA-V1.md) | Инвентарь прод `durable-tasks/state.db` (read-only) и целевая схема Task Store: userTaskId, журнал событий, сигналы с дедуп, awaiting input, delivery, conversation |
 | [Engineering Approach](ENGINEERING-APPROACH.md) | Концепция Sandbox Driven Development и общие правила разработки |
 | [Acceptance](ACCEPTANCE-CHECKLIST.md) | Типы доказательств, общий гейт Done карточки, сквозные проверки инвариантов и контрактов; где теперь лежат чек-листы. Не план и не трекер |
@@ -61,7 +62,7 @@ Fast-path research: [алгоритм до запуска агента и про
 
 | Работа | Документы |
 |---|---|
-| Runner, API и файлы | [Runtime boundary](runtime/EXECUTION-RUNTIME.md), [Runner repo](https://github.com/trained-assist/ai-agent-runner), [Serverless API](SERVERLESS-AGENT-API.md); lifecycle данных — ARCHITECTURE §4.6 |
+| Runner, API и файлы | [Runtime boundary](runtime/EXECUTION-RUNTIME.md), [Runner repo](https://github.com/trained-assist/ai-agent-runner), [Serverless API](SERVERLESS-AGENT-API.md), [Запуск и сохранение данных](AGENT-RUNNER-DATA-PERSISTENCE-IMPLEMENTATION.md); lifecycle данных — ARCHITECTURE §4.6 |
 | Router, MCP и быстрые ответы | [Router/MCP](TASK-ROUTER-AND-MCP.md), [Capability Catalog](CAPABILITY-CATALOG-AND-FAST-REPLIES.md). Router сначала модуль control plane |
 | Статусы, IDs и пользовательский ввод | [ID и Reporting](USER-TASK-IDS-AND-REPORTING.md), [Run conflict](scenarios/interaction/run-conflict-explicit-choice.md), [Stories](stories/README.md), [старые сценарии](scenarios/README.md) |
 | Разговорная сессия | [Conversation contract](CONVERSATIONAL-SESSION-CONTRACT.md): границы Conversation/Task/Run, что в Task Store, resume-семантика, связь с legacy session-store |
@@ -77,6 +78,7 @@ Fast-path research: [алгоритм до запуска агента и про
 
 - [P-DB comparison](pilots/p-db/COMPARISON.md) — выбор пары база/движок; локальный PASS не заменяет cloud smoke.
 - [Code baseline](audits/CODE-BASELINE.md) — pinned факты текущего кода.
+- [Legacy learnings 30.09](audits/LEGACY-LEARNINGS-TRAINED-ASSIST-AGENT-2026-09-30.md) — что из действующей legacy-системы уже построено и проверено в проде, что переносится (датированный снапшот).
 - [User stories audit](audits/USER-STORIES-CONSISTENCY-AUDIT-2026-09-30.md).
 - [Real playbooks review](REVIEW-WITH-REAL-PLAYBOOKS.md) — виртуальная проверка модели.
 - Ревью прежней архитектуры: [Claude](ARCHITECTURE_claude_2026-09-30_1926.md), [MiMo](ARCHITECTURE_mimo_review_2026-09-30.md). Это история обоснования, не альтернативные текущие архитектуры.
