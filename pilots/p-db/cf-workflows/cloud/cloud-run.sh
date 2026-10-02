@@ -4,6 +4,7 @@
 #   C1 (а) an instance interrupted after step 2 continues BY ITSELF (no external trigger)
 #   C2 (б) durable sleep + waitForEvent timeout fire WITHOUT any external event
 #   C3 (в) deploy while an instance is waiting: it survives and resumes on the NEW code
+#   C4 (#90) deploys AFTER a task is done never touch its status/result (terminal guard)
 # One command: ./cloud-run.sh  -> cloud-run.log, results.cloud.json, evidence-*
 # Creates only pilot resources; deletes/overwrites nothing in prod.
 set -uo pipefail
@@ -131,6 +132,35 @@ ok = (before["status"]=="awaiting_input" and before.get("version")=="v1"
 print("PASS" if ok else "FAIL")' "$C3_BEFORE" "$C3_MID" "$C3_AFTER")
 log "C3 verdict=$R_C3 (waiting instance survived deploy; resumed steps carry version v2); engine pre=$C3_BEFORE mid=$C3_MID"
 
+# ---------------- C4 (issue #90): deploys AFTER the task finished must not touch it
+# Reproduction from the issue: 2-3 `wrangler deploy` inside +-10 min of `done`, watching
+# `tasks.status` + `task_events`. The bug was a late `wait_timeout` flipping done -> failed.
+log "== C4 #90 repro: 3 deploys while $U-deploy is already done"
+C4_FIN=${C4_FIN:-0}; C4_FIN=$(hist "$U-deploy" step_done finalize); C4_FIN=${C4_FIN:-0}
+C4_PROJ='{status:.taskStore.status, result:(.taskStore.result_json|fromjson?), gen:.taskStore.generation}'
+C4_BEFORE=$(row "$U-deploy" | jq -c "$C4_PROJ")
+C4_CHANGED=no; C4_AFTER=""
+c4_watch() { # seconds -> sets C4_CHANGED/C4_AFTER on the first deviation
+  local end=$(( $(date +%s) + $1 ))
+  while [ "$(date +%s)" -lt "$end" ]; do
+    local s; s=$(row "$U-deploy" | jq -c "$C4_PROJ")
+    if [ "$s" != "$C4_BEFORE" ]; then C4_CHANGED=yes; C4_AFTER="$s"; return 0; fi
+    sleep 5
+  done
+}
+for d in 1 2 3; do
+  set_version v$((d+2))                       # marker changes (v3,v4,v5), step code does not
+  "$W" -c "$CFG" deploy 2>&1 | tee -a "$LOG" | tail -1
+  set_version v1
+  c4_watch 40; [ "$C4_CHANGED" = yes ] && break
+done
+c4_watch 120
+C4_AFTER=${C4_AFTER:-$(row "$U-deploy" | jq -c "$C4_PROJ")}
+C4_LATE=$(row "$U-deploy" | jq -c --argjson fin "$C4_FIN" '{wait_timeout_after_finalize:([.taskStore.history|fromjson[]|select(.kind=="wait_timeout" and .at>$fin)]|length),
+  late_writes:([.taskStore.history|fromjson[]|select(.kind=="late_write_rejected" or .kind=="wait_timeout_ignored")]|length)}')
+R_C4=$(jq -r 'if .status=="done" then "PASS" else "FAIL" end' <<<"$C4_AFTER")
+log "C4 before=$C4_BEFORE after=$C4_AFTER changed=$C4_CHANGED late=$C4_LATE verdict=$R_C4 (3 deploys while done)"
+
 # ---------------- leave the worker as the repo is (v1)
 log "== final redeploy v1 (repo state == deployed state)"
 "$W" -c "$CFG" deploy 2>&1 | tee -a "$LOG" | tail -2
@@ -149,21 +179,24 @@ log "T8 rows: $D1_ROWS"
 kill "$TAIL_PID" 2>/dev/null; TAIL_PID=""
 
 jq -n --arg run "$RUN" --arg c1 "$R_C1" --arg sleep "$R_C2_SLEEP" --arg wake "$R_C2_WAKE" \
-  --arg to "$R_C2B" --arg c3 "$R_C3" --argjson gap "$C2_GAP" --argjson rows "$D1_ROWS" \
+  --arg to "$R_C2B" --arg c3 "$R_C3" --arg c4 "$R_C4" --argjson gap "$C2_GAP" --argjson rows "$D1_ROWS" \
   --argjson c1lat "$((C1_FIN - C1_SIG_T))" --argjson c3lat "$C3_LAT" --argjson c2lat "$C2_LAT" --argjson wall1 "$((C1_T1-C1_T0))" \
   --argjson sleepmid "$C2_MID" --argjson timeoutstate "$C2B" --argjson before "$C3_BEFORE" \
-  --argjson mid "$C3_MID" --argjson after "$C3_AFTER" \
+  --argjson mid "$C3_MID" --argjson after "$C3_AFTER" --argjson c4before "$C4_BEFORE" \
+  --argjson c4after "$C4_AFTER" --argjson c4late "$C4_LATE" --argjson c4changed "$([ "$C4_CHANGED" = yes ] && echo true || echo false)" \
   '{variant:"cf-workflows-d1", run:$run, mode:"real Cloudflare account (worker p-db-a1-cloud-smoke, D1 p-db-a1-taskstore)",
     criteria:{ "C1_continuation_after_crash_without_trigger":$c1,
                "C2_durable_sleep_no_external_event":$sleep,
                "C2_sleep_gap_ms":$gap,
                "C2_wake_after_sleep":$wake,
                "C2_waitFor_timeout_no_event":$to,
-               "C3_deploy_while_waiting":$c3 },
+               "C3_deploy_while_waiting":$c3,
+               "C4_late_deploys_never_touch_a_finished_task":$c4 },
     notes:{ c1_signal_to_finalize_ms:$c1lat, c2_signal_to_apply_ms:$c2lat, c3_signal_to_apply_after_deploy_ms:$c3lat, c1_wall_ms:$wall1, t8_rows:$rows },
-    evidence:{ C1:$sleepmid, C2b:$timeoutstate, C3_before:$before, C3_mid:$mid, C3_after:$after },
+    evidence:{ C1:$sleepmid, C2b:$timeoutstate, C3_before:$before, C3_mid:$mid, C3_after:$after,
+               C4_repro_90:{before:$c4before, after:$c4after, changed:$c4changed, events:$c4late} },
     files:["cloud-run.log","evidence-tail.jsonl","evidence-c1-instance.txt","evidence-c2-instance.txt",
            "evidence-c2b-instance.txt","evidence-c3-instance.txt","evidence-d1-status.json","evidence-instances-list.txt"]}' \
   > "$HERE/results.cloud.json"
-log "== RESULTS: C1=$R_C1 C2-sleep=$R_C2_SLEEP C2-wake=$R_C2_WAKE C2-timeout=$R_C2B C3=$R_C3"
+log "== RESULTS: C1=$R_C1 C2-sleep=$R_C2_SLEEP C2-wake=$R_C2_WAKE C2-timeout=$R_C2B C3=$R_C3 C4=$R_C4"
 cat "$HERE/results.cloud.json"

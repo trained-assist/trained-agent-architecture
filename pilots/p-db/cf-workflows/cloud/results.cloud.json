@@ -1,21 +1,22 @@
 {
   "variant": "cf-workflows-d1",
-  "run": "183802",
+  "run": "064632",
   "mode": "real Cloudflare account (worker p-db-a1-cloud-smoke, D1 p-db-a1-taskstore)",
   "criteria": {
     "C1_continuation_after_crash_without_trigger": "PASS",
     "C2_durable_sleep_no_external_event": "PASS",
-    "C2_sleep_gap_ms": 47390,
+    "C2_sleep_gap_ms": 45119,
     "C2_wake_after_sleep": "PASS",
     "C2_waitFor_timeout_no_event": "PASS",
-    "C3_deploy_while_waiting": "PASS"
+    "C3_deploy_while_waiting": "PASS",
+    "C4_late_deploys_never_touch_a_finished_task": "PASS"
   },
   "notes": {
-    "c1_signal_to_finalize_ms": 548,
-    "c2_signal_to_apply_ms": 234,
-    "c3_signal_to_apply_after_deploy_ms": 1425,
-    "c1_wall_ms": 6880,
-    "t8_rows": 21
+    "c1_signal_to_finalize_ms": 641,
+    "c2_signal_to_apply_ms": 180,
+    "c3_signal_to_apply_after_deploy_ms": 214693,
+    "c1_wall_ms": 7769,
+    "t8_rows": 25
   },
   "evidence": {
     "C1": {
@@ -52,6 +53,31 @@
         "version": "v2"
       },
       "apply_version": "v2"
+    },
+    "C4_repro_90": {
+      "before": {
+        "status": "done",
+        "result": {
+          "answer": "да",
+          "ok": true,
+          "version": "v2"
+        },
+        "gen": 1
+      },
+      "after": {
+        "status": "done",
+        "result": {
+          "answer": "да",
+          "ok": true,
+          "version": "v2"
+        },
+        "gen": 1
+      },
+      "changed": false,
+      "events": {
+        "wait_timeout_after_finalize": 0,
+        "late_writes": 0
+      }
     }
   },
   "files": [
