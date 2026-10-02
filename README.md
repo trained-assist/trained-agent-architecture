@@ -21,7 +21,7 @@ python3 tools/repo-context/map.py
 
 Карта — ограниченный индекс, pack — структурное сжатие кода; Markdown не имеет AST-сжатия. Ограничения и исключённые пути отражаются в manifest. Перед изменением поведения откройте исходник. Если CI/публикация ещё не прошли, используйте README и локальную генерацию.
 
-Актуальный датированный [срез реализации и критический путь](IMPLEMENTATION-AND-INTEGRATION-PLAN.md#срез-реализации-и-критический-путь--01102026-2318-мск) — в плане. На 01.10 cloud smoke завершён и Runner имеет реализацию; новый control plane ещё требует прикладного кода. Окончательная приёмка — в карточках, не по наличию файла или merged PR.
+Актуальный датированный [срез реализации и критический путь](IMPLEMENTATION-AND-INTEGRATION-PLAN.md#срез-реализации-и-критический-путь--02102026-1105-мск) — в плане. На 02.10 Task Store и Workflow Port уже смержены в control plane; по Runner опубликован VM reboot/dogfood отчёт. Следующий результат — admission/dispatch/results и первый sandbox Web диалог. Для интерактивности открыты гейты #115/#116; полный fast-path — следующий подэтап. Окончательная приёмка — в карточках, не по наличию файла или merged PR.
 
 Fast-path research: [алгоритм до запуска агента и протокол исследования](TASK-ROUTER-AND-MCP.md#11-fast-path-v1-алгоритм-до-запуска-агента) и [compact catalog / explicit naming](CAPABILITY-CATALOG-AND-FAST-REPLIES.md#explicit-names-и-compact-catalog-v1--01102026). Pilot изолирован от живых компонентов и текущей приёмки PR.
 
