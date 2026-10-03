@@ -1,0 +1,96 @@
+{
+  "policyVersion": "fast-path-v1-draft-2026-10-02",
+  "source": "eval/fast-replies/harness.py::FaultStub",
+  "note": "Ожидания — внешние данные, а не код стаба: проверка не сравнивает функцию с собой (AC-19). Каждый сценарий — управляемый сбой model gateway из TASK-ROUTER-AND-MCP.md §11.9. Общее требование: технический исход не доходит до исполнителя (§11.3).",
+  "scenarios": [
+    {
+      "id": "FS-01",
+      "fault": "model_timeout",
+      "input": {"turns": [{"role": "user", "text": "перепиши абзац короче"}], "context": {"connected": ["documents"]}, "story": ["U-20"]},
+      "expect": {
+        "outcome": "technical_error", "technicalCode": "MODEL_TIMEOUT", "schemaOutcome": "timeout",
+        "modelCalls": 1, "repairAttempts": 0, "escalationAttempt": false, "needsExecutor": false, "route": null,
+        "must": ["честная причина пользователю", "не больше одного вызова модели"],
+        "must_not": ["запуск агента", "тихий ретрай без предела", "ответ «из памяти»"]
+      }
+    },
+    {
+      "id": "FS-02",
+      "fault": "invalid_json",
+      "input": {"turns": [{"role": "user", "text": "что умеешь?"}], "context": {"connected": ["documents"]}, "story": ["U-18"]},
+      "expect": {
+        "outcome": "technical_error", "technicalCode": "SCHEMA_INVALID", "schemaOutcome": "invalid",
+        "modelCalls": 2, "repairAttempts": 1, "escalationAttempt": false, "needsExecutor": false, "route": null,
+        "must": ["ровно один ограниченный repair по JSON", "после него типизированная ошибка"],
+        "must_not": ["второй repair", "запуск агента как «обход» ошибки схемы"]
+      }
+    },
+    {
+      "id": "FS-03",
+      "fault": "truncated_json",
+      "input": {"turns": [{"role": "user", "text": "что умеешь?"}], "context": {"connected": ["documents"]}, "story": ["U-18"]},
+      "expect": {
+        "outcome": "technical_error", "technicalCode": "SCHEMA_TRUNCATED", "schemaOutcome": "truncated",
+        "modelCalls": 2, "repairAttempts": 1, "escalationAttempt": false, "needsExecutor": false, "route": null,
+        "must": ["обрезанный вывод отличим от невалидного", "один repair"],
+        "must_not": ["запуск агента"]
+      }
+    },
+    {
+      "id": "FS-04",
+      "fault": "model_refusal",
+      "input": {"turns": [{"role": "user", "text": "объясни, что такое NPS"}], "context": {"connected": ["documents"]}, "story": ["U-17"]},
+      "expect": {
+        "outcome": "technical_error", "technicalCode": "MODEL_REFUSED", "schemaOutcome": "refused",
+        "modelCalls": 1, "repairAttempts": 0, "escalationAttempt": false, "needsExecutor": false, "route": null,
+        "must": ["отказ модели — отдельный исход, а не «пустой успешный ответ»"],
+        "must_not": ["запись отказа как успешного ответа", "запуск агента"]
+      }
+    },
+    {
+      "id": "FS-05",
+      "fault": "budget_denied",
+      "input": {"turns": [{"role": "user", "text": "перепиши абзац короче"}], "context": {"connected": ["documents"], "budget_left": 0}, "story": ["U-20"]},
+      "expect": {
+        "outcome": "blocked", "technicalCode": "BUDGET_EXHAUSTED", "schemaOutcome": "budget_denied",
+        "modelCalls": 0, "repairAttempts": 0, "escalationAttempt": false, "needsExecutor": false, "route": null,
+        "must": ["проверка бюджета до вызова модели", "понятная причина и что сделать"],
+        "must_not": ["тихое включение дорогой модели", "запуск агента"]
+      }
+    },
+    {
+      "id": "FS-06",
+      "fault": "no_enabled_candidates",
+      "input": {"turns": [{"role": "user", "text": "расшарь итоговый файл"}], "context": {"connected": [], "available_not_connected": ["google-drive"]}, "story": ["U-18"]},
+      "expect": {
+        "outcome": "technical_error", "technicalCode": "NO_ENABLED_CANDIDATES", "schemaOutcome": "not_run",
+        "modelCalls": 0, "repairAttempts": 0, "escalationAttempt": false, "needsExecutor": false, "route": null,
+        "must": ["отсутствие кандидатов не доказывает отсутствие capability во всей системе"],
+        "must_not": ["запуск агента как обход пустого каталога"]
+      }
+    },
+    {
+      "id": "FS-07",
+      "fault": "stale_context_snapshot",
+      "input": {"turns": [{"role": "user", "text": "что я просил вчера?"}], "context": {"connected": ["documents"], "tasks_yesterday_ref": "fixtures/tasks-2026-09-29.json", "snapshot_owner": "other-profile"}, "story": ["U-14"]},
+      "expect": {
+        "outcome": "technical_error", "technicalCode": "STALE_CONTEXT", "schemaOutcome": "not_run",
+        "modelCalls": 0, "repairAttempts": 0, "escalationAttempt": false, "needsExecutor": false, "route": null,
+        "must": ["снимок чужого профиля не используется как свой", "coverage=stale виден в событии"],
+        "must_not": ["ответ по чужим данным", "запуск агента"]
+      }
+    },
+    {
+      "id": "FS-08",
+      "fault": "missing_required_arg",
+      "input": {"turns": [{"role": "user", "text": "расшарь мне итоговый файл"}], "context": {"connected": ["google-drive"], "user_email": null}, "story": ["U-19"]},
+      "expect": {
+        "outcome": "clarify", "technicalCode": "MISSING_REQUIRED_ARG", "schemaOutcome": "valid",
+        "semanticOutcome": "invalid_missing_arg",
+        "modelCalls": 0, "repairAttempts": 0, "escalationAttempt": false, "needsExecutor": false, "route": null,
+        "must": ["недостающий обязательный аргумент — вопрос пользователю, а не технический сбой"],
+        "must_not": ["выдуманный email", "запуск агента до получения данных"]
+      }
+    }
+  ]
+}

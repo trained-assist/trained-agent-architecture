@@ -20,3 +20,7 @@ jobs:
           persist-credentials: false
       - name: Validate fast-reply corpus
         run: python3 eval/fast-replies/check.py
+      - name: Re-check anchor sanitization filters
+        run: python3 eval/fast-replies/verify_anchors.py
+      - name: Deterministic baseline eval and controlled failures
+        run: python3 eval/fast-replies/selfcheck.py

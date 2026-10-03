@@ -1,0 +1,12 @@
+{"cohort": "EXT-OTHER", "group": "EXT-OTHER-01", "text": "а тя можешь тут всё заполнить заодно и завершить настройки подключения", "has_media": false, "sampleId": "R-RAW-000001"}
+{"cohort": "EXT-REC", "group": "EXT-REC-01", "text": "перепиши этот абзац короче и без канцелярита пожалуйста", "has_media": false, "sampleId": "R-RAW-000002"}
+{"cohort": "EXT-OTHER", "group": "EXT-OTHER-01", "text": "что там с моей задачей по отчёту сколько осталось", "has_media": false, "sampleId": "R-RAW-000003"}
+{"cohort": "OWNER", "group": "OWNER-01", "text": "статус пожалуйста", "has_media": false, "sampleId": "R-RAW-000004"}
+{"cohort": "EXT-OTHER", "group": "EXT-OTHER-01", "text": "мой токен sk-abcdefghij1234567890abcdef не работает проверь", "has_media": false, "sampleId": "R-RAW-000005"}
+{"cohort": "EXT-OTHER", "group": "EXT-OTHER-01", "text": "позвони мне на +79161234567 когда будет готово", "has_media": false, "sampleId": "R-RAW-000006"}
+{"cohort": "EXT-OTHER", "group": "EXT-OTHER-01", "text": "файл лежит в /home/vova/Documents/secret.txt прочитай его", "has_media": false, "sampleId": "R-RAW-000007"}
+{"cohort": "EXT-OTHER", "group": "EXT-OTHER-01", "text": "напиши на ivan@example.com что встреча переносится", "has_media": false, "sampleId": "R-RAW-000008"}
+{"cohort": "EXT-OTHER", "group": "EXT-OTHER-01", "text": "перепиши этот абзац короче и без канцелярита пожалуйста", "has_media": false, "sampleId": "R-RAW-000009"}
+{"cohort": "EXT-OTHER", "group": "EXT-OTHER-01", "text": "", "has_media": false, "sampleId": "R-RAW-000010"}
+{"cohort": "EXT-OTHER", "group": "EXT-OTHER-01", "text": "ok", "has_media": false, "sampleId": "R-RAW-000011"}
+{"cohort": "EXT-OTHER", "group": "EXT-OTHER-01", "text": "а можно таблицей оцифровать эти три тарифа из прошлого сообщения", "has_media": false, "sampleId": "R-RAW-000012"}
