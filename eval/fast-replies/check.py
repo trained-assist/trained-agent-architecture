@@ -14,6 +14,15 @@ ROOT = os.path.abspath(os.path.join(HERE, "..", ".."))
 ROUTES = {"template", "deterministic", "llm", "agent", "clarify", "required_input"}
 SPLITS = {"dev", "holdout"}
 REVIEW_TIERS = {"unreviewed", "model_reviewed", "human_reviewed", "rejected"}
+# Профильные данные: e-mail, телефон, абсолютный путь, имена профилей владельца.
+# В корпусе их быть не должно — это проверяемый пункт AC-132, а не обещание.
+# Зарезервированные домены RFC 2606 исключены: они легитимны в синтетических фикстурах.
+PROFILE_MARKERS = [
+    re.compile(r"[\w.+-]+@(?!(?:example\.(?:com|org|net|io|ru)|localhost)\b)[\w-]+\.[\w.]+"),
+    re.compile(r"(?<!\d)(?:\+7|8)\d{10}(?!\d)"),
+    re.compile(r"/home/|/Users/"),
+    re.compile(r"trained-assist-product-owner|vladimir|kobzev", re.I),
+]
 stories = set(re.findall(r"^### ((?:U|API|OPS|DEV)-\d+)", "".join(
     open(os.path.join(ROOT, "stories", f)).read() for f in os.listdir(os.path.join(ROOT, "stories")) if f.endswith(".md")), re.M))
 
@@ -58,8 +67,15 @@ def _run():
             errors.append(f"{i}: {r['route']} не может требовать больше одного вызова модели")
         for s in r.get("story", []):
             if s not in stories: errors.append(f"{i}: нет истории {s} в stories/")
-        for p in refs(r):
-            if not os.path.exists(os.path.join(HERE, p)): errors.append(f"{i}: нет файла {p}")
+    for p in refs(r):
+        if not os.path.exists(os.path.join(HERE, p)): errors.append(f"{i}: нет файла {p}")
+
+    # Профильные данные в корпусе не публикуются (AC-132). Проверяемо, а не обещано:
+    # e-mail, телефон, абсолютный путь и имена профилей владельца в текстах запрещены.
+    blob = json.dumps(r, ensure_ascii=False)
+    for marker in PROFILE_MARKERS:
+        if marker.search(blob):
+            errors.append(f"{i}: профильные данные в корпусе: {marker.pattern}")
 
     # --- 2. версия корпуса -------------------------------------------------
     manifest_path = os.path.join(HERE, "corpus.manifest.json")
