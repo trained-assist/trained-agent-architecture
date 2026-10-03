@@ -13,6 +13,7 @@ import json, os, subprocess, sys, tempfile
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import harness  # noqa: E402
+import check as corpus_check  # noqa: E402  — те же маркеры, что и у check.py
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.abspath(os.path.join(HERE, "..", ".."))
@@ -41,6 +42,12 @@ def main():
     check("классы ловушек присутствуют",
           {"live_data", "quoted_url", "constraint_middle", "model_failure", "budget", "late_attachment"}
           <= {d["class"] for d in dialogs})
+    check("профильные данные в корпусе не публикуются",
+          not any(m.search(json.dumps(d, ensure_ascii=False)) for d in dialogs
+                  for m in corpus_check.PROFILE_MARKERS))
+    check("проверка профильных данных не пустая (negative test)",
+          any(m.search("пишите на owner@company.ru") for m in corpus_check.PROFILE_MARKERS)
+          and not any(m.search("пишите на owner@example.com") for m in corpus_check.PROFILE_MARKERS))
 
     print("2. baseline-прогон")
     r = sh("eval/fast-replies/run_eval.py", "--write")
