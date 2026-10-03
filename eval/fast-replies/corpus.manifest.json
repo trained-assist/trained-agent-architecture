@@ -1,0 +1,84 @@
+{
+  "corpus": "fast-replies",
+  "version": 1,
+  "format": "dialogs.v1.jsonl",
+  "policyVersion": "fast-path-v1-draft-2026-10-02",
+  "generatedBy": "eval/fast-replies/check.py --manifest",
+  "note": "Версия корпуса поднимается только при смене формата записи (stories/FAST-REPLIES.md, п. «Как добавлять и проверять»). Смена ожидаемого поведения — правка записи и истории в одном PR, версия не меняется. Хэши считаются по байтам файлов: любая правка корпуса ломает манифест, пока он не пересобран — это и есть версионирование, а не обещание.",
+  "files": {
+    "dialogs.v1.jsonl": {
+      "sha256": "c882b3f9446c9b6299b48d55bb9eebfcc58970fcf34fee7cb236e5f351200fca",
+      "records": 35,
+      "splits": {
+        "dev": 30,
+        "holdout": 5
+      },
+      "classes": 22,
+      "routes": {
+        "deterministic": 7,
+        "template": 5,
+        "required_input": 1,
+        "llm": 17,
+        "clarify": 1,
+        "agent": 4
+      }
+    },
+    "anchors.external.v1.jsonl": {
+      "sha256": "659b52622bf2465c74df5c417ba7744c34eeaf8d1588ab439ba3e9fdf5e1c69b",
+      "records": 344,
+      "note": "Сырьё для разметки, а не разметка. Метрики по нему считаются только по human_reviewed строкам реестра anchor-review.v1.jsonl (AC-132)."
+    },
+    "fixtures/long-memo.txt": {
+      "sha256": "112e151f6d66a0957a61566bea2110040eec5eb1fcd670721eb17860f05a1dc2"
+    },
+    "fixtures/memo.txt": {
+      "sha256": "2f83de2933acfdb2286aa53a706cd706a360ae01a7b1fad31ec2d6fa6b19b419"
+    },
+    "fixtures/newsletter-with-mid-constraint.txt": {
+      "sha256": "bf34be5265831954fe194d4864495ba009a89d6c4cbf4b431d9789adf5ed175a"
+    },
+    "fixtures/session-research-halfway.md": {
+      "sha256": "affa722d2f7c63583d4aa5a3b5dd672d3aea86816ceefac4d13b5355a92ce182"
+    },
+    "fixtures/tasks-2026-09-29.json": {
+      "sha256": "5c549394b7d7bd676de52297073ecc508200372767b4c05d65fbb1fe74fa5e3c"
+    },
+    "fixtures/raw-export.planted-pii.sample.jsonl": {
+      "sha256": "00d74a0e5183f2f65c1a4dbc1f226161bf6dbcac4fb86e137215f161daadd3c9",
+      "records": 12,
+      "note": "ТОЛЬКО вход для проверки фильтров: намеренно содержит секрет, телефон, путь, e-mail, чужую когорту и дубли. Это не публикуемые данные и не якоря — файл существует, чтобы проверка санитизации была воспроизводимой."
+    },
+    "decisions/legacy-shadow-baseline.v1.jsonl": {
+      "sha256": "152e03f01596fd0f735b24b3ae0701f141fbbda99ac3410535c067d48e5ec6e8",
+      "records": 35,
+      "note": "Записанные решения текущей системы (baseline). Каждая строка несёт evidence и evidenceKind: documented — есть ссылка на задокументированное поведение, declared — выведено из отсутствия задокументированного быстрого пути. Это модель текущего поведения, а не записанные трассы запросов."
+    },
+    "fault-scenarios.v1.json": {
+      "sha256": "12f534a5d40442a8ac19e5b74c9fc2e67bf454a3b42471388138279773c8af4c",
+      "scenarios": 8,
+      "note": "Внешние ожидания для управляемых сбоев. Проверка сверяет стаб с этим файлом, а не с самим собой."
+    }
+  },
+  "reviewLedger": {
+    "file": "anchor-review.v1.jsonl",
+    "tiers": {
+      "unreviewed": "сырьё, метрик не даёт",
+      "model_reviewed": "кандидат на подтверждение, истиной не считается",
+      "human_reviewed": "единственный уровень, дающий ground truth",
+      "rejected": "отклонено ревьюером"
+    },
+    "counts": {
+      "unreviewed": 344,
+      "model_reviewed": 0,
+      "human_reviewed": 0,
+      "rejected": 0
+    }
+  },
+  "history": [
+    {
+      "version": 1,
+      "date": "2026-10-03",
+      "change": "Первая версия корпуса и baseline-стенда (P18). 35 диалогов, 344 обезличенных якоря, 8 сценариев управляемого сбоя, baseline текущей системы."
+    }
+  ]
+}

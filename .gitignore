@@ -6,3 +6,7 @@ docs/inventory/construction-tasks.md
 
 # wrangler local cache (account id cache from `wrangler whoami`)
 .wrangler/
+
+# python bytecode from eval scripts
+__pycache__/
+*.pyc

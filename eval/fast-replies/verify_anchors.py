@@ -8,10 +8,12 @@
 Запуск: python3 eval/fast-replies/verify_anchors.py   (зависимостей нет)
 
 Проверяемые фильтры опубликованного набора:
- 1. только внешние когорты (EXT-*); сессии владельца не публикуются;
- 2. в тексте не должно быть путей, @handle, URL и e-mail;
- 3. не должно быть персональных данных и названий чужих брендов из blocklist;
- 4. любой латинский токен длиной >=4 должен быть в ALLOW (публичные интеграции).
+  1. только внешние когорты (EXT-*); сессии владельца не публикуются;
+  2. в тексте не должно быть путей, @handle, URL и e-mail;
+  3. не должно быть персональных данных и названий чужих брендов из blocklist;
+  4. любой латинский токен длиной >=4 должен быть в ALLOW (публичные интеграции);
+  5. не должно быть значений секретов и российских телефонных номеров;
+  6. длина 8..200 и отсутствие дублей текста.
 Нулевой результат проверки не доказывает, что человек не опознан, — это нижняя граница.
 """
 import json, os, re, sys, collections
@@ -32,7 +34,31 @@ BLOCKLIST = re.compile(
     r"дата рождения|паспорт|номер телефона|фамили[яию]|мо[яё] имя|зовут|"
     r"\bалеси\b|\bалекса\b|\bефи\b|\bкинескоп\b|\bпилингов|\bпедикир|\bгеткурс|\bgetcourse\b|"
     r"\bzoom\b|\bтильд|\btilda\b|zerocreds|зерокредс", re.I)
+# Значения секретов: префиксы известных провайдеров и присваивания вида token=… / api_key: ….
+# Слово «token» само по себе легально (оно в ALLOW) — ловим только присваивание значения.
+SECRET = re.compile(
+    r"sk-[A-Za-z0-9_-]{16,}|ghp_[A-Za-z0-9]{16,}|github_pat_|AIza[0-9A-Za-z_-]{20,}|"
+    r"xox[baprs]-|AKIA[0-9A-Z]{16}|-----BEGIN [A-Z ]*PRIVATE KEY-----|"
+    r"\b(?:password|passwd|secret|api[_-]?key|access[_-]?token|refresh[_-]?token)\s*[:=]\s*\S+|"
+    r"bearer\s+[A-Za-z0-9._~+/=-]{12,}", re.I)
+PHONE = re.compile(r"(?<!\d)(?:\+7|8)\d{10}(?!\d)")
 LATIN = re.compile(r"[A-Za-z][A-Za-z0-9_-]{3,}")
+
+
+def violations(text, group="EXT-OTHER-01"):
+    """Возвращает список нарушений фильтров для одного текста. Пустая строка — текст прошёл."""
+    t = " ".join(text.split())
+    out = []
+    if not group.startswith("EXT"):
+        out.append(f"не внешняя когорта ({group})")
+    if IDENTITY.search(t): out.append("маркер идентичности (путь/@/URL/e-mail)")
+    if BLOCKLIST.search(t): out.append("персональные данные или бренд из blocklist")
+    if SECRET.search(t): out.append("значение секрета")
+    if PHONE.search(t): out.append("телефонный номер")
+    for tok in LATIN.findall(t):
+        if tok.lower() not in ALLOW: out.append(f"латинский токен вне ALLOW: {tok}")
+    if not 8 <= len(t) <= 200: out.append(f"длина {len(t)} вне 8..200")
+    return out
 
 
 def main() -> int:
@@ -44,17 +70,8 @@ def main() -> int:
     for n, r in enumerate(rows, 1):
         i = r.get("sampleId", f"строка {n}")
         t = " ".join(r.get("text", "").split())
-        if not r.get("group", "").startswith("EXT"):
-            errors.append(f"{i}: не внешняя когорта ({r.get('group')})")
-        if IDENTITY.search(t):
-            errors.append(f"{i}: маркер идентичности (путь/@/URL/e-mail)")
-        if BLOCKLIST.search(t):
-            errors.append(f"{i}: персональные данные или бренд из blocklist")
-        for tok in LATIN.findall(t):
-            if tok.lower() not in ALLOW:
-                errors.append(f"{i}: латинский токен вне ALLOW: {tok}")
-        if not 8 <= len(t) <= 200:
-            errors.append(f"{i}: длина {len(t)} вне 8..200")
+        for v in violations(t, r.get("group", "")):
+            errors.append(f"{i}: {v}")
         key = re.sub(r"\s+", " ", t.lower())
         if key in seen:
             errors.append(f"{i}: дубль текста")
