@@ -1,0 +1,1052 @@
+{
+  "schemaVersion": 1,
+  "generatorVersion": "1.0.0",
+  "repomixVersion": "1.18.1",
+  "repository": "trained-assist/trained-agent-architecture",
+  "sourceSha": "0c50d20bd378793fec2ffb7d03a6c982da988697",
+  "dirty": false,
+  "mapByteLimit": 8192,
+  "mapBytes": 8158,
+  "indexed": [
+    ".github/workflows/ci-fix-cleanup.yml",
+    ".github/workflows/ci.yml",
+    ".github/workflows/coverage-drift.yml",
+    ".github/workflows/pr-autofix.yml",
+    ".github/workflows/repo-context.yml",
+    ".github/workflows/stories-check.yml",
+    ".gitignore",
+    ".repo-context/.gitignore",
+    ".repo-context/repomix.config.json",
+    "ACCEPTANCE-CHECKLIST.md",
+    "AGENT-RUNNER-DATA-PERSISTENCE-IMPLEMENTATION.md",
+    "AGENTS.md",
+    "ARCHITECTURE.md",
+    "ARCHITECTURE_claude-opus-5-5_2026-09-30-1848.md",
+    "ARCHITECTURE_claude_2026-09-30_1926.md",
+    "ARCHITECTURE_mimo_review_2026-09-30.md",
+    "CAPABILITY-CATALOG-AND-FAST-REPLIES.md",
+    "CONVERSATIONAL-SESSION-CONTRACT.md",
+    "DECISIONS.md",
+    "ENGINEERING-APPROACH.md",
+    "EXTERNAL-INTEGRATION-GATE.md",
+    "IMPLEMENTATION-AND-INTEGRATION-PLAN.md",
+    "INTERACTIVE-EXECUTION-AND-USER-INPUT.md",
+    "MODEL-GATEWAY-AND-COSTS.md",
+    "OBSERVABILITY-AND-ERROR-CONTRACT.md",
+    "PLAYBOOKS-VS-GETTING-THINGS-DONE-BOUNDARIES.md",
+    "README.md",
+    "REVIEW-WITH-REAL-PLAYBOOKS.md",
+    "SANDBOX.md",
+    "SERVERLESS-AGENT-API.md",
+    "SYSTEM-ERROR-WATCHER.md",
+    "TASK-ROUTER-AND-MCP.md",
+    "TASK-STORE-SCHEMA-V1.md",
+    "TERMINOLOGY.md",
+    "TG-AND-WEB-INTERACTION-REFACTORING-PLAN.md",
+    "TOOLING-RESEARCH-AND-VM-PILOTS.md",
+    "USER-TASK-IDS-AND-REPORTING.md",
+    "audits/CODE-BASELINE.md",
+    "audits/LEGACY-LEARNINGS-TRAINED-ASSIST-AGENT-2026-09-30.md",
+    "audits/TG-BOT-RESUMABLE-CODE-AND-WHAT-TO-REVIEW.md",
+    "audits/USER-STORIES-CONSISTENCY-AUDIT-2026-09-30.md",
+    "checklist.md",
+    "contracts/README.md",
+    "docs/inventory/README.md",
+    "docs/inventory/repo-coverage.json",
+    "docs/inventory/repo-coverage.md",
+    "docs/inventory/repo-coverage.stable.json",
+    "eval/fast-replies/anchor-review.v1.jsonl"
+  ],
+  "omittedFromMap": [
+    "eval/fast-replies/CORPUS-VERSIONING-AND-BASELINE-EVAL.md",
+    "eval/fast-replies/anchors.external.v1.jsonl",
+    "eval/fast-replies/check.py",
+    "eval/fast-replies/corpus.manifest.json",
+    "eval/fast-replies/decisions/legacy-shadow-baseline.v1.jsonl",
+    "eval/fast-replies/dialogs.v1.jsonl",
+    "eval/fast-replies/extract_sanitized_requests.py",
+    "eval/fast-replies/fault-scenarios.v1.json",
+    "eval/fast-replies/fixtures/long-memo.txt",
+    "eval/fast-replies/fixtures/memo.txt",
+    "eval/fast-replies/fixtures/newsletter-with-mid-constraint.txt",
+    "eval/fast-replies/fixtures/raw-export.planted-pii.sample.jsonl",
+    "eval/fast-replies/fixtures/session-research-halfway.md",
+    "eval/fast-replies/fixtures/tasks-2026-09-29.json",
+    "eval/fast-replies/harness.py",
+    "eval/fast-replies/live_free_smoke.py",
+    "eval/fast-replies/reports/legacy-shadow-baseline.v1.md",
+    "eval/fast-replies/run_eval.py",
+    "eval/fast-replies/selfcheck.py",
+    "eval/fast-replies/verify_anchors.py",
+    "pilots/p-db/.gitignore",
+    "pilots/p-db/CLOUD-SMOKE.md",
+    "pilots/p-db/COMPARISON.md",
+    "pilots/p-db/SCENARIO.md",
+    "pilots/p-db/cf-workflows/.gitignore",
+    "pilots/p-db/cf-workflows/RESULTS.md",
+    "pilots/p-db/cf-workflows/cloud/cloud-run.sh",
+    "pilots/p-db/cf-workflows/cloud/deploy-wake-probe.sh",
+    "pilots/p-db/cf-workflows/cloud/evidence-c1-instance.txt",
+    "pilots/p-db/cf-workflows/cloud/evidence-c2-instance.txt",
+    "pilots/p-db/cf-workflows/cloud/evidence-c2b-instance.txt",
+    "pilots/p-db/cf-workflows/cloud/evidence-c3-instance.txt",
+    "pilots/p-db/cf-workflows/cloud/evidence-d1-status.json",
+    "pilots/p-db/cf-workflows/cloud/evidence-instances-list.txt",
+    "pilots/p-db/cf-workflows/cloud/evidence-probe-instance-1.txt",
+    "pilots/p-db/cf-workflows/cloud/evidence-probe-instance-2.txt",
+    "pilots/p-db/cf-workflows/cloud/evidence-probe-instance-3.txt",
+    "pilots/p-db/cf-workflows/cloud/evidence-probe-instance-4.txt",
+    "pilots/p-db/cf-workflows/cloud/evidence-probe-instance-5.txt",
+    "pilots/p-db/cf-workflows/cloud/evidence-probe-instance-6.txt",
+    "pilots/p-db/cf-workflows/cloud/evidence-probe-tail-runs.jsonl",
+    "pilots/p-db/cf-workflows/cloud/evidence-tail.jsonl",
+    "pilots/p-db/cf-workflows/cloud/probe-wake.results.json",
+    "pilots/p-db/cf-workflows/cloud/results.cloud.json",
+    "pilots/p-db/cf-workflows/cloud/wrangler.jsonc",
+    "pilots/p-db/cf-workflows/lib.sh",
+    "pilots/p-db/cf-workflows/package.json",
+    "pilots/p-db/cf-workflows/results.json",
+    "pilots/p-db/cf-workflows/run.sh",
+    "pilots/p-db/cf-workflows/src/ids.ts",
+    "pilots/p-db/cf-workflows/src/index.ts",
+    "pilots/p-db/cf-workflows/src/plan.ts",
+    "pilots/p-db/cf-workflows/src/port.ts",
+    "pilots/p-db/cf-workflows/src/taskstore.ts",
+    "pilots/p-db/cf-workflows/src/version.ts",
+    "pilots/p-db/cf-workflows/wrangler.jsonc",
+    "pilots/p-db/dbos/.gitignore",
+    "pilots/p-db/dbos/RESULTS.md",
+    "pilots/p-db/dbos/package.json",
+    "pilots/p-db/dbos/results.json",
+    "pilots/p-db/dbos/run.sh",
+    "pilots/p-db/dbos/src/driver.ts",
+    "pilots/p-db/dbos/src/executor.ts",
+    "pilots/p-db/dbos/src/port.ts",
+    "pilots/p-db/dbos/src/taskstore.ts",
+    "pilots/p-db/dbos/src/workflow.ts",
+    "pilots/p-db/prod-plans/.gitignore",
+    "pilots/p-db/prod-plans/RESULTS.md",
+    "pilots/p-db/prod-plans/executor.js",
+    "pilots/p-db/prod-plans/port.js",
+    "pilots/p-db/prod-plans/results.json",
+    "pilots/p-db/prod-plans/run.sh",
+    "pilots/p-db/prod-plans/scenario.js",
+    "pilots/p-db/prod-plans/steps.js",
+    "pilots/p-db/prod-plans/t6-fencing.js",
+    "pilots/p-db/restate/.gitignore",
+    "pilots/p-db/restate/RESULTS.md",
+    "pilots/p-db/restate/package.json",
+    "pilots/p-db/restate/restate.toml",
+    "pilots/p-db/restate/results.json",
+    "pilots/p-db/restate/run.sh",
+    "pilots/p-db/restate/src/pilot.js",
+    "pilots/p-db/restate/src/port.js",
+    "pilots/p-db/restate/src/service.js",
+    "pilots/p-db/restate/src/taskstore.js",
+    "research/FAST-PATH-RESEARCH-2026-10-02.md",
+    "research/GATEWAY-BOUNDARY-RESEARCH-2026-10-02.md",
+    "runtime/EXECUTION-RUNTIME.md",
+    "scenarios/IMPORT-MANIFEST.json",
+    "scenarios/README.md",
+    "scenarios/interaction/run-conflict-explicit-choice.md",
+    "scenarios/sources/software-engineering-playbooks/docs/user-scenarios/ci/cloud-test-run.md",
+    "scenarios/sources/software-engineering-playbooks/docs/user-scenarios/playbooks/skill-tool.context.md",
+    "scenarios/sources/software-engineering-playbooks/docs/user-scenarios/playbooks/skill-tool.md",
+    "scenarios/sources/software-engineering-playbooks/docs/user-scenarios/playbooks/skill-tool.proposal.md",
+    "scenarios/sources/software-engineering-playbooks/docs/user-scenarios/playbooks/skill-tool.requirements.md",
+    "scenarios/sources/trained-assist-agent/docs/user-scenarios/GOALS.md",
+    "scenarios/sources/trained-assist-agent/docs/user-scenarios/README.md",
+    "scenarios/sources/trained-assist-agent/docs/user-scenarios/core/01-channel-concurrency.md",
+    "scenarios/sources/trained-assist-agent/docs/user-scenarios/core/02-background-run-visibility.md",
+    "scenarios/sources/trained-assist-agent/docs/user-scenarios/core/02-stop-and-supplement.md",
+    "scenarios/sources/trained-assist-agent/docs/user-scenarios/core/03-web-session-log-views.md",
+    "scenarios/sources/trained-assist-agent/docs/user-scenarios/core/04-durable-plan-artifacts.md",
+    "scenarios/sources/trained-assist-agent/docs/user-scenarios/core/04-durable-wait-latency.md",
+    "scenarios/sources/trained-assist-agent/docs/user-scenarios/core/05-web-session-durability.md",
+    "scenarios/sources/trained-assist-agent/docs/user-scenarios/core/06-tool-platform-keys.md",
+    "scenarios/sources/trained-assist-agent/docs/user-scenarios/engineering/01-development-playbook.md",
+    "scenarios/sources/trained-assist-agent/docs/user-scenarios/engineering/02-custom-playbook-authoring.md",
+    "scenarios/sources/trained-assist-agent/docs/user-scenarios/engineering/03-credential-reachability.md",
+    "scenarios/sources/trained-assist-agent/docs/user-scenarios/engineering/03-playbook-guide-mode.md",
+    "scenarios/sources/trained-assist-agent/docs/user-scenarios/exhibition/01-exhibition-catalog-to-sales-site.md",
+    "scenarios/sources/trained-assist-agent/docs/user-scenarios/freelance/01-freelance-project-spec.md",
+    "scenarios/sources/trained-assist-agent/docs/user-scenarios/recruiter/01-full-end-to-end.md",
+    "scenarios/sources/trained-assist-agent/docs/user-scenarios/recruiter/02-ats-setup-and-scoring.md",
+    "scenarios/sources/trained-assist-agent/docs/user-scenarios/recruiter/03-response-regen.md",
+    "scenarios/sources/trained-assist-agent/docs/user-scenarios/recruiter/04-cold-search.md",
+    "scenarios/sources/trained-assist-agent/docs/user-scenarios/recruiter/05-vacancy-switch.md",
+    "scenarios/sources/trained-assist-agent/docs/user-scenarios/recruiter/06-hh-reconnect.md",
+    "scenarios/sources/trained-assist-agent/docs/user-scenarios/speech/01-speech-transcribe.md",
+    "scenarios/sources/trained-assist-agent/docs/user-scenarios/speech/02-requirements-flags.md",
+    "scenarios/sources/trained-assist-agent/docs/user-scenarios/speech/03-proposal-design.md",
+    "scenarios/sources/trained-assist-hh-skill/docs/user-scenarios/README.md",
+    "scenarios/sources/trained-assist-hh-skill/docs/user-scenarios/recruiting/01-cold-search-to-review-page.md",
+    "scenarios/sources/trained-assist-hh-skill/docs/user-scenarios/recruiting/02-ats-config-to-scored-responses.md",
+    "scenarios/sources/trained-assist-llm-ladder/docs/user-scenarios/ladder/sticky-rung-per-conversation.md",
+    "scenarios/sources/trained-assist-tg-bot/docs/user-stories/CURRENT-STATE.md",
+    "scenarios/sources/trained-assist-tg-bot/docs/user-stories/KNOWN-BUGS-2026-09-22.md",
+    "scenarios/sources/trained-assist-tg-bot/docs/user-stories/README.md",
+    "scenarios/sources/trained-assist-web/docs/ACCEPTANCE-TESTS.md",
+    "scenarios/sources/trained-assist-web/test/ui-reconnect-integrity.md",
+    "scripts/inventory/assert-no-credential-values.js",
+    "scripts/inventory/coverage.test.mjs",
+    "scripts/inventory/regenerate.mjs",
+    "stories/API.md",
+    "stories/FAST-REPLIES.md",
+    "stories/LATER.md",
+    "stories/OPERATOR.md",
+    "stories/PROBES.md",
+    "stories/README.md",
+    "stories/TRACEABILITY.md",
+    "stories/USER.md",
+    "tools/repo-context/.gitignore",
+    "tools/repo-context/map.py",
+    "tools/repo-context/package.json",
+    "trained-agent-architecture_claude_user_stories_2026-09-30-1838.md",
+    "trained-agent-architecture_claude_user_stories_2026-09-30_1851.md"
+  ],
+  "inventory": [
+    {
+      "path": ".github/workflows/ci-fix-cleanup.yml",
+      "bytes": 531
+    },
+    {
+      "path": ".github/workflows/ci.yml",
+      "bytes": 1203
+    },
+    {
+      "path": ".github/workflows/coverage-drift.yml",
+      "bytes": 11620
+    },
+    {
+      "path": ".github/workflows/pr-autofix.yml",
+      "bytes": 1283
+    },
+    {
+      "path": ".github/workflows/repo-context.yml",
+      "bytes": 2886
+    },
+    {
+      "path": ".github/workflows/stories-check.yml",
+      "bytes": 668
+    },
+    {
+      "path": ".gitignore",
+      "bytes": 297
+    },
+    {
+      "path": ".repo-context/.gitignore",
+      "bytes": 8
+    },
+    {
+      "path": ".repo-context/repomix.config.json",
+      "bytes": 947
+    },
+    {
+      "path": "ACCEPTANCE-CHECKLIST.md",
+      "bytes": 19313
+    },
+    {
+      "path": "AGENT-RUNNER-DATA-PERSISTENCE-IMPLEMENTATION.md",
+      "bytes": 25252
+    },
+    {
+      "path": "AGENTS.md",
+      "bytes": 913
+    },
+    {
+      "path": "ARCHITECTURE.md",
+      "bytes": 74756
+    },
+    {
+      "path": "ARCHITECTURE_claude-opus-5-5_2026-09-30-1848.md",
+      "bytes": 19687
+    },
+    {
+      "path": "ARCHITECTURE_claude_2026-09-30_1926.md",
+      "bytes": 31426
+    },
+    {
+      "path": "ARCHITECTURE_mimo_review_2026-09-30.md",
+      "bytes": 34053
+    },
+    {
+      "path": "CAPABILITY-CATALOG-AND-FAST-REPLIES.md",
+      "bytes": 13689
+    },
+    {
+      "path": "CONVERSATIONAL-SESSION-CONTRACT.md",
+      "bytes": 34060
+    },
+    {
+      "path": "DECISIONS.md",
+      "bytes": 5784
+    },
+    {
+      "path": "ENGINEERING-APPROACH.md",
+      "bytes": 10134
+    },
+    {
+      "path": "EXTERNAL-INTEGRATION-GATE.md",
+      "bytes": 6374
+    },
+    {
+      "path": "IMPLEMENTATION-AND-INTEGRATION-PLAN.md",
+      "bytes": 52754
+    },
+    {
+      "path": "INTERACTIVE-EXECUTION-AND-USER-INPUT.md",
+      "bytes": 19343
+    },
+    {
+      "path": "MODEL-GATEWAY-AND-COSTS.md",
+      "bytes": 3722
+    },
+    {
+      "path": "OBSERVABILITY-AND-ERROR-CONTRACT.md",
+      "bytes": 12280
+    },
+    {
+      "path": "PLAYBOOKS-VS-GETTING-THINGS-DONE-BOUNDARIES.md",
+      "bytes": 38225
+    },
+    {
+      "path": "README.md",
+      "bytes": 14799
+    },
+    {
+      "path": "REVIEW-WITH-REAL-PLAYBOOKS.md",
+      "bytes": 27110
+    },
+    {
+      "path": "SANDBOX.md",
+      "bytes": 38840
+    },
+    {
+      "path": "SERVERLESS-AGENT-API.md",
+      "bytes": 10677
+    },
+    {
+      "path": "SYSTEM-ERROR-WATCHER.md",
+      "bytes": 9995
+    },
+    {
+      "path": "TASK-ROUTER-AND-MCP.md",
+      "bytes": 48951
+    },
+    {
+      "path": "TASK-STORE-SCHEMA-V1.md",
+      "bytes": 78349
+    },
+    {
+      "path": "TERMINOLOGY.md",
+      "bytes": 13334
+    },
+    {
+      "path": "TG-AND-WEB-INTERACTION-REFACTORING-PLAN.md",
+      "bytes": 21399
+    },
+    {
+      "path": "TOOLING-RESEARCH-AND-VM-PILOTS.md",
+      "bytes": 29557
+    },
+    {
+      "path": "USER-TASK-IDS-AND-REPORTING.md",
+      "bytes": 25971
+    },
+    {
+      "path": "audits/CODE-BASELINE.md",
+      "bytes": 13176
+    },
+    {
+      "path": "audits/LEGACY-LEARNINGS-TRAINED-ASSIST-AGENT-2026-09-30.md",
+      "bytes": 10224
+    },
+    {
+      "path": "audits/TG-BOT-RESUMABLE-CODE-AND-WHAT-TO-REVIEW.md",
+      "bytes": 26100
+    },
+    {
+      "path": "audits/USER-STORIES-CONSISTENCY-AUDIT-2026-09-30.md",
+      "bytes": 9558
+    },
+    {
+      "path": "checklist.md",
+      "bytes": 785
+    },
+    {
+      "path": "contracts/README.md",
+      "bytes": 38271
+    },
+    {
+      "path": "docs/inventory/README.md",
+      "bytes": 2472
+    },
+    {
+      "path": "docs/inventory/repo-coverage.json",
+      "bytes": 38056
+    },
+    {
+      "path": "docs/inventory/repo-coverage.md",
+      "bytes": 21497
+    },
+    {
+      "path": "docs/inventory/repo-coverage.stable.json",
+      "bytes": 38142
+    },
+    {
+      "path": "eval/fast-replies/CORPUS-VERSIONING-AND-BASELINE-EVAL.md",
+      "bytes": 14256
+    },
+    {
+      "path": "eval/fast-replies/anchor-review.v1.jsonl",
+      "bytes": 100099
+    },
+    {
+      "path": "eval/fast-replies/anchors.external.v1.jsonl",
+      "bytes": 97308
+    },
+    {
+      "path": "eval/fast-replies/check.py",
+      "bytes": 10400
+    },
+    {
+      "path": "eval/fast-replies/corpus.manifest.json",
+      "bytes": 4656
+    },
+    {
+      "path": "eval/fast-replies/decisions/legacy-shadow-baseline.v1.jsonl",
+      "bytes": 16900
+    },
+    {
+      "path": "eval/fast-replies/dialogs.v1.jsonl",
+      "bytes": 21666
+    },
+    {
+      "path": "eval/fast-replies/extract_sanitized_requests.py",
+      "bytes": 6256
+    },
+    {
+      "path": "eval/fast-replies/fault-scenarios.v1.json",
+      "bytes": 6451
+    },
+    {
+      "path": "eval/fast-replies/fixtures/long-memo.txt",
+      "bytes": 10048
+    },
+    {
+      "path": "eval/fast-replies/fixtures/memo.txt",
+      "bytes": 1884
+    },
+    {
+      "path": "eval/fast-replies/fixtures/newsletter-with-mid-constraint.txt",
+      "bytes": 11184
+    },
+    {
+      "path": "eval/fast-replies/fixtures/raw-export.planted-pii.sample.jsonl",
+      "bytes": 2191
+    },
+    {
+      "path": "eval/fast-replies/fixtures/session-research-halfway.md",
+      "bytes": 486
+    },
+    {
+      "path": "eval/fast-replies/fixtures/tasks-2026-09-29.json",
+      "bytes": 634
+    },
+    {
+      "path": "eval/fast-replies/harness.py",
+      "bytes": 21358
+    },
+    {
+      "path": "eval/fast-replies/live_free_smoke.py",
+      "bytes": 8866
+    },
+    {
+      "path": "eval/fast-replies/reports/legacy-shadow-baseline.v1.md",
+      "bytes": 6004
+    },
+    {
+      "path": "eval/fast-replies/run_eval.py",
+      "bytes": 10344
+    },
+    {
+      "path": "eval/fast-replies/selfcheck.py",
+      "bytes": 9924
+    },
+    {
+      "path": "eval/fast-replies/verify_anchors.py",
+      "bytes": 5420
+    },
+    {
+      "path": "pilots/p-db/.gitignore",
+      "bytes": 56
+    },
+    {
+      "path": "pilots/p-db/CLOUD-SMOKE.md",
+      "bytes": 31250
+    },
+    {
+      "path": "pilots/p-db/COMPARISON.md",
+      "bytes": 16289
+    },
+    {
+      "path": "pilots/p-db/SCENARIO.md",
+      "bytes": 4000
+    },
+    {
+      "path": "pilots/p-db/cf-workflows/.gitignore",
+      "bytes": 98
+    },
+    {
+      "path": "pilots/p-db/cf-workflows/RESULTS.md",
+      "bytes": 26183
+    },
+    {
+      "path": "pilots/p-db/cf-workflows/cloud/cloud-run.sh",
+      "bytes": 15514
+    },
+    {
+      "path": "pilots/p-db/cf-workflows/cloud/deploy-wake-probe.sh",
+      "bytes": 12849
+    },
+    {
+      "path": "pilots/p-db/cf-workflows/cloud/evidence-c1-instance.txt",
+      "bytes": 9524
+    },
+    {
+      "path": "pilots/p-db/cf-workflows/cloud/evidence-c2-instance.txt",
+      "bytes": 7414
+    },
+    {
+      "path": "pilots/p-db/cf-workflows/cloud/evidence-c2b-instance.txt",
+      "bytes": 3992
+    },
+    {
+      "path": "pilots/p-db/cf-workflows/cloud/evidence-c3-instance.txt",
+      "bytes": 7144
+    },
+    {
+      "path": "pilots/p-db/cf-workflows/cloud/evidence-d1-status.json",
+      "bytes": 73798
+    },
+    {
+      "path": "pilots/p-db/cf-workflows/cloud/evidence-instances-list.txt",
+      "bytes": 24694
+    },
+    {
+      "path": "pilots/p-db/cf-workflows/cloud/evidence-probe-instance-1.txt",
+      "bytes": 4137
+    },
+    {
+      "path": "pilots/p-db/cf-workflows/cloud/evidence-probe-instance-2.txt",
+      "bytes": 3956
+    },
+    {
+      "path": "pilots/p-db/cf-workflows/cloud/evidence-probe-instance-3.txt",
+      "bytes": 2372
+    },
+    {
+      "path": "pilots/p-db/cf-workflows/cloud/evidence-probe-instance-4.txt",
+      "bytes": 3956
+    },
+    {
+      "path": "pilots/p-db/cf-workflows/cloud/evidence-probe-instance-5.txt",
+      "bytes": 4137
+    },
+    {
+      "path": "pilots/p-db/cf-workflows/cloud/evidence-probe-instance-6.txt",
+      "bytes": 3956
+    },
+    {
+      "path": "pilots/p-db/cf-workflows/cloud/evidence-probe-tail-runs.jsonl",
+      "bytes": 3588
+    },
+    {
+      "path": "pilots/p-db/cf-workflows/cloud/evidence-tail.jsonl",
+      "bytes": 1319557
+    },
+    {
+      "path": "pilots/p-db/cf-workflows/cloud/probe-wake.results.json",
+      "bytes": 8683
+    },
+    {
+      "path": "pilots/p-db/cf-workflows/cloud/results.cloud.json",
+      "bytes": 4131
+    },
+    {
+      "path": "pilots/p-db/cf-workflows/cloud/wrangler.jsonc",
+      "bytes": 587
+    },
+    {
+      "path": "pilots/p-db/cf-workflows/lib.sh",
+      "bytes": 2992
+    },
+    {
+      "path": "pilots/p-db/cf-workflows/package.json",
+      "bytes": 114
+    },
+    {
+      "path": "pilots/p-db/cf-workflows/results.json",
+      "bytes": 13356
+    },
+    {
+      "path": "pilots/p-db/cf-workflows/run.sh",
+      "bytes": 22017
+    },
+    {
+      "path": "pilots/p-db/cf-workflows/src/ids.ts",
+      "bytes": 1573
+    },
+    {
+      "path": "pilots/p-db/cf-workflows/src/index.ts",
+      "bytes": 5574
+    },
+    {
+      "path": "pilots/p-db/cf-workflows/src/plan.ts",
+      "bytes": 9416
+    },
+    {
+      "path": "pilots/p-db/cf-workflows/src/port.ts",
+      "bytes": 8743
+    },
+    {
+      "path": "pilots/p-db/cf-workflows/src/taskstore.ts",
+      "bytes": 26607
+    },
+    {
+      "path": "pilots/p-db/cf-workflows/src/version.ts",
+      "bytes": 376
+    },
+    {
+      "path": "pilots/p-db/cf-workflows/wrangler.jsonc",
+      "bytes": 333
+    },
+    {
+      "path": "pilots/p-db/dbos/.gitignore",
+      "bytes": 34
+    },
+    {
+      "path": "pilots/p-db/dbos/RESULTS.md",
+      "bytes": 20211
+    },
+    {
+      "path": "pilots/p-db/dbos/package.json",
+      "bytes": 282
+    },
+    {
+      "path": "pilots/p-db/dbos/results.json",
+      "bytes": 8848
+    },
+    {
+      "path": "pilots/p-db/dbos/run.sh",
+      "bytes": 1266
+    },
+    {
+      "path": "pilots/p-db/dbos/src/driver.ts",
+      "bytes": 15426
+    },
+    {
+      "path": "pilots/p-db/dbos/src/executor.ts",
+      "bytes": 798
+    },
+    {
+      "path": "pilots/p-db/dbos/src/port.ts",
+      "bytes": 2860
+    },
+    {
+      "path": "pilots/p-db/dbos/src/taskstore.ts",
+      "bytes": 4953
+    },
+    {
+      "path": "pilots/p-db/dbos/src/workflow.ts",
+      "bytes": 2480
+    },
+    {
+      "path": "pilots/p-db/prod-plans/.gitignore",
+      "bytes": 60
+    },
+    {
+      "path": "pilots/p-db/prod-plans/RESULTS.md",
+      "bytes": 20213
+    },
+    {
+      "path": "pilots/p-db/prod-plans/executor.js",
+      "bytes": 2683
+    },
+    {
+      "path": "pilots/p-db/prod-plans/port.js",
+      "bytes": 4522
+    },
+    {
+      "path": "pilots/p-db/prod-plans/results.json",
+      "bytes": 9366
+    },
+    {
+      "path": "pilots/p-db/prod-plans/run.sh",
+      "bytes": 1513
+    },
+    {
+      "path": "pilots/p-db/prod-plans/scenario.js",
+      "bytes": 13238
+    },
+    {
+      "path": "pilots/p-db/prod-plans/steps.js",
+      "bytes": 4961
+    },
+    {
+      "path": "pilots/p-db/prod-plans/t6-fencing.js",
+      "bytes": 2779
+    },
+    {
+      "path": "pilots/p-db/restate/.gitignore",
+      "bytes": 64
+    },
+    {
+      "path": "pilots/p-db/restate/RESULTS.md",
+      "bytes": 17860
+    },
+    {
+      "path": "pilots/p-db/restate/package.json",
+      "bytes": 217
+    },
+    {
+      "path": "pilots/p-db/restate/restate.toml",
+      "bytes": 683
+    },
+    {
+      "path": "pilots/p-db/restate/results.json",
+      "bytes": 6431
+    },
+    {
+      "path": "pilots/p-db/restate/run.sh",
+      "bytes": 760
+    },
+    {
+      "path": "pilots/p-db/restate/src/pilot.js",
+      "bytes": 14404
+    },
+    {
+      "path": "pilots/p-db/restate/src/port.js",
+      "bytes": 3217
+    },
+    {
+      "path": "pilots/p-db/restate/src/service.js",
+      "bytes": 4013
+    },
+    {
+      "path": "pilots/p-db/restate/src/taskstore.js",
+      "bytes": 4703
+    },
+    {
+      "path": "research/FAST-PATH-RESEARCH-2026-10-02.md",
+      "bytes": 30657
+    },
+    {
+      "path": "research/GATEWAY-BOUNDARY-RESEARCH-2026-10-02.md",
+      "bytes": 25541
+    },
+    {
+      "path": "runtime/EXECUTION-RUNTIME.md",
+      "bytes": 10723
+    },
+    {
+      "path": "scenarios/IMPORT-MANIFEST.json",
+      "bytes": 20634
+    },
+    {
+      "path": "scenarios/README.md",
+      "bytes": 13371
+    },
+    {
+      "path": "scenarios/interaction/run-conflict-explicit-choice.md",
+      "bytes": 20991
+    },
+    {
+      "path": "scenarios/sources/software-engineering-playbooks/docs/user-scenarios/ci/cloud-test-run.md",
+      "bytes": 9199
+    },
+    {
+      "path": "scenarios/sources/software-engineering-playbooks/docs/user-scenarios/playbooks/skill-tool.context.md",
+      "bytes": 11761
+    },
+    {
+      "path": "scenarios/sources/software-engineering-playbooks/docs/user-scenarios/playbooks/skill-tool.md",
+      "bytes": 8833
+    },
+    {
+      "path": "scenarios/sources/software-engineering-playbooks/docs/user-scenarios/playbooks/skill-tool.proposal.md",
+      "bytes": 13703
+    },
+    {
+      "path": "scenarios/sources/software-engineering-playbooks/docs/user-scenarios/playbooks/skill-tool.requirements.md",
+      "bytes": 6149
+    },
+    {
+      "path": "scenarios/sources/trained-assist-agent/docs/user-scenarios/GOALS.md",
+      "bytes": 3134
+    },
+    {
+      "path": "scenarios/sources/trained-assist-agent/docs/user-scenarios/README.md",
+      "bytes": 5278
+    },
+    {
+      "path": "scenarios/sources/trained-assist-agent/docs/user-scenarios/core/01-channel-concurrency.md",
+      "bytes": 3146
+    },
+    {
+      "path": "scenarios/sources/trained-assist-agent/docs/user-scenarios/core/02-background-run-visibility.md",
+      "bytes": 25952
+    },
+    {
+      "path": "scenarios/sources/trained-assist-agent/docs/user-scenarios/core/02-stop-and-supplement.md",
+      "bytes": 41478
+    },
+    {
+      "path": "scenarios/sources/trained-assist-agent/docs/user-scenarios/core/03-web-session-log-views.md",
+      "bytes": 14582
+    },
+    {
+      "path": "scenarios/sources/trained-assist-agent/docs/user-scenarios/core/04-durable-plan-artifacts.md",
+      "bytes": 3166
+    },
+    {
+      "path": "scenarios/sources/trained-assist-agent/docs/user-scenarios/core/04-durable-wait-latency.md",
+      "bytes": 17030
+    },
+    {
+      "path": "scenarios/sources/trained-assist-agent/docs/user-scenarios/core/05-web-session-durability.md",
+      "bytes": 6574
+    },
+    {
+      "path": "scenarios/sources/trained-assist-agent/docs/user-scenarios/core/06-tool-platform-keys.md",
+      "bytes": 3904
+    },
+    {
+      "path": "scenarios/sources/trained-assist-agent/docs/user-scenarios/engineering/01-development-playbook.md",
+      "bytes": 32969
+    },
+    {
+      "path": "scenarios/sources/trained-assist-agent/docs/user-scenarios/engineering/02-custom-playbook-authoring.md",
+      "bytes": 8870
+    },
+    {
+      "path": "scenarios/sources/trained-assist-agent/docs/user-scenarios/engineering/03-credential-reachability.md",
+      "bytes": 7338
+    },
+    {
+      "path": "scenarios/sources/trained-assist-agent/docs/user-scenarios/engineering/03-playbook-guide-mode.md",
+      "bytes": 9720
+    },
+    {
+      "path": "scenarios/sources/trained-assist-agent/docs/user-scenarios/exhibition/01-exhibition-catalog-to-sales-site.md",
+      "bytes": 19311
+    },
+    {
+      "path": "scenarios/sources/trained-assist-agent/docs/user-scenarios/freelance/01-freelance-project-spec.md",
+      "bytes": 18433
+    },
+    {
+      "path": "scenarios/sources/trained-assist-agent/docs/user-scenarios/recruiter/01-full-end-to-end.md",
+      "bytes": 8174
+    },
+    {
+      "path": "scenarios/sources/trained-assist-agent/docs/user-scenarios/recruiter/02-ats-setup-and-scoring.md",
+      "bytes": 5766
+    },
+    {
+      "path": "scenarios/sources/trained-assist-agent/docs/user-scenarios/recruiter/03-response-regen.md",
+      "bytes": 6235
+    },
+    {
+      "path": "scenarios/sources/trained-assist-agent/docs/user-scenarios/recruiter/04-cold-search.md",
+      "bytes": 6567
+    },
+    {
+      "path": "scenarios/sources/trained-assist-agent/docs/user-scenarios/recruiter/05-vacancy-switch.md",
+      "bytes": 4291
+    },
+    {
+      "path": "scenarios/sources/trained-assist-agent/docs/user-scenarios/recruiter/06-hh-reconnect.md",
+      "bytes": 6041
+    },
+    {
+      "path": "scenarios/sources/trained-assist-agent/docs/user-scenarios/speech/01-speech-transcribe.md",
+      "bytes": 18739
+    },
+    {
+      "path": "scenarios/sources/trained-assist-agent/docs/user-scenarios/speech/02-requirements-flags.md",
+      "bytes": 13728
+    },
+    {
+      "path": "scenarios/sources/trained-assist-agent/docs/user-scenarios/speech/03-proposal-design.md",
+      "bytes": 35903
+    },
+    {
+      "path": "scenarios/sources/trained-assist-hh-skill/docs/user-scenarios/README.md",
+      "bytes": 1323
+    },
+    {
+      "path": "scenarios/sources/trained-assist-hh-skill/docs/user-scenarios/recruiting/01-cold-search-to-review-page.md",
+      "bytes": 7561
+    },
+    {
+      "path": "scenarios/sources/trained-assist-hh-skill/docs/user-scenarios/recruiting/02-ats-config-to-scored-responses.md",
+      "bytes": 5467
+    },
+    {
+      "path": "scenarios/sources/trained-assist-llm-ladder/docs/user-scenarios/ladder/sticky-rung-per-conversation.md",
+      "bytes": 7178
+    },
+    {
+      "path": "scenarios/sources/trained-assist-tg-bot/docs/user-stories/CURRENT-STATE.md",
+      "bytes": 54803
+    },
+    {
+      "path": "scenarios/sources/trained-assist-tg-bot/docs/user-stories/KNOWN-BUGS-2026-09-22.md",
+      "bytes": 17803
+    },
+    {
+      "path": "scenarios/sources/trained-assist-tg-bot/docs/user-stories/README.md",
+      "bytes": 10117
+    },
+    {
+      "path": "scenarios/sources/trained-assist-web/docs/ACCEPTANCE-TESTS.md",
+      "bytes": 4783
+    },
+    {
+      "path": "scenarios/sources/trained-assist-web/test/ui-reconnect-integrity.md",
+      "bytes": 2898
+    },
+    {
+      "path": "scripts/inventory/assert-no-credential-values.js",
+      "bytes": 2295
+    },
+    {
+      "path": "scripts/inventory/coverage.test.mjs",
+      "bytes": 3844
+    },
+    {
+      "path": "scripts/inventory/regenerate.mjs",
+      "bytes": 3644
+    },
+    {
+      "path": "stories/API.md",
+      "bytes": 14453
+    },
+    {
+      "path": "stories/FAST-REPLIES.md",
+      "bytes": 8936
+    },
+    {
+      "path": "stories/LATER.md",
+      "bytes": 5010
+    },
+    {
+      "path": "stories/OPERATOR.md",
+      "bytes": 10753
+    },
+    {
+      "path": "stories/PROBES.md",
+      "bytes": 14052
+    },
+    {
+      "path": "stories/README.md",
+      "bytes": 12017
+    },
+    {
+      "path": "stories/TRACEABILITY.md",
+      "bytes": 7383
+    },
+    {
+      "path": "stories/USER.md",
+      "bytes": 28505
+    },
+    {
+      "path": "tools/repo-context/.gitignore",
+      "bytes": 14
+    },
+    {
+      "path": "tools/repo-context/map.py",
+      "bytes": 4508
+    },
+    {
+      "path": "tools/repo-context/package.json",
+      "bytes": 198
+    },
+    {
+      "path": "trained-agent-architecture_claude_user_stories_2026-09-30-1838.md",
+      "bytes": 23303
+    },
+    {
+      "path": "trained-agent-architecture_claude_user_stories_2026-09-30_1851.md",
+      "bytes": 29589
+    }
+  ],
+  "configSha256": "64d2721ad9bebf0ed6a485851dd01e67456d14bb259e2c643d7175027ba8be4a",
+  "packedPaths": [
+    ".github/workflows/ci-fix-cleanup.yml",
+    ".github/workflows/ci.yml",
+    ".github/workflows/coverage-drift.yml",
+    ".github/workflows/pr-autofix.yml",
+    ".github/workflows/repo-context.yml",
+    ".github/workflows/stories-check.yml",
+    ".repo-context/repomix.config.json",
+    "eval/fast-replies/check.py",
+    "eval/fast-replies/extract_sanitized_requests.py",
+    "eval/fast-replies/harness.py",
+    "eval/fast-replies/live_free_smoke.py",
+    "eval/fast-replies/run_eval.py",
+    "eval/fast-replies/selfcheck.py",
+    "eval/fast-replies/verify_anchors.py",
+    "pilots/p-db/cf-workflows/cloud/cloud-run.sh",
+    "pilots/p-db/cf-workflows/cloud/deploy-wake-probe.sh",
+    "pilots/p-db/cf-workflows/src/ids.ts",
+    "pilots/p-db/cf-workflows/src/index.ts",
+    "pilots/p-db/cf-workflows/src/plan.ts",
+    "pilots/p-db/cf-workflows/src/port.ts",
+    "pilots/p-db/cf-workflows/src/taskstore.ts",
+    "pilots/p-db/cf-workflows/src/version.ts",
+    "pilots/p-db/cf-workflows/lib.sh",
+    "pilots/p-db/cf-workflows/package.json",
+    "pilots/p-db/cf-workflows/run.sh",
+    "pilots/p-db/dbos/src/driver.ts",
+    "pilots/p-db/dbos/src/executor.ts",
+    "pilots/p-db/dbos/src/port.ts",
+    "pilots/p-db/dbos/src/taskstore.ts",
+    "pilots/p-db/dbos/src/workflow.ts",
+    "pilots/p-db/dbos/package.json",
+    "pilots/p-db/dbos/run.sh",
+    "pilots/p-db/prod-plans/executor.js",
+    "pilots/p-db/prod-plans/port.js",
+    "pilots/p-db/prod-plans/run.sh",
+    "pilots/p-db/prod-plans/scenario.js",
+    "pilots/p-db/prod-plans/steps.js",
+    "pilots/p-db/prod-plans/t6-fencing.js",
+    "pilots/p-db/restate/src/pilot.js",
+    "pilots/p-db/restate/src/port.js",
+    "pilots/p-db/restate/src/service.js",
+    "pilots/p-db/restate/src/taskstore.js",
+    "pilots/p-db/restate/package.json",
+    "pilots/p-db/restate/run.sh",
+    "scripts/inventory/assert-no-credential-values.js",
+    "scripts/inventory/coverage.test.mjs",
+    "scripts/inventory/regenerate.mjs",
+    "tools/repo-context/map.py",
+    "tools/repo-context/package.json",
+    "ARCHITECTURE.md",
+    "ENGINEERING-APPROACH.md",
+    "README.md"
+  ],
+  "packScope": "repomix.config.json allowlist; Markdown is not AST-compressed",
+  "files": {
+    "REPO-MAP.md": {
+      "bytes": 8158,
+      "sha256": "d12e8fd7b138fa0d4c446218147b949d1e130dba47ee87788a29f679be137e98"
+    },
+    "repo-compressed.xml": {
+      "bytes": 249780,
+      "sha256": "aa7208035372bb54d71e07798ec644483d8ff9422d5f97fae6c9bbd4d5aec546"
+    }
+  }
+}
