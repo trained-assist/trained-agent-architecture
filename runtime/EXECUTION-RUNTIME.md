@@ -1,6 +1,6 @@
 # Agent Runner: граница для выделения из core
 
-Статус: актуальная граница Agent Runner · 30.09.2026.
+Статус: граница Agent Runner; сверка выделенной реализации · 03.10.2026.
 
 ## Названия
 
@@ -8,15 +8,23 @@
 
 Это разные сущности. Отдельного уникального инфраструктурного термина «агент внутри среды» не требуется: это agent process в agent clean room. Clean room может быть реализован без контейнера; свойства границы должны быть проверены для каждого движка и tool.
 
-## Что реально есть сейчас
+## Legacy baseline — состояние на 30.09.2026
 
 В core: src/agent-isolation.js (slot leases, ACL gates, env allowlist), src/runner/engine-isolation.js (spawn glue), run tokens/MCP bridge, локальные task queue и runners. Изоляция T0 опциональна; Codex и cwd вне профиля оставляют только allowlist/bridge, без run-as. Профиль/.agent-home постоянный. MCP servers работают как service user. Это не полный ephemeral clean room lifecycle и не самостоятельный межмашинный runtime API.
 
 Git worktree из software-engineering-playbooks — изоляция изменений кода. Его lifecycle не заменяет OS boundary агента. Текущие исходники и ограничения закреплены ссылками в [Code baseline](../audits/CODE-BASELINE.md).
 
+## Выделенная реализация — сверка 03.10.2026
+
+В [ai-agent-runner](https://github.com/trained-assist/ai-agent-runner) уже есть lifecycle/recovery, HTTP API, export/upload/snapshot и per-run MCP. В [control plane](https://github.com/trained-assist/trained-assist-control-plane) — admission/status/reporting/awaiting/Web и настоящий Runner adapter. Это greenfield-код, а не автоматически перенесённая legacy OS boundary.
+
+Проверено Runner main `4f4a0d1f540a26337e8a096d18f74b30f173ca62`: уникальный cwd создаётся API, OpenCode spawn остаётся service UID. Capabilities прямо объявляет `not_proven_service_uid_only`. Materialize пока mkdir/clone; export prune удаляет только перечисленные сохранённые outputs. Полный snapshot restore и sweep cwd/HOME/tmp не подтверждены. План работ: [#51 — OS isolation](https://github.com/trained-assist/ai-agent-runner/issues/51), [#52 — materialize/persist/sweep](https://github.com/trained-assist/ai-agent-runner/issues/52).
+
+Постоянные API daemon и VM остаются; завершение Run освобождает его процессы и ephemeral ресурсы после сохранения. Следующий прогон получает разрешённые durable refs в новой среде. При потере связи процесс не дублируется, sole copy не удаляется. [Актуальный путь own-API dogfood](../IMPLEMENTATION-AND-INTEGRATION-PLAN.md#новый-критический-путь-собственный-api--clean-room--результат--очистка).
+
 ## Рекомендация по репозиторию
 
-**Да, выделение runner оправдано**, но сначала фиксируем [C04/C05](../contracts/README.md), затем извлекаем компонент постепенно. Выбранный репозиторий: [trained-assist/ai-agent-runner](https://github.com/trained-assist/ai-agent-runner). Это место draft и будущего извлечения Runner; выделенная реализация не объявляется готовой. Прежнее предложение имени trained-assist-execution-runtime заменено. Контроль задач теперь распределён между Input/Output, Task Router и GTD по [общей архитектуре](../ARCHITECTURE.md).
+**Да, выделение runner оправдано**, но сначала фиксируем [C04/C05](../contracts/README.md), затем извлекаем компонент постепенно. Выбранный репозиторий: [trained-assist/ai-agent-runner](https://github.com/trained-assist/ai-agent-runner). Выделенная реализация Runner/API/storage/MCP уже существует; готовность отдельных частей и полной изоляции различаются (срез ниже). Прежнее предложение имени trained-assist-execution-runtime заменено. Контроль задач теперь распределён между Input/Output, Task Router и GTD по [общей архитектуре](../ARCHITECTURE.md).
 
 | Остаётся в core/control plane | Выходит в execution runtime | Живёт отдельно |
 |---|---|---|
@@ -36,7 +44,7 @@ Runner не решает, какой бизнес-результат нужен,
 - capabilities/health → supported engines, isolation modes, region, capacity, readiness.
 - reconcile → перечень фактических процессов/attempts и состояния восстановления для control plane.
 
-Transport выбирается позднее: сначала host-owned library/adapter в одном процессе, потом локальный IPC или authenticated HTTP для workers. Не обязательно вводить remote network API до появления второго worker.
+Текущий транспорт выделенного Runner — authenticated HTTP Serverless Agent API; control plane уже имеет RunnerApiAdapter. Внутренний вызов library допустим для тестов, но own-API dogfood и gateway integration проходят тот же публичный контракт.
 
 ## Этапы выделения
 
