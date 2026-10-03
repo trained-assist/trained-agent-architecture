@@ -190,6 +190,13 @@ VM — заменяемый исполнитель. Управляющее со�
 
 Приёмка: сетевой разрыв при живом агенте не создаёт новый Run; после выхода процесса диск остаётся доступным; повтор finalization не повторяет исполнение; разрешённый следующий Run видит прежние файлы и дополнительные инструкции; очистка до подтверждённого сохранения блокируется. Конкретные проверки — P03/P06/P07/P09/P30 в [плане реализации](IMPLEMENTATION-AND-INTEGRATION-PLAN.md).
 
+
+Уточнение границы «serverless» / clean room — 03.10.2026: заказчик и наши собственные клиенты используют одинаковый API-контракт. Канальные adapters обращаются к Task API control plane; control plane — к Serverless Agent API Runner. Прямой spawn движка из gateway, ручная запись в workspace и отдельный внутренний обход admission не являются целевым путём.
+
+Постоянный VM host, API daemon и supervisor не уничтожаются после каждого Run. Ephemeral ресурсы — engine и его process tree, per-run MCP, изоляционная identity/lease, cwd/HOME/tmp/config. После выхода engine финализация может продолжаться; полный sweep разрешён после verified persist обязательных outputs/checkpoints и согласованного retention. При ошибке storage sole copy сохраняется, cleanup остаётся pending. Отдельные статусы процесса, сохранения, очистки и доставки не подменяют друг друга.
+
+Факт реализации не выводится из термина: отдельный cwd не доказывает OS isolation; удаление объявленных export files не доказывает очистку всей среды. Приёмка полной границы — concurrent cross-run probes и crash/recover persist/sweep. Выявленные остатки: [Runner #51](https://github.com/trained-assist/ai-agent-runner/issues/51), [#52](https://github.com/trained-assist/ai-agent-runner/issues/52); единый own-API dogfood — [control-plane #23](https://github.com/trained-assist/trained-assist-control-plane/issues/23).
+
 ## 5. Разговорная сессия
 
 Статус: **Принято** (ревью Claude C3/C4/C6/C7). Детали контрактов — предложены; они зафиксированы документом [Контракт разговорной сессии](CONVERSATIONAL-SESSION-CONTRACT.md) (гейт M0, эпик #87 A3).
