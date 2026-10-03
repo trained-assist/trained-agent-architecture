@@ -7,7 +7,7 @@
 при повторном запуске — это проверяется selfcheck.py. Живой прогон на бесплатной
 модели — отдельный скрипт live_free_smoke.py и в CI не запускается.
 """
-import argparse, json, os, sys
+import argparse, os, sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import harness  # noqa: E402
