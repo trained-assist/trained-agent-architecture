@@ -193,6 +193,7 @@ Reporting не угадывает состояние по наличию отв�
 
 - Последний heartbeat устарел: показываем stale/«статус не подтверждён, проверяем», а не выдуманный running/failed.
 - Deadline превышен: технический watchdog сверяет фактическое состояние и создаёт structured outcome.
+- **Принято, но не начато — тоже имеет дедлайн.** Стадии `collecting`/`preparing`/`queued`/`handing_off` обязаны иметь `start_deadline_at` (колонка Task Store, не JSON); приём без него — дефект. Дедлайн сбрасывается в NULL при старте Run. Это закрывает класс «принятый вход без запуска, без границы ожидания» (репро — tg-bot 2026-10-04, arch#132 R1/R2; реализация — control-plane#33).
 - Outcome попадает в Output; тот решает report/follow-up по policy.
 - Связь с Reporting недоступна: UI сохраняет последний snapshot с временем и признаком stale.
 - Outcome есть, delivery pending/failed: пользователь всё равно видит состояние и сохранённый результат по userTaskId.
