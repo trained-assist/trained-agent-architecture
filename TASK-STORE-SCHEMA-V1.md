@@ -889,3 +889,85 @@ WHERE t.id = ?;
 | Эпик [#87](https://github.com/trained-assist/trained-agent-architecture/issues/87) A2 | Это задание; галочка A2 ставится после мержа этого файла в main |
 | Эпик [#11](https://github.com/trained-assist/trained-agent-architecture/issues/11) M0 | «Схема Task Store v1» — пункт M0; порядок этапов теперь только в плане этого репо |
 
+
+---
+
+## 6. Наблюдаемый принятый вход и согласованность (arch#132, Приоритеты 2–4)
+
+Дополнение к схеме v1 — то, что понадобилось, чтобы «принято, но дальше тишина»
+стало невозможным молча. Все изменения аддитивные (§5.0).
+
+### 6.1 `pending_inputs` — вход ДО создания задачи
+
+```sql
+CREATE TABLE pending_inputs (
+    batch_id         TEXT PRIMARY KEY,   -- id пакета накопителя (стабильный)
+    version          INTEGER NOT NULL,   -- версия контракта принятия
+    profile_id       TEXT NOT NULL,
+    channel          TEXT,               -- telegram | web | api | cron
+    conversation_id  TEXT,
+    audience_id      TEXT,               -- адрес доставки (INV-19)
+    destination_id   TEXT,
+    first_message_at INTEGER NOT NULL,   -- время ПЕРВОГО сообщения пакета
+    message_count    INTEGER NOT NULL DEFAULT 0,
+    prep_state       TEXT NOT NULL DEFAULT 'collecting'
+                     CHECK (prep_state IN ('collecting','preparing','ready','failed','admitted')),
+    deadline_at      INTEGER,            -- верхняя граница ожидания (NULL = не задана)
+    user_task_id     TEXT,               -- связь с задачей после admitTask
+    created_at       INTEGER NOT NULL,
+    updated_at       INTEGER NOT NULL,
+    CHECK (user_task_id IS NULL OR prep_state = 'admitted')
+);
+CREATE INDEX idx_pending_inputs_due ON pending_inputs(first_message_at) WHERE user_task_id IS NULL;
+```
+
+**Почему не `durable_tasks`:** заводить пользовательскую задачу на каждое сообщение только
+ради watchdog нельзя — это раздувает хранилище задачами без результата и без попыток.
+Ни одна существующая таблица не подходит: `durable_tasks` — задача с lifecycle,
+`awaiting_inputs` — ожидание ответа внутри задачи, `conversations` — диалог,
+`admission_principals` — права.
+
+**`first_message_at` никогда не перебивается новыми сообщениями.** Иначе активный чат
+постоянно подставлял бы свежие сообщения, и возраст самого старого непродвинувшегося
+ввода стал бы невидимым. Новые сообщения двигают только `message_count`/`updated_at`.
+
+### 6.2 `stuck_input_alerts` — один операторский алерт на инцидент
+
+```sql
+CREATE TABLE stuck_input_alerts (
+    incident_id   TEXT PRIMARY KEY,   -- 'task:<id>' | 'batch:<id>'
+    alerted_at    INTEGER NOT NULL,   -- первое обнаружение
+    last_seen_at  INTEGER,            -- последнее обнаружение
+    count         INTEGER NOT NULL DEFAULT 1
+);
+```
+
+Планировщик шлёт алерт на ПЕРВОЕ обнаружение; дальше инцидент только копит `count`.
+Иначе зависший вход шлёт тревогу на каждом проходе, и тревога перестаёт быть сигналом.
+
+### 6.3 `start_deadline_at` и миграционная политика
+
+`durable_tasks.start_deadline_at` (миграция 0008) — верхняя граница ожидания старта для
+стадий `collecting`/`preparing`/`queued`/`handing_off`. Заполняется при приёме
+(`DEFAULT_START_DEADLINE_MS`), сбрасывается в NULL при старте Run.
+
+**Политика для строк, созданных до 0008** (миграция 0010): дедлайн назначается от
+`updated_at`, а не от `now()` — возраст отражает реальное ожидание, а не искусственную
+задержку бэкфилла. Задачи, ждавшие дольше стандартной границы, сразу попадают в следующий
+проход детектора — это намеренно: тихий вход опаснее ложного срабатывания. Задачи вне
+pre-start не трогаются; дедлайн им неприменим.
+
+### 6.4 Атомарная граница старта
+
+`startRun` записывает попытку, событие `run_started` и сбрасывает `start_deadline_at`
+**одной транзакцией** (`db.batch`). До этого были три отдельных `.run()`: падение между
+ними оставляло задачу с попыткой, но с не сброшенным дедлайном — и watchdog видел
+«принято, но не начато» у задачи, которая уже идёт (ложное зависание навсегда).
+
+### 6.5 Дедуп доставки не ухудшает подтверждённое состояние
+
+`queueDelivery` идемпотентен по `(user_task_id, logical_message_id)`. Повтор не создаёт
+вторую доставку, но проекция `delivery_state` на задаче обновлялась всегда и возвращала
+задачу в `pending` даже после того, как та же доставка уже была `accepted`/`delivered`.
+Теперь подтверждённые состояния не трогаются: повтор может только начать доставку заново,
+но не отменять факт, что её уже приняли. Повтор после сбоя по-прежнему взводит `pending`.
