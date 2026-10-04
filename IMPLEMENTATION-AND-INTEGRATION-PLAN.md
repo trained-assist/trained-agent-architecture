@@ -93,13 +93,26 @@ Control plane после own-API работы продолжил fast-path: [#29
 | Materialize / snapshot | Runner #69, #52 closed: snapshot указывает на durable artifact bytes; checksum/path/owner guards до spawn, следующая попытка читает разрешённые refs | Проверить, что deploy Runner включает #69: merge main сам по себе не подтверждает установленную версию сервиса |
 | Fast-path | P16/P17/P20 в main | Не требуется для fixed-route API dogfood; самостоятельная приёмка корпуса/режимов/UX остаётся по карточкам |
 
-### Обновление evidence — 04.10.2026, 14:28 МСК
+### Обновление evidence — 04.10.2026, 16:30 МСК
 
 - [Control plane #32](https://github.com/trained-assist/trained-assist-control-plane/pull/32) смержен: snapshotId проходит public Task input → RunSpec → Runner. Report: Run A экспортировал, Run B прочитал SEED-42, 14/14. **Граница:** CP локальный, VM Runner/OpenCode настоящие; это не повтор deployed Cloudflare snapshot пути и не автоматический Git saveback.
 - [Runner #70](https://github.com/trained-assist/ai-agent-runner/pull/70) и [#71](https://github.com/trained-assist/ai-agent-runner/pull/71) смержены: исправлена гонка exit/stdio при resolveSlot. На VM2 два настоящих OpenCode разных uid одновременно, report 12/12; concurrency больше не невыполненный пункт.
 - [Architecture #131](https://github.com/trained-assist/trained-agent-architecture/pull/131) смержен: постоянный репозиторий профиля принят.
-- [Runner #72](https://github.com/trained-assist/ai-agent-runner/pull/72) **открыт**: независимый src/workspace, восемь методов + evaluate_workspace_cleanup; report 101 локальный тест, 485 passed/3 skipped всего. Это готовый кандидат для ревью, не подключённый lifecycle и не live Git/storage acceptance.
-- [Architecture #133](https://github.com/trained-assist/trained-agent-architecture/pull/133) **открыт**: уточнения workspace контракта. Статусы актуальны на этот срез; перед началом сверять PR, не дублировать текущую сессию.
+- [Runner #72](https://github.com/trained-assist/ai-agent-runner/pull/72) смержен (`743c7e4e`): независимый `src/workspace`, восемь методов + `evaluate_workspace_cleanup`; report 101 локальный тест, 485 passed/3 skipped всего. Это готовый кандидат для ревью, не подключённый lifecycle и не live Git/storage acceptance.
+- [Architecture #133](https://github.com/trained-assist/trained-agent-architecture/pull/133) смержен: уточнения workspace контракта (v0.4) — двенадцать уточнений в раздел «Постоянный пользовательский workspace».
+- [Control plane #33](https://github.com/trained-assist/trained-assist-control-plane/pull/33) смержен: дедлайн старта + детектор «принято, но не начато» (arch#132 R1–R5).
+- [Control plane #34](https://github.com/trained-assist/trained-assist-control-plane/pull/34) закрыт без мержа: add/add с #33 по `stuck-input-watchdog.ts`; работа поглощена #35.
+- [tg-bot #345](https://github.com/trained-assist/trained-assist-tg-bot/pull/345) закрыт без мержа: пересечение по `intake-buffer.js` с уже принятым решением.
+- [Agent #2095](https://github.com/trained-assist/trained-assist-agent/pull/2095) и [#2097](https://github.com/trained-assist/trained-assist-agent/pull/2097) смержены: прямые вызовы провайдера убраны из `media-vision`, `site-connector`, `intake-gate`, `llm-client`; `OPENROUTER_API_KEY` убран из реестра секретов. Issue [#2092](https://github.com/trained-assist/trained-assist-agent/issues/2092) закрыт.
+
+### Критический путь — 04.10.2026, 16:30 МСК
+
+1. ✅ **Закрепить текущий deploy и повторить короткий own-API smoke.** Runner `d20c274` (`vm2-final-cp23-r10`, cfg 12) + CP `ed65278d`. Smoke: 12/12 (два настоящих OpenCode одновременно, 47 с перекрытием), snapshot ref 14/14. **Закрыто.**
+2. ✅ **Закрыть concurrent OpenCode строку #51.** Гонка exit/stdio исправлена (#70), два настоящих OpenCode разных uid одновременно (#71, 12/12). **Закрыто.**
+3. 🔄 **Замкнуть постоянный workspace пользователя до переноса существующих профилей.** Контракт принят в [#131](https://github.com/trained-assist/trained-agent-architecture/pull/131), уточнён в #133 (v0.4). Модуль `src/workspace` реализован в [Runner #72](https://github.com/trained-assist/ai-agent-runner/pull/72) (8 методов, 101 тест). **Не сделано:** hooks H1–H5 не подключены к lifecycle Runner и control plane, живой прогон на private repo с настоящим Git API и object storage не выполнен, массовый импорт профилей не выполнялся. Перенос пользователей блокируется до интеграции и живой приёмки; разовый own-API dogfood не блокируется.
+4. ⬜ **Подключить только нужные первому пользователю capabilities.** Service capabilities — Cloudflare API с тонким MCP adapter на VM; run-local tools — в clean room. Решение и приёмка: [agent #2061](https://github.com/trained-assist/trained-assist-agent/issues/2061), communication [#2034](https://github.com/trained-assist/trained-assist-agent/issues/2034). Доменный UI и Agent Run вызывают одну реализацию; клики UI не создают агентскую сессию. Полный перенос всех MCP не блокирует запуск.
+5. ⬜ **Выбрать один реальный канал/сценарий и принять compatibility.** Sandbox Web либо API client, затем Telegram; проверить полный input/context, профиль/проект, статус/stop/continue, настоящее awaiting choice/form, результат и файл. Не переключать все каналы по зелёному transport test.
+6. ⬜ **Разрешённый cohort и rollback.** Только новые задачи идут новому owner, старые остаются legacy. Отдельное решение о переключении endpoint; данные/события читаются после rollback, mutation с неизвестным исходом не повторяется.
 
 ### Новый критический путь — подключить постоянное состояние и принять канал
 
