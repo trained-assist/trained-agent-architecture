@@ -365,7 +365,11 @@ userTaskId, gtdId, tenant/profile/audience и причинная связь пе
 
 MCP — интерфейс, а не монолитное ядро: локальный stdio-процесс на запуск, удалённый MCP-сервис, фиксированный вызов handler из Job и каталог возможностей. Схема «доменный скил — свой MCP-сервер в конфигурации запуска» **В проде ✅**. Готовность MCP измеряется, а не предполагается. Детали — [Router/MCP](TASK-ROUTER-AND-MCP.md).
 
-Runner загружает разрешённый snapshot пользовательских текстов и ссылок на artifacts; после Run экспортирует разрешённые изменения. Параллельные экспорты требуют версий и политики конфликтов. Логи Run хранятся отдельно от рабочего пространства пользователя.
+**Решение 04.10:** каждый профиль имеет связанный приватный Git repository постоянного workspace. В нём — текстовые файлы, папки и ссылки/manifest тяжёлых artifacts; bytes artifacts — в object storage, credentials — в Broker. Profile Workspace module владеет provisioning/binding и versioned publication; Runner получает snapshot с baseRevision и после Run передаёт разрешённый manifest изменений. Логи Run и engine resume state хранятся отдельно.
+
+Методы: ensure_profile_repository (новые пользователи), provision_existing_profile_repositories (batch ensure/import/verify), prepare_profile_workspace, sync_profile_workspace (явный pull/publish), publish_run_changes, get_workspace_publication, resolve_workspace_conflict и publish_workspace_resolution. Контракт, IDs, ownership и sandbox — [Запуск и сохранение данных](AGENT-RUNNER-DATA-PERSISTENCE-IMPLEMENTATION.md#постоянный-пользовательский-workspace--контракт-методов-04102026).
+
+Run не держит глобальный profile lock. Публикация использует base/run/current three-way merge и compare-and-swap Git head; конфликт сохраняется отдельно и не перезаписывает canonical state. Детерминированное разрешение первым; ограниченный resolver Agent Run создаёт проверяемый candidate, неоднозначность требует Awaiting user input. Force push и бесконечный AutoFix/GTD loop запрещены. Engine exit, publication и cleanup — разные статусы; cleanup не уничтожает единственную копию pending/conflict данных. Этот контракт принят для реализации, сквозная интеграция ещё требует evidence.
 
 Credentials имеют scopes shared/platform, private/user и replaceable-default; выбор через binding policy. Секреты не попадают в события и Ledger; Runner получает минимальный доступ. Правило прода «токен Cloudflare только у сервера, агент его не видит» **В проде ✅** — образец для остальных.
 
