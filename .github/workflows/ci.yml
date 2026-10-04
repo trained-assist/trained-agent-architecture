@@ -26,3 +26,18 @@ jobs:
     uses: trained-assist/pr-autofix/.github/workflows/devbaseline-callable.yml@v1.7.8
     with:
       mode: ci
+
+  # Архитектура — декларативные требования (владелец, 04.10.2026). Чеклисты (`- [ ]` /
+  # `- [x]`), TODO/FIXME и файлы чеклистов в репозитории запрещены: они протухают,
+  # расходятся с issues и плодят merge-конфликты между параллельными сессиями. Статус
+  # требований живёт в GitHub (Project «Trained Assist — Migration», issues).
+  no-checklists:
+    name: no-checklists
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Чеклисты и TODO запрещены в репозитории архитектуры
+        run: node --test scripts/inventory/no-checklists.test.mjs
