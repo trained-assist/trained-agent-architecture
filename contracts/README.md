@@ -143,7 +143,7 @@ LLM gateway управляет provider/model ladder, health, key rotation, prot
 
 Call context: `providerCallId, userTaskId?, runId?, stepId?, principalId, purpose, budgetRef, permittedCostClass, traceId`. Сервисные вызовы без task имеют явный system source. Каждый provider attempt получает запись outcome/usage/cost basis; stream usage может быть unknown, но не zero. Subscription usage, estimate и invoice amount различаются. Цены привязаны к timestamp/version. При исчерпании бюджета возвращается typed failure; технический retry не сбрасывает budget, каналы показывают одинаковую причину и допустимое продолжение.
 
-Streaming failover после начала ответа — отдельный сценарий: нельзя прозрачно приклеить второй независимый ответ. Ошибки ledger delivery не теряются: durable accounting outbox/reconciliation; режим fail-open/fail-closed при недоступном budget authority требует решения владельца.
+Streaming failover после начала ответа — отдельный сценарий: нельзя прозрачно приклеить второй независимый ответ. Ошибки ledger delivery не теряются: durable accounting outbox/reconciliation; режим fail-open/fail-closed при недоступном budget authority требует решения владельца. **Решение по умолчанию (arch#132 R5): fail-open с записью причины** — отказ бюджета/гейта не может молча заблокировать принятый вход; задача либо уходит исполнителю по детерминированному фолбэку, либо остаётся в явном ожидании с живой кнопкой запуска.
 
 **Сейчас:** llm-ladder Worker + D1 trace есть. Полная интеграция заявленного LLM Ledger, streaming cost и mandatory identity coverage этой проверкой не подтверждены.
 

@@ -66,13 +66,15 @@ Profile отсутствует у error с scope=profile → telemetry contract 
 
 Сбой log delivery: bounded retry и локальный spool, где доступен; overflow/dropped-count виден health signal. Логирование не должно бесконечно блокировать user path или занимать весь диск. Delivery guarantees определяются deployment backend, а не обещанием «ни одна ошибка никогда не потеряется». Ошибки транспорта самого error sink не порождают рекурсивный поток себя.
 
+**Централизованное хранение логов шлюза — обязательное требование эксплуатации, а не опция.** Локальный `console` воркера не является наблюдаемостью: при расследовании инцидента (tg-bot 2026-10-04) логов воркера не существовало — `logpush` не был настроен, и единственным следом оставались косвенные артефакты. Требование: структурированные логи шлюза/Input с ретеншном по классу из таблицы ниже + читаемый бэкенд (Logpush или аналог), иначе расследование инцидентов всегда вслепую.
+
 Первичный error state задачи и deterministic краткий ответ пользователю не ждут watcher. Watcher добавляет диагноз/обход/issue в связанной diagnostic Task.
 
 ## Основные события
 
 | Модуль | Минимальные события |
 |---|---|
-| Gateway/Input/media | received, durable accepted, upload/preparation state, queued, dispatch accepted/rejected |
+| Gateway/Input/media | received, durable accepted, upload/preparation state, queued, dispatch accepted/rejected, **stuck_input** |
 | Router/LLM | decision, needs_executor, schema invalid, timeout, escalation; model call correlation |
 | Runner/executors | starting, started, heartbeat summary, outcome, cancel requested/confirmed, lease lost |
 | Storage | snapshot resolved, export started/committed/failed, conflict, cleanup |
@@ -83,6 +85,12 @@ Profile отсутствует у error с scope=profile → telemetry contract 
 | Watcher | incident opened/updated, diagnosis submitted, suppression created/expired, issue receipt |
 
 События содержат transitions, IDs, timings и safe metadata. Не копируют каждый attachment/prompt в каждую запись. Error event при failed outcome имеет тот же causal context, что lifecycle event; они могут быть разными представлениями одного event envelope.
+
+### Метрика «принято, но не начато»
+
+Возраст самого старого принятого, но не начатого входа — обязательная метрика, а не опция. Считается детектором вне накопителя (arch#132 R3/R4; реализация — `sweepStuckAccepted` + `runStuckInputWatchdog`, control-plane#33): запрос идёт по индексу `idx_tasks_start_deadline`, сортировка по дедлайну. Порог — значение `start_deadline_at` по умолчанию; превышение = error event `intake.stuck_input` (stage, дедлайн, возраст) и факт для операторского алерта.
+
+Причина обязательности: единственные «часы» накопителя — его собственный таймер, а сломанный таймер не должен быть единственной причиной тишины в чате. Зелёный health при зависшем входе — дефект наблюдаемости, а не норма.
 
 ## TTL: предлагаемая стартовая политика
 
