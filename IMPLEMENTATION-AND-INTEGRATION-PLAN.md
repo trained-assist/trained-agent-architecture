@@ -1,6 +1,6 @@
 # План реализации и интеграции Trained Assist
 
-Draft v0.8 · 03.10.2026. Это документ implementation/integration: долговечная структура плана — решения владельца, путь интеграции, этапы, зависимости, общие правила приёмки, scope репозиториев и риски. Статус карточек и чек-листы ведутся в [Project «Trained Assist — Migration»](https://github.com/orgs/trained-assist/projects/1) и issues. Это не runtime GTD/checklist. Документ задаёт план, а не запускает инфраструктуру. Уже выполненные прогоны учитываются по ссылкам и границам evidence; migrations и production переключения требуют отдельной приёмки.
+Draft v0.9 · 04.10.2026. Это документ implementation/integration: долговечная структура плана — решения владельца, путь интеграции, этапы, зависимости, общие правила приёмки, scope репозиториев и риски. Статус карточек и чек-листы ведутся в [Project «Trained Assist — Migration»](https://github.com/orgs/trained-assist/projects/1) и issues. Это не runtime GTD/checklist. Документ задаёт план, а не запускает инфраструктуру. Уже выполненные прогоны учитываются по ссылкам и границам evidence; migrations и production переключения требуют отдельной приёмки.
 
 ## Решение владельца: новая реализация параллельно живому сервису
 
@@ -72,7 +72,38 @@ Org Project: **[Trained Assist — Migration](https://github.com/orgs/trained-as
 
 Это уточнение зависимостей, не переименование 33 карточек и не объявление их выполненными. Для первой интеграции части карточек можно выделять в малые PR; полная карточка Done только после всей её приёмки.
 
-## Срез реализации и критический путь — 03.10.2026
+## Актуальная приёмка и критический путь — 04.10.2026
+
+**Ближайшая цель own-API dogfood достигнута по отчёту исполнителя; повторять этапы среза 03.10 ниже не нужно.** Этот раздел имеет приоритет для текущего порядка работ. Отчёты не равны независимому повторному прогону и массовому production cutover.
+
+### Где остановилась работа
+
+Последний опубликованный результат Runner — [PR #69](https://github.com/trained-assist/ai-agent-runner/pull/69), смержен **04.10 03:49 МСК**: материализация refs/snapshot с проверкой владельца, пути, sha256/size и staging. [Итог #52](https://github.com/trained-assist/ai-agent-runner/issues/52#issuecomment-5975132790) снимает предшествующий СТОП по snapshot. По GitHub видно последнее завершённое действие; состояние/причину смерти локальной сессии этот аудит не устанавливает.
+
+Control plane после own-API работы продолжил fast-path: [#29](https://github.com/trained-assist/trained-assist-control-plane/pull/29) P16, [#30](https://github.com/trained-assist/trained-assist-control-plane/pull/30) P17, [#31](https://github.com/trained-assist/trained-assist-control-plane/pull/31) P20 (последний merge **04.10 06:20 МСК**). Поэтому «агент остановился» не означает незавершённый запуск ядра.
+
+### Что реально подтверждено
+
+| Контур | Evidence | Граница |
+|---|---|---|
+| Own API | Control plane #24–28 в main; [финальный report #23](https://github.com/trained-assist/trained-assist-control-plane/issues/23#issuecomment-5974803166) | Deployed Cloudflare → VM Runner → настоящий OpenCode free; настоящий engineText, пользовательский ответ отдельно |
+| Артефакты и teardown | Тот же report: answer.txt/index.html/report.md, sha256 совпал, ключа в URL нет; room/workspace/home/tmp отсутствуют после persist | Нельзя подменять этим проверку неизвестного набора domain tools |
+| Restart / unknown | startedCount=1, admissions 1→1 после restart; connection_lost = unknown без rerun; host ask durable wait/answer/continuation | Контролируемые сценарии отчёта, не обещание восстановления любой VM/потерянного диска |
+| OS boundary | [#51 evidence](https://github.com/trained-assist/ai-agent-runner/issues/51#issuecomment-5973258177): разные Unix uid, cross-run EACCES/EPERM, 81/81; последующие #59/#61–68 исправили VM-дефекты | В отчёте #51 строка «два настоящих OpenCode одновременно» осталась открыта. Более поздний #23 доказывает реальный engine, но не явно эту concurrent matrix |
+| Materialize / snapshot | Runner #69, #52 closed: snapshot указывает на durable artifact bytes; checksum/path/owner guards до spawn, следующая попытка читает разрешённые refs | Проверить, что deploy Runner включает #69: merge main сам по себе не подтверждает установленную версию сервиса |
+| Fast-path | P16/P17/P20 в main | Не требуется для fixed-route API dogfood; самостоятельная приёмка корпуса/режимов/UX остаётся по карточкам |
+
+### Новый критический путь — от принятого sandbox к использованию
+
+1. **Закрепить текущий deploy и повторить короткий own-API smoke.** Выбрать Runner release с #69 и соответствующий control-plane release, записать deployed SHA/engine/config refs. Через существующий dogfood client выполнить новую задачу с разрешённым snapshot, скачать файл, проверить checksum и cleanup; после restart дочитать тот же Run. Это release acceptance, не новая разработка.
+2. **Закрыть concurrent OpenCode строку #51.** Два настоящих бесплатных движка одновременно, отдельные identities/HOME/config, разрешённые MCP и provider bindings; чужие данные/процессы недоступны, leases возвращаются. Если поздний transcript это уже доказывает — сослаться, не повторять работу. Один successful OpenCode Run не доказывает concurrency.
+3. **Подключить только нужные первому пользователю capabilities.** Service capabilities — Cloudflare API с тонким MCP adapter на VM; run-local tools — в clean room. Решение и приёмка: [agent #2061](https://github.com/trained-assist/trained-assist-agent/issues/2061), communication [#2034](https://github.com/trained-assist/trained-assist-agent/issues/2034). Доменный UI и Agent Run вызывают одну реализацию; клики UI не создают агентскую сессию. Полный перенос всех MCP не блокирует запуск.
+4. **Выбрать один реальный канал/сценарий и принять compatibility.** Sandbox Web либо API client, затем Telegram; проверить полный input/context, профиль/проект, статус/stop/continue, настоящее awaiting choice/form, результат и файл. Не переключать все каналы по зелёному transport test.
+5. **Разрешённый cohort и rollback.** Только новые задачи идут новому owner, старые остаются legacy. Отдельное решение о переключении endpoint; данные/события читаются после rollback, mutation с неизвестным исходом не повторяется.
+
+**Можно сейчас:** внутренние API-задачи с synthetic/разрешёнными данными на принятой sandbox связке. **Для полного переезда:** доказанная deployed версия, concurrent boundary, нужные доменные capability/UI и cohort acceptance. Не ставить перед этим весь GTD/fleet/watchers/fast-path или массовый перенос MCP. Открытые tooling карточки остаются со своими обязательствами; не объявлять их принятыми по факту dogfood.
+
+## Исторический срез реализации — 03.10.2026
 
 Цель текущей итерации: **мы сами используем свой API для настоящего OpenCode Run в отдельной Agent clean room; ответ и файлы сохраняются, временная среда очищается автоматически**. Это не массовое переключение старого Telegram/Web. M1 transport и demo conversation уже построены; их не начинаем заново.
 
