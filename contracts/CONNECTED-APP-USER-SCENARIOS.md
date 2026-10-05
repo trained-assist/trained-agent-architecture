@@ -172,6 +172,21 @@ Use **S-01 catalog reads** as the first connected/test-account CRM slice. Then u
 
 For Recruiting, start with **R-01 vacancy selection + response list/read-only review** as the first slice after its credential boundary is decided; it proves profile-scoped service access with less side-effect risk than cold search, send or publishing PII reports. R-02/R-03/R-04 remain required subsequent journeys. A pure report-render test may be developed independently with synthetic data, but it does not count as report workflow migration until review, access control and publication are covered.
 
+## Current implementation evidence
+
+These draft PRs are foundations against synthetic fixtures. They are not a live cutover and do not close the named journeys:
+
+| Work | Draft PR | Evidence in this iteration | Still missing for scenario completion |
+|---|---|---|---|
+| C14 boundary and user journeys | [Architecture #150](https://github.com/trained-assist/trained-agent-architecture/pull/150) | Ownership contract, profile through-line, scenario map, test/migration gates | Runtime binding, trusted web session, agreed data owners |
+| CRM catalog contract | [CRM Web #2](https://github.com/flexi-consulting/crm-web/pull/2) | Synthetic catalog and versioned read contract | Profile-aware workspace/session binding, legacy data/provider parity |
+| CRM intent preparation | [CRM Web #4](https://github.com/flexi-consulting/crm-web/pull/4) | Scoped synthetic API foundation, idempotency and fake status reconciliation | Browser confirmation UX, agent relay parity, real CRM deal receipt/reconcile, canonical writer; not S-04 complete |
+| Recruiting service contract | [Recruiting Web #1](https://github.com/trained-assist/trained-assist-recruiting-web/pull/1) | Synthetic vacancy list, manifest/schema/CI foundation | HH provider, trusted identity/credentials, agent binding |
+| Recruiting response read | [Recruiting Web #5](https://github.com/trained-assist/trained-assist-recruiting-web/pull/5) | Local profile fixture UI, assigned vacancy, paginated response summaries with fixture revision/freshness | Trusted profile mapping, live response semantics/freshness, relay parity; R-01 foundation only |
+| Recruiting report preview | [Recruiting Web #6](https://github.com/trained-assist/trained-assist-recruiting-web/pull/6) | Synthetic client allowlist projection, escaped deterministic preview, internal-field leakage tests | Real source revision, profile authorization, edit/persist/review, approved fields, explicit publish/access/revoke; report foundation only |
+
+Each PR is deliberately draft. Local test evidence is recorded in the PRs; GitHub Actions was still queued when this status was written. Do not treat a synthetic green suite as proof of provider connectivity, deployed compatibility or scenario completion.
+
 ## Test scenarios derived from these journeys
 
 The shared synthetic golden set should have at least two profiles; two events with overlapping participant names; duplicate/unsafe IDs; one profile-private note; a pending/created/unknown deal operation; two vacancies; applied and cold-search candidates; changed resume/criteria revisions; one internal-only report field; and one publication/access-policy case. Keep all IDs/emails/names synthetic.
