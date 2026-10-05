@@ -1,6 +1,6 @@
 # Connected Web Apps — user scenario map
 
-Status: source-informed scenario baseline · 2026-10-05. This describes workflows visible in inspected source and a target experience for the agent's user. It is not proof every path is deployed or currently used. Scenario priority by frequency/value must be confirmed from product usage; the current code alone does not provide that evidence.
+Status: source-informed scenario baseline · 2026-10-06. This describes workflows visible in inspected source and a target experience for the agent's user. It is not proof every path is deployed or currently used. Scenario priority by frequency/value must be confirmed from product usage; the current code alone does not provide that evidence.
 
 ## Product outcome and shared contract
 
@@ -181,11 +181,13 @@ These draft PRs are foundations against synthetic fixtures. They are not a live 
 | C14 boundary and user journeys | [Architecture #150](https://github.com/trained-assist/trained-agent-architecture/pull/150) | Ownership contract, profile through-line, scenario map, test/migration gates | Runtime binding, trusted web session, agreed data owners |
 | CRM catalog contract | [CRM Web #2](https://github.com/flexi-consulting/crm-web/pull/2) | Synthetic catalog and versioned read contract | Profile-aware workspace/session binding, legacy data/provider parity |
 | CRM intent preparation | [CRM Web #4](https://github.com/flexi-consulting/crm-web/pull/4) | Scoped synthetic API foundation, idempotency and fake status reconciliation | Browser confirmation UX, agent relay parity, real CRM deal receipt/reconcile, canonical writer; not S-04 complete |
+| CRM prelead timeline | [CRM Web #5](https://github.com/flexi-consulting/crm-web/pull/5) | Synthetic append-only note/reject/undo events, profile-scoped idempotency and fail-closed routes | Durable canonical store, UI/relay parity, audio consent/retention and trusted profile binding; S-03 foundation only |
 | Recruiting service contract | [Recruiting Web #1](https://github.com/trained-assist/trained-assist-recruiting-web/pull/1) | Synthetic vacancy list, manifest/schema/CI foundation | HH provider, trusted identity/credentials, agent binding |
 | Recruiting response read | [Recruiting Web #5](https://github.com/trained-assist/trained-assist-recruiting-web/pull/5) | Local profile fixture UI, assigned vacancy, paginated response summaries with fixture revision/freshness | Trusted profile mapping, live response semantics/freshness, relay parity; R-01 foundation only |
+| Recruiting candidate evaluation | [Recruiting Web #7](https://github.com/trained-assist/trained-assist-recruiting-web/pull/7) | Synthetic deterministic evidence/gap evaluation pinned to response, resume and criteria revisions; semantic inconsistencies rejected and adapter failures return typed errors | Real ATS policy/evaluator, source authority/freshness, persistence/audit, trusted profile binding and relay parity; R-02 foundation only |
 | Recruiting report preview | [Recruiting Web #6](https://github.com/trained-assist/trained-assist-recruiting-web/pull/6) | Synthetic client allowlist projection, escaped deterministic preview, internal-field leakage tests | Real source revision, profile authorization, edit/persist/review, approved fields, explicit publish/access/revoke; report foundation only |
 
-Each PR is deliberately draft. Local test evidence is recorded in the PRs; GitHub Actions was still queued when this status was written. Do not treat a synthetic green suite as proof of provider connectivity, deployed compatibility or scenario completion.
+Each PR is deliberately draft. As of 2026-10-06, CRM Web #5 has a passing hosted run for its current head (a duplicate run remains queued); Recruiting Web #7 has queued hosted runs after its latest fix. Local suites are reported in the PRs. Do not treat a synthetic green suite as proof of provider connectivity, deployed compatibility or scenario completion.
 
 ## Test scenarios derived from these journeys
 
