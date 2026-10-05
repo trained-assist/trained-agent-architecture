@@ -1,5 +1,7 @@
 # Sandbox — как строится и проверяется песочница каждого этапа
 
+**Актуальное ограничение 05.10.2026:** `alesa-personal-assistent/us-central1-a/alesa-vm` выводится из эксплуатации и больше не используется для новых sandbox, процессов или agent runs. Нижеописанные прежние VM-прогоны — историческое evidence. Новые проверки размещаются serverless либо, при обоснованной потребности в постоянном локальном процессе, на существующей VM во Франции в изоляции от интегратора. [Статус #145](https://github.com/trained-assist/trained-agent-architecture/issues/145).
+
 v1.0 · 01.10.2026. Единый документ вместо прежних SANDBOX-PLAN, SANDBOX-BINDINGS-AND-CREDENTIALS и SANDBOX-CREDENTIALS-AND-ACCESS. Здесь только долговечная логика: как устроена песочница этапа, какие классы bindings/credentials ей нужны, как вызываются сбои и что проверяется в логах. Статус, пробелы, блокеры и чек-листы ведутся в issues и [Project «Trained Assist — Migration»](https://github.com/orgs/trained-assist/projects/1). Порядок работ — [план реализации](IMPLEMENTATION-AND-INTEGRATION-PLAN.md), общие правила — [Engineering Approach](ENGINEERING-APPROACH.md), схема логов — [Observability](OBSERVABILITY-AND-ERROR-CONTRACT.md).
 
 Документ не заявляет готовность ещё не построенных sandbox methods. Если метод технически реализуем, его постройка — работа карточки, а не причина ждать.
