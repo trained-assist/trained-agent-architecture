@@ -7,6 +7,7 @@ Status: proposed contract · 2026-10-05. This contract defines the boundary betw
 - The platform owns and versions the platform-facing envelope: trusted tenant/profile context, capability registration and invocation lifecycle, platform correlation IDs, credential resolution rules, normalized outcomes, readiness states and observability requirements.
 - A connected application owns its domain API, canonical records, domain schemas, policies, UI and deterministic validation. It publishes a versioned service manifest and implements the platform-facing envelope. It does not import the agent/core as a library or write the platform Task Store.
 - The agent/runtime consumes a registered application through a versioned binding/adapter. Core code does not import an application's private schemas, storage, routes or workflow rules.
+- When a connected-app capability is exposed to the Trained Assist Agent, use the existing versioned capability-relay boundary (agent issue #2061): UI/API and agent relay call the same canonical application handler. The relay is a transport adapter only; do not add a second business implementation or an independent tool registry for the same capability. This contract does not require every UI route to be an agent capability.
 - The Credential Broker or approved integration owner resolves provider credentials and scopes. A model never receives credentials or chooses a principal. Provider protocol and adapter ownership remains under C10 / the Integration Gate.
 - `userTaskId` and `runId` correlate work only. Application domain state remains authoritative in the application; task/run state remains authoritative in the platform.
 
@@ -63,5 +64,6 @@ Each application repository checks, without a live LLM/provider:
 - AI-stub output validation and redaction of credentials/private values from prompts and logs;
 - browser UI rendering with synthetic data, loading/empty/error/degraded/stale states;
 - consumer contract tests against the pinned adapter/manifest version.
+- for any capability exposed to the agent, REST/UI and the agent relay reach the same handler and return the same capability result/schema.
 
 Live provider/LLM smoke is a separate, explicitly scoped check. Synthetic fixtures, mocks and schema validation are not represented as proof of external connectivity or model quality.
