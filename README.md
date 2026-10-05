@@ -4,6 +4,8 @@
 
 **Статус и чек-листы — в [Project «Trained Assist — Migration»](https://github.com/orgs/trained-assist/projects/1) и issues; документы — долговечная архитектура.** Перед работой над карточкой сначала открыть её issue: там актуальный статус, чек-лист приёмки и evidence.
 
+**Вывод старой GCP VM:** новые работы и зависимости на `alesa-personal-assistent/us-central1-a/alesa-vm` запрещены. Serverless — выбор по умолчанию; существующая VM во Франции — для подтверждённой потребности в постоянном сервере. Данные сохраняются и восстанавливаются до согласованного выключения; stop и удаление дисков/backup — разные решения. Другие сервисы Google разрешены. Актуальный статус и границы работы — [issue #145](https://github.com/trained-assist/trained-agent-architecture/issues/145).
+
 ## Быстрый обзор для агента
 
 Перед изучением откройте [короткую карту репозитория](https://github.com/trained-assist/trained-agent-architecture/blob/repo-context/REPO-MAP.md). Рядом лежат [Tree-sitter pack](https://github.com/trained-assist/trained-agent-architecture/blob/repo-context/repo-compressed.xml) и [manifest с sourceSha](https://github.com/trained-assist/trained-agent-architecture/blob/repo-context/manifest.json). Это постоянные ссылки на последний опубликованный main; sourceSha показывает свежесть.
