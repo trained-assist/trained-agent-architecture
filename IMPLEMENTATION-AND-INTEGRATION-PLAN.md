@@ -72,6 +72,14 @@ Org Project: **[Trained Assist — Migration](https://github.com/orgs/trained-as
 
 Это уточнение зависимостей, не переименование 33 карточек и не объявление их выполненными. Для первой интеграции части карточек можно выделять в малые PR; полная карточка Done только после всей её приёмки.
 
+## Приоритеты integrator v1 — решение владельца 05.10.2026
+
+Для отдельного тестового контура [integrator #140](https://github.com/trained-assist/trained-agent-architecture/issues/140) доступ к Google-документам вынесен в самостоятельную [работу #142](https://github.com/trained-assist/trained-agent-architecture/issues/142). Она не задерживает независимую функциональную приёмку; CSV не заменяет Google Sheet и продолжение по месяцам.
+
+Изоляция собственного Runner, напротив, остаётся критичной архитектурной зависимостью: [работа #141](https://github.com/trained-assist/trained-agent-architecture/issues/141), implementation [Runner PR132](https://github.com/trained-assist/ai-agent-runner/pull/132). Требуется отделение Unix identity, executable release и private state от соседних legacy исполнителей без изменения их ресурсов. Наличие приёмки изоляции другого deployment не подтверждает этот контур.
+
+Автономная доставка Telegram, динамический scoped MCP для следующих задач диалога, credentials wait/resume, controlled failures и постоянный transport оцениваются отдельно в #140. Статусы и проверочные сценарии находятся в issues; production promotion не следует из успешного тестового CSV.
+
 ## Актуальная приёмка и критический путь — 04.10.2026
 
 **Ближайшая цель own-API dogfood достигнута по отчёту исполнителя; повторять этапы среза 03.10 ниже не нужно.** Этот раздел имеет приоритет для текущего порядка работ. Отчёты не равны независимому повторному прогону и массовому production cutover.
