@@ -11,6 +11,19 @@ Status: proposed contract · 2026-10-05. This contract defines the boundary betw
 - The Credential Broker or approved integration owner resolves provider credentials and scopes. A model never receives credentials or chooses a principal. Provider protocol and adapter ownership remains under C10 / the Integration Gate.
 - `userTaskId` and `runId` correlate work only. Application domain state remains authoritative in the application; task/run state remains authoritative in the platform.
 
+## Agent user and profile are the through-line
+
+The product's primary user journey is anchored by the authenticated agent user and the user's selected profile. A user may move between agent conversation and a connected web app during one larger scenario; the same authorized profile scope must resolve to the same profile-owned domain records in either channel.
+
+- The platform is authoritative for agent-user identity and profile identity/lifecycle. Each app receives stable opaque `principalRef` and `profileRef` through trusted server-side context, plus the allowed scopes. These refs are identifiers, not credentials. The application may keep an app-local profile projection or preferences, but must not create a competing login, infer identity from email, or become the authority for the agent profile.
+- A web request obtains its identity through an authenticated platform/app session handoff that the server validates and resolves to the trusted refs/scopes. A browser-supplied `profileRef`, URL parameter or hidden form field is never proof of identity. The concrete SSO/session adapter is an implementation gate for real web access; tests may inject a fake trusted identity resolver.
+- A Connected Web App owns the domain data created for that profile (for example a recruiting workspace, candidate/application records, CRM deals or notes). Every read, search, mutation, attachment and background job is scoped and authorized by the trusted profile context. Domain records retain an explicit owner/profile reference; UI-supplied, model-supplied or payload-supplied profile IDs never override the trusted context.
+- The agent relay forwards the trusted principal/profile context separately from the model-controlled capability payload. The same application handler enforces authorization whether called by the web UI, direct app API or relay. Agent and web operations on the same authorized profile therefore observe the same canonical domain objects and current revisions.
+- Cross-channel continuity is carried by stable domain object references, typed operation receipts and explicitly authorized summaries. Do not copy the whole agent conversation, credential set or profile database into an app. A task/run ID is useful correlation only; it is not a profile key or proof of access.
+- Profile switching, profile revocation and tenant mismatch are security boundaries. Switching profile changes the trusted context before the next call; revoked or mismatched references fail closed. Audit records identify the actor/profile and operation without logging secrets or unnecessary PII.
+
+Required conformance tests include: same profile sees the same object through agent relay and web/API; another profile cannot enumerate/read/mutate it; forged payload profile refs do not change scope; profile switch cannot reuse prior scoped authorization; revoked/mismatched profile fails typed and closed; and background work retains the initiating profile scope.
+
 ## Service manifest and compatibility
 
 An application manifest is machine-readable JSON validated by a checked-in schema. It contains at least:
