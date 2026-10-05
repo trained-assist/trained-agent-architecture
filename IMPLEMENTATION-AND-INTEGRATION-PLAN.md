@@ -74,6 +74,8 @@ Org Project: **[Trained Assist — Migration](https://github.com/orgs/trained-as
 
 ## Приоритеты integrator v1 — решение владельца 05.10.2026
 
+Telegram интегрируется через существующий отдельный `IntakeBuffer` и UX действующего бота в изолированной ветке. Меняется начало исполнения: накопленный полный input → классификация интента из каталога → MCP-инструкция (включая возможный запуск агента) либо агент. Старые `/run`, backend-классификатор и прямой `/start` не являются новым execution port. Сначала фиксируются пользовательские сценарии и исполняемые e2e, затем выполняется адресное UX-ревью; сохранение кнопок не означает перенос старых backend полномочий. Работа и evidence — в [#144](https://github.com/trained-assist/trained-agent-architecture/issues/144).
+
 Для отдельного тестового контура [integrator #140](https://github.com/trained-assist/trained-agent-architecture/issues/140) доступ к Google-документам вынесен в самостоятельную [работу #142](https://github.com/trained-assist/trained-agent-architecture/issues/142). Она не задерживает независимую функциональную приёмку; CSV не заменяет Google Sheet и продолжение по месяцам.
 
 Изоляция собственного Runner, напротив, остаётся критичной архитектурной зависимостью: [работа #141](https://github.com/trained-assist/trained-agent-architecture/issues/141), implementation [Runner PR132](https://github.com/trained-assist/ai-agent-runner/pull/132). Требуется отделение Unix identity, executable release и private state от соседних legacy исполнителей без изменения их ресурсов. Наличие приёмки изоляции другого deployment не подтверждает этот контур.
