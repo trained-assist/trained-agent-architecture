@@ -37,6 +37,10 @@ Error reader поддерживает cursor/replay/dedup, producer — bounded 
 
 [Serverless Agent API](../SERVERLESS-AGENT-API.md): key/scopes, quotas, idempotent durable receipt, run status, cancel, artifact/result и callback receipt. В платформе — Task API; standalone — Runner admission adapter. [Error Watcher](../SYSTEM-ERROR-WATCHER.md) отправляет diagnostic Task с incidentId и sourceUserTaskId, не подменяет исходную пользовательскую работу. GTD не включается этим submission автоматически. Публичный client API не является provider Integration Gate.
 
+### C14 — Connected Application ↔ Platform
+
+Предлагаемый контракт независимого доменного веб-приложения: платформа владеет стабильным platform-facing envelope, registry/binding, trusted scope, correlation, credential resolution и typed invocation lifecycle; приложение владеет canonical domain state, собственными схемами/API/UI и deterministic rules. Runtime обращается через pinned, versioned binding, а не импортирует приложение или его private schemas. Negotiation, readiness, app-scoped incompatibility, outcome handling, rollout and rollback — в [C14 Connected Application](C14-CONNECTED-APPLICATION.md). Это проектный контракт; runtime adapter и service registration ещё предстоит реализовать.
+
 ### Уточнение GTD и агентской эскалации
 
 gtdId opt-in только при явном completion control/конкретном следующем шаге. Cron/delegation/errors не требуют его сами по себе. Автоматическая escalation заканчивается OpenCode; автоматического следующего Claude Code/Codex rung нет. C10 принадлежит выделяемому Integration Gate repo; business domain rules остаются отдельно.
@@ -60,6 +64,7 @@ gtdId opt-in только при явном completion control/конкретн�
 | C07 | Tool/Runner → Credential broker | Разрешить credential по consumer/scope/региону без скрытого выбора аккаунта | Broker владеет secrets/refresh/rotation | A12 |
 | C08 | Runner/service callers → LLM gateway + Cost ledger | Вызвать разрешённую модель и атрибутировать расходы всех попыток | LLM gateway владеет ladder health; ledger учётом; control plane budget | A07/A10 |
 | C09 | Playbook registry/validators ↔ Orchestrator | Получить pinned методику и evidence проверок; принимать progress/completion через единый executor | Registry версиями; orchestrator экземпляром плана | A08/A09 |
+| C14 | Connected Application ↔ Platform | Договориться о pinned versions; изолировать scoped invocation, readiness и release failure | App — domain state; platform — task/run/binding | A03/A07/A12 |
 
 ## C01 — вход сообщений и заданий
 
