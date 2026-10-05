@@ -52,6 +52,7 @@ Fast-path research: [алгоритм до запуска агента и про
 | [Acceptance](ACCEPTANCE-CHECKLIST.md) | Типы доказательств, общий гейт Done карточки, сквозные проверки инвариантов и контрактов; где теперь лежат чек-листы. Не план и не трекер |
 | [Sandbox](SANDBOX.md) | Песочница каждого этапа R00, I00–I10: что запускаем, сбои, ожидаемый результат, классы bindings/credentials, logs checks; правила и механизмы хранения credentials (без значений) |
 | [Tooling Research / R00](TOOLING-RESEARCH-AND-VM-PILOTS.md) | Вопросы по всем карточкам, shortlist инструментов и измеряемые VM-пилоты; кандидаты не равны принятому stack |
+| [MCP / capabilities review](MCP-CAPABILITY-REVIEW.md) | R1 static evidence snapshot for issue #146; partial audit with pinned source revisions and explicit measurement gaps |
 | [Contracts](contracts/README.md) | Межкомпонентные обязательства; wire API имеет собственный статус согласования |
 | [Observability](OBSERVABILITY-AND-ERROR-CONTRACT.md) | Общая схема ошибок/событий, scope и retention |
 | [DECISIONS](DECISIONS.md) | История решений; действующая формулировка сверяется с архитектурой |
