@@ -8,6 +8,16 @@ Read-only GCP API 05.10.2026: project `alesa-personal-assistent`, zone `us-centr
 
 Read-only SSH 05.10: работают `assist-agent`, `sar`, `nginx`, `chrome-vova`, `chrome-alesa`, `xvfb-vova`, `xvfb-alesa`, `login-server`, `novnc-browser`, `token-relay`, `zen-relay`, `cloudflared-agent`, `freelance-bot`, `host-monitor`, `xray`, `anydesk` и системные службы. В crontab обнаружены `mainstream-cron.sh`, `disk-guard.sh`, `dead-tenant-sweep.sh`, `bugs-collector-cron.sh`, `issue-fixer-cron.sh`, `claude-token-refresh.sh`; упоминание скрипта не доказывает его полезность. В `~/users` 40 каталогов верхнего уровня, в `~/agent-data` — 50. Эти числа не являются числом пользователей или подтверждением полного экспорта. Имена, содержимое и manifest пользовательских данных в публичный репозиторий не помещаются.
 
+### Пользовательские расписания HH — пауза 06.10.2026
+
+Помимо шести записей crontab в SQLite старого агента были 11 включённых `hh_proactive_search` jobs: 10 у одного рекрутерского профиля и одно у тестового. На VM во Франции таблица `cron_jobs` была пустой. Все 11 заданий оказались просрочены, 8 имели `last_status=unknown`; текущий процесс старого агента не получил `CRON_SCHEDULER_ROLE`, хотя host drop-in на диске объявлял `primary`. Внешний `assist-cron-tick.timer` активен, но считает HTTP 409 штатным отказом хоста без роли. Это не доказательство успешного исполнения расписаний.
+
+По разрешению владельца задания **поставлены на паузу**: перед изменением сохранён закрытый экспорт 11 определений и 467 ссылок на execution history (`gcp-vm-exit-2026-10-06-cron-v1`, SHA-256 `413adc4e171371f3c58bfc1b53732d87e76954d4fda7e3969f75e28e1ba3624a`, файл с правами `0600` вне репозитория). В одной SQLite-транзакции, после сверки состава записей и отсутствия выполняющихся execution, только `enabled` изменён с 1 на 0. Повторное чтение подтвердило: 11 определений и 467 ссылок остались, все прочие поля совпадают с экспортом. Полный backup пользовательского состояния и восстановление ведутся отдельно; этот экспорт их не заменяет.
+
+Пауза предотвращает неожиданный догон при возвращении роли планировщика. Старые задания не включать вместе с новым контуром. Если автопоиск нужен снова, перенести каждое определение и действие с явным решением по 8 неизвестным результатам; не переисполнять их вслепую. Проверить профиль, вакансию, права и секреты, IANA-зону `Europe/Moscow`, политику catch-up и один реальный результат вне GCP VM. В момент переключения должен быть ровно один владелец расписания; `enabled` в старой SQLite остаётся 0. Только после этого можно считать миграцию принятой.
+
+Cloud Scheduler допустим для будущего Cloud Run/HTTP target, но один Scheduler job сам по себе исполняет лишь вызов target. Нынешний `hh_proactive_search` читает и пишет профильные файлы, ATS-настройки, снимки и credentials; запуск прежнего кода в контейнере с GCS FUSE не обеспечивает прежнюю файловую блокировку и атомарность записи. Сначала нужен перенос состояния и отдельный scoped action handler с durable ключом `(legacy_job_id, scheduled_at)`, проверкой повторной доставки и отсутствием overlap. Если расписания принадлежат новому control plane, его D1/P22 Cron Trigger — уже существующий serverless scheduler; в этом случае также требуется адаптер для доменного HH-действия. Не создавать параллельно 11 GCP jobs и 11 P22 schedules.
+
 ## Инвентарь и целевой путь
 
 | Объект | Источник/потребитель | Предполагаемое место | Проверка перед cutoff | Остаток |
@@ -17,7 +27,7 @@ Read-only SSH 05.10: работают `assist-agent`, `sar`, `nginx`, `chrome-vo
 | Agent Run | `assist-agent`, `sar` и клиенты | Собственный async Agent Run API → ephemeral worker | End-to-end input, result, artifacts, cancel, cleanup и повтор доставки | Интегратор #140 ведёт приёмку; production cutover не разрешён |
 | Shared MCP/service capabilities | Legacy MCP, UI, бот | Один canonical serverless handler; VM adapter при необходимости | Настоящий потребитель вызывает тот же handler без постоянного Run | Выбор по каждому методу #2061 |
 | Браузер/login/CDP, relays, xray | Локальные процессы и внешние consumers | Только подтверждённая нужда в постоянном процессе → существующая VM Франция | Реальный сценарий, restart, identity, auth, владелец и конфликты с #140 | Не переносить комплект автоматически |
-| Cron, webhooks, DNS/CI targets | GCP VM, GitHub Actions и внешние вызовы | Serverless schedule/handler либо Франция при обосновании | Единственный writer/scheduler, нет вызовов старого host | `trained-assist-agent` CI guard — PR #2144; прочие targets ещё сверяются |
+| Cron, webhooks, DNS/CI targets | GCP VM, GitHub Actions и внешние вызовы | Serverless schedule/handler либо Франция при обосновании | Единственный writer/scheduler, нет вызовов старого host; 11 HH jobs остаются paused или приняты на новом пути | Legacy CI deploy выключен; HH jobs paused 06.10, новые execution target и остальные consumers ещё сверяются |
 
 VM во Франции установлена по конфигурации legacy repo как `contabo-vm2`; это не подтверждение права менять её сервисы. Любое пересечение с #140/#141 согласуется до изменения.
 
