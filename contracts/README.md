@@ -1,5 +1,8 @@
 # Контракты между сервисами
 
+План безопасного переноса Recruiting и CRM вертикальными срезами, golden fixtures и слоями проверок: [C14 Migration Playbook](C14-MIGRATION-PLAYBOOK.md).
+Сценарии пользователя, сквозной профильный контекст и acceptance criteria: [Connected App User Scenarios](CONNECTED-APP-USER-SCENARIOS.md).
+
 Статус: **C01/C02/C03 приняты 02.10.2026** как основной контракт взаимодействия каналов с задачами — логические границы, идентификаторы, смысл квитанции, адресация команд, приёмка. Остальные контракты — предложение для согласования · 30.09.2026. Это логические границы; пути API ниже иллюстративны и ещё не утверждены. Раздел не объявляет текущий wire protocol заменённым.
 
 Принятие C01–C03 — решение владельца от 02.10.2026 ([DECISIONS](../DECISIONS.md), [исследование границы шлюза](../research/GATEWAY-BOUNDARY-RESEARCH-2026-10-02.md)): контракт канала фиксируется **до** того, как в старом коде появляется граница адаптера или фасада. Приняты логические границы и запреты (приложение A), а не конкретные URL — их выбирает карточка реализации.
@@ -37,6 +40,10 @@ Error reader поддерживает cursor/replay/dedup, producer — bounded 
 
 [Serverless Agent API](../SERVERLESS-AGENT-API.md): key/scopes, quotas, idempotent durable receipt, run status, cancel, artifact/result и callback receipt. В платформе — Task API; standalone — Runner admission adapter. [Error Watcher](../SYSTEM-ERROR-WATCHER.md) отправляет diagnostic Task с incidentId и sourceUserTaskId, не подменяет исходную пользовательскую работу. GTD не включается этим submission автоматически. Публичный client API не является provider Integration Gate.
 
+### C14 — Connected Application ↔ Platform
+
+Предлагаемый контракт независимого доменного веб-приложения: платформа владеет stable platform envelope, registry/binding, trusted scope, correlation, credential resolution и typed invocation lifecycle; приложение — canonical domain state, собственными API/schemas/UI и deterministic rules. При вызове из агента используется versioned capability relay по [agent issue #2061](https://github.com/trained-assist/trained-assist-agent/issues/2061): UI/API и relay доходят до одной canonical handler implementation. Capability owner публикует mapping/payload schemas; agent/runtime owner — transport contract/adapter, который передаёт payload без изменений. Relay не содержит бизнес-логику и не создаёт вторую регистрацию. Остальные правила — в [C14 Connected Application](C14-CONNECTED-APPLICATION.md). Это проектный контракт; application binding и runtime conformance ещё предстоят.
+
 ### Уточнение GTD и агентской эскалации
 
 gtdId opt-in только при явном completion control/конкретном следующем шаге. Cron/delegation/errors не требуют его сами по себе. Автоматическая escalation заканчивается OpenCode; автоматического следующего Claude Code/Codex rung нет. C10 принадлежит выделяемому Integration Gate repo; business domain rules остаются отдельно.
@@ -60,6 +67,7 @@ gtdId opt-in только при явном completion control/конкретн�
 | C07 | Tool/Runner → Credential broker | Разрешить credential по consumer/scope/региону без скрытого выбора аккаунта | Broker владеет secrets/refresh/rotation | A12 |
 | C08 | Runner/service callers → LLM gateway + Cost ledger | Вызвать разрешённую модель и атрибутировать расходы всех попыток | LLM gateway владеет ladder health; ledger учётом; control plane budget | A07/A10 |
 | C09 | Playbook registry/validators ↔ Orchestrator | Получить pinned методику и evidence проверок; принимать progress/completion через единый executor | Registry версиями; orchestrator экземпляром плана | A08/A09 |
+| C14 | Connected Application ↔ Platform | Договориться о pinned versions; изолировать scoped invocation, readiness и release failure | App — domain state; platform — task/run/binding | A03/A07/A12 |
 
 ## C01 — вход сообщений и заданий
 

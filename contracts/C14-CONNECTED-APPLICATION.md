@@ -1,0 +1,85 @@
+# C14 — Connected Application ↔ Platform
+
+Status: proposed contract · 2026-10-05. This contract defines the boundary between an independently released domain application and the Trained Assist platform. It does not claim that the runtime adapter, service registration or production applications exist yet.
+
+## Ownership and dependency direction
+
+- The platform owns and versions the platform-facing envelope: trusted tenant/profile context, capability registration and invocation lifecycle, platform correlation IDs, credential resolution rules, normalized outcomes, readiness states and observability requirements.
+- A connected application owns its domain API, canonical records, domain schemas, policies, UI and deterministic validation. It publishes a versioned service manifest and implements the platform-facing envelope. It does not import the agent/core as a library or write the platform Task Store.
+- The agent/runtime consumes a registered application through a versioned binding/adapter. Core code does not import an application's private schemas, storage, routes or workflow rules.
+- When a connected-app capability is exposed to the Trained Assist Agent, use the existing versioned capability-relay boundary (agent issue #2061): UI/API and agent relay call the same canonical application handler. The application owns its domain request/result schemas. The capability owner publishes the agent-facing tool mapping and payload schemas; the agent/runtime owner publishes the MCP↔HTTP relay transport contract and adapter, which maps those payloads unchanged. These are separate from the C14 platform envelope. The relay is a transport adapter only; do not add a second business implementation or an independent tool registry for the same capability. This contract does not require every UI route to be an agent capability.
+- The Credential Broker or approved integration owner resolves provider credentials and scopes. A model never receives credentials or chooses a principal. Provider protocol and adapter ownership remains under C10 / the Integration Gate.
+- `userTaskId` and `runId` correlate work only. Application domain state remains authoritative in the application; task/run state remains authoritative in the platform.
+
+## Agent user and profile are the through-line
+
+The product's primary user journey is anchored by the authenticated agent user and the user's selected profile. A user may move between agent conversation and a connected web app during one larger scenario; the same authorized profile scope must resolve to the same profile-owned domain records in either channel.
+
+- The platform is authoritative for agent-user identity and profile identity/lifecycle. Each app receives stable opaque `principalRef` and `profileRef` through trusted server-side context, plus the allowed scopes. These refs are identifiers, not credentials. The application may keep an app-local profile projection or preferences, but must not create a competing login, infer identity from email, or become the authority for the agent profile.
+- A web request obtains its identity through an authenticated platform/app session handoff that the server validates and resolves to the trusted refs/scopes. A browser-supplied `profileRef`, URL parameter or hidden form field is never proof of identity. The concrete SSO/session adapter is an implementation gate for real web access; tests may inject a fake trusted identity resolver.
+- A Connected Web App owns the domain data created for that profile (for example a recruiting workspace, candidate/application records, CRM deals or notes). Every read, search, mutation, attachment and background job is scoped and authorized by the trusted profile context. Domain records retain an explicit owner/profile reference; UI-supplied, model-supplied or payload-supplied profile IDs never override the trusted context.
+- The agent relay forwards the trusted principal/profile context separately from the model-controlled capability payload. The same application handler enforces authorization whether called by the web UI, direct app API or relay. Agent and web operations on the same authorized profile therefore observe the same canonical domain objects and current revisions.
+- Cross-channel continuity is carried by stable domain object references, typed operation receipts and explicitly authorized summaries. Do not copy the whole agent conversation, credential set or profile database into an app. A task/run ID is useful correlation only; it is not a profile key or proof of access.
+- Profile switching, profile revocation and tenant mismatch are security boundaries. Switching profile changes the trusted context before the next call; revoked or mismatched references fail closed. Audit records identify the actor/profile and operation without logging secrets or unnecessary PII.
+
+Required conformance tests include: same profile sees the same object through agent relay and web/API; another profile cannot enumerate/read/mutate it; forged payload profile refs do not change scope; profile switch cannot reuse prior scoped authorization; revoked/mismatched profile fails typed and closed; and background work retains the initiating profile scope.
+
+## Service manifest and compatibility
+
+An application manifest is machine-readable JSON validated by a checked-in schema. It contains at least:
+
+| Field | Contract |
+|---|---|
+| `serviceId` | Stable registered identity; unique within the registry. |
+| `release` | Immutable application release/source revision and environment. |
+| `platformContractRange` | Supported platform envelope versions, using an agreed bounded range. |
+| `domainApiVersion` | Version of the application's own API. |
+| `capabilities[]` | Stable capability ID, version, required/optional flag, input/output schema refs, effect class, required scopes, and handler/API operation ref. |
+| `readiness` | `ready`, `degraded`, `blocked` or `unavailable`, with a safe typed reason and checked release/version tuple. |
+| `compatibility` | Deprecated IDs/versions and explicit replacement mapping; aliases map to the same registered capability. |
+
+At registration and deployment, the platform validates the manifest and performs a bounded readiness/compatibility handshake. It resolves and pins every applicable version dimension to the application binding/release: platform contract, domain API, concrete capability, application release and, when used, relay transport contract. The selected tuple is visible in diagnostics. An invocation uses that pinned tuple; it does not silently fall back to a different schema or handler. A release changing a pinned tuple requires a new binding revision or an explicit compatible migration.
+
+These versions are separate dimensions: platform-facing C14 contract, application domain API, capability implementation, application release, and (where the agent relay is used) capability-relay transport contract. In particular, the relay's integer contract version does not replace the application's domain API/capability versions. The platform binding pins the exact supported tuple and tests mismatches independently.
+
+An unsupported required platform/API/capability version marks only that application binding `blocked`; an absent optional capability disables only workflows that require it. The platform returns a typed compatibility error with expected and observed versions. Other applications, capabilities and platform tasks remain available. Recovery requires a compatible application release or a platform compatibility adapter, followed by a successful handshake. Renaming a transport/MCP entry alone is not recovery.
+
+Readiness endpoints expose no secrets or private domain records. Public liveness is not proof of authenticated readiness: the platform checks the actual binding, granted scopes and required operations using its trusted service identity.
+
+## Invocation, effects and failures
+
+The platform invocation envelope supplies a registered `serviceId`/binding, pinned versions, capability ID, typed payload or authorized reference, trusted tenant/profile scope, `operationId` for mutations and available task/run/event correlation. The application validates both envelope and domain invariants before applying a command. Claims supplied in model-generated text are never trusted as authorization.
+
+Outcomes are typed: `completed`, `accepted`, `rejected`, `failed`, `outcome_unknown`, `blocked` or `unavailable`. A successful response identifies the domain object/revision or returns a bounded result; it must not claim a mutation merely because a request was sent. Domain writes use an idempotency key and revision/concurrency check. An unknown result for an external mutation is reconciled before retry, following C10. Analysis retries never imply mutation retries.
+
+Timeouts, concurrency limits, circuit state and retries are scoped to the application binding/capability. Reads may use bounded retries under their declared policy. A failed/down/malformed app produces a typed binding/workflow outcome; it does not crash the agent, cause an unbounded self-healing loop, silently route to another principal, or replay a write. The platform can continue unrelated work. User-facing policy may offer manual retry or another supported route, but the failed domain action is not represented as complete.
+
+AI output is a proposal. The application validates the output against the domain API, captured source revisions and its policy before accepting a domain command. A stale result returns a typed conflict/stale outcome; it is not silently applied. Drafting a message is separate from sending it.
+
+## Release, canary and rollback
+
+1. Publish a new platform contract/compatibility adapter additively while old pinned versions remain served.
+2. Application CI validates its manifest and domain API against every supported platform version and the next candidate version, with synthetic fixtures and controlled failure cases.
+3. Release the application with old/new compatibility where needed. Deploy it without moving the canonical writer or changing live routing.
+4. Create a new binding revision and move a test account/canary cohort. Observe readiness, typed failures, latency, idempotency, version tuple and domain invariants.
+5. Promote only after evidence is attached to the linked issue. Keep the previous application release, API schema and handler readable for rollback. Do not route an in-flight mutation across versions until its outcome is reconciled.
+6. Deprecate then remove an old contract/capability only after all registered consumers have migrated and their CI/evidence is recorded. A failed app can be disabled at its binding without disabling the platform.
+
+Every cross-repository migration has a linked issue/release matrix naming producer and consumer revisions, contract/API versions, owner, canary, rollback target and retirement evidence. There is no assumption of an atomic multi-repository release.
+
+## Required conformance checks
+
+Each application repository checks, without a live LLM/provider:
+
+- manifest/schema validity, supported-version intersection and missing required/optional capabilities;
+- independent mismatch behavior for platform envelope, domain API, capability and relay contract versions;
+- readiness behavior for ready/degraded/blocked/unavailable, including app-scoped failure isolation;
+- authorization scope and tenant/profile isolation using synthetic principals;
+- domain invariants, stale revision/concurrent update, duplicate command and duplicate/out-of-order event behavior;
+- timeout, malformed response, unknown mutation outcome and reconciliation-before-retry;
+- AI-stub output validation and redaction of credentials/private values from prompts and logs;
+- browser UI rendering with synthetic data, loading/empty/error/degraded/stale states;
+- consumer contract tests against the pinned adapter/manifest version.
+- for any capability exposed to the agent, REST/UI and the agent relay reach the same handler and return the same capability result/schema.
+
+Live provider/LLM smoke is a separate, explicitly scoped check. Synthetic fixtures, mocks and schema validation are not represented as proof of external connectivity or model quality.
