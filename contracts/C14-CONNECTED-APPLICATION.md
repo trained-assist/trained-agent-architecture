@@ -27,6 +27,8 @@ An application manifest is machine-readable JSON validated by a checked-in schem
 
 At registration and deployment, the platform validates the manifest and performs a bounded readiness/compatibility handshake. It resolves and pins one platform contract version, one domain API version and concrete capability versions to the application binding/release. The selected tuple is visible in diagnostics. An invocation uses that pinned tuple; it does not silently fall back to a different schema or handler. A release changing a pinned tuple requires a new binding revision or an explicit compatible migration.
 
+These versions are separate dimensions: platform-facing C14 contract, application domain API, capability implementation, application release, and (where the agent relay is used) capability-relay transport contract. In particular, the relay's integer contract version does not replace the application's domain API/capability versions. The platform binding pins the exact supported tuple and tests mismatches independently.
+
 An unsupported required platform/API/capability version marks only that application binding `blocked`; an absent optional capability disables only workflows that require it. The platform returns a typed compatibility error with expected and observed versions. Other applications, capabilities and platform tasks remain available. Recovery requires a compatible application release or a platform compatibility adapter, followed by a successful handshake. Renaming a transport/MCP entry alone is not recovery.
 
 Readiness endpoints expose no secrets or private domain records. Public liveness is not proof of authenticated readiness: the platform checks the actual binding, granted scopes and required operations using its trusted service identity.
@@ -57,6 +59,7 @@ Every cross-repository migration has a linked issue/release matrix naming produc
 Each application repository checks, without a live LLM/provider:
 
 - manifest/schema validity, supported-version intersection and missing required/optional capabilities;
+- independent mismatch behavior for platform envelope, domain API, capability and relay contract versions;
 - readiness behavior for ready/degraded/blocked/unavailable, including app-scoped failure isolation;
 - authorization scope and tenant/profile isolation using synthetic principals;
 - domain invariants, stale revision/concurrent update, duplicate command and duplicate/out-of-order event behavior;
