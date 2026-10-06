@@ -24,6 +24,8 @@ Sandbox — среда разработки. Agent clean room — граница
 
 Для активного репозитория обязателен concise Environment Contract в `AGENTS.md`. Создатель или существенный владелец runtime-компонента поддерживает testability path `deploy/start sandbox → send test input → observe output → inspect logs/state → reset/retry`; изменение этого пути обновляет contract в той же PR. Недостающее свойство — Sandbox Gap: маленький пробел устранить сразу, большой описать с влиянием на evidence и issue owning repository; cross-project gap связать с architecture issue.
 
+При двух и более одновременных инженерных сессиях изолируйте изменяемое состояние: отдельные clone/worktree и ветка для каждой сессии. Общая checkout/ветка создаёт риск потерять или загрязнить чужую работу; повторно скачать небольшой объём текстовых файлов дешевле и безопаснее.
+
 ## Общие правила
 
 1. Каждый work item имеет воспроизводимый setup/run/evidence/teardown с pinned source/software/config versions и isolated resource namespace. Test fixture означает подготовленный сценарий, а не обязательный mock.
