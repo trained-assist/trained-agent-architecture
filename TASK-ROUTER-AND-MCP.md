@@ -310,6 +310,22 @@ Fault fixtures: invalid/refused/truncated JSON, timeout, budget denied, no enabl
 
 **Граница и следующий acceptance:** это offline cross-repository contract, без деплоя и без доказательства сетевого доступа к живому Worker. Следующий прогон — один test-only live вызов после того, как владельцы Host и Runner настроят одинаковый secret через trusted stores, JWK/верификацию Runner и будущий expiry, а CP binding указывает ту же policy. Сначала проверить CP discovery `tools/list`, затем Runner admission + proof-bound Host `tools/list` и единственный fixture `tools/call`; собрать run ID, версии/digest, outcome и sanitized stream evidence. Если Worker всё ещё отвечает `503` из-за отсутствующей конфигурации, не запускать повторно агента: это setup blocker, а не новый тестовый результат. Не передавать секреты в чат/репозиторий.
 
+### 12.1 Размещение секретов тестового профиля
+
+Хранилище выбирается по сервису, который использует credential; общей копии в GitHub Secrets/GCP для runtime не делаем. Имена ниже — контракт размещения, значения не записывать в эту документацию.
+
+| Сервис/хранилище | Что хранится | Что там не хранится |
+|---|---|---|
+| Cloudflare Worker `trained-assist-mcp-host-test-160` → Worker Secrets | `MCP_TEST_AUTH_TOKEN` (test Bearer) | private signing key, CP→Runner API key |
+| Тот же Host Worker → Worker vars | `MCP_TEST_RUNNER_PUBLIC_JWK`, `MCP_TEST_EXPIRES_AT`, principal/catalogue metadata | секретный Bearer/private key |
+| Cloudflare Worker `trained-assist-cp-telegram-ux-v1-sandbox` → Worker Secrets | совпадающий `MCP_TEST_AUTH_TOKEN`; `RUNNER_API_KEY_TELEGRAM_UX` (отдельный CP→Runner ключ) | Runner private signing key |
+| Runner VM2 → `/etc/agent-runner/agent-runner-api.env` (owner service, mode `0600`) | `RUNNER_MCP_REGISTRY_TEST_TOKEN`, `RUNNER_MCP_REGISTRY_TEST_EXPIRES_AT`, `RUNNER_MCP_REGISTRY_TEST_SIGNING_KEY_B64`; trusted `AGENT_API_REMOTE_MCP_SERVERS` policy | CP API key в открытом виде |
+| Runner VM2 → `/etc/agent-runner/key-registry.json` | SHA-256 hash CP API key, principal/profile, scopes и разрешённый engine | исходный CP API key и Host Bearer |
+| GCP Secret Manager | `SANDBOX_VM2_SSH` — bootstrap SSH credential для администрирования VM | Registry runtime Bearer/API key/signing key |
+| GitHub Actions Secrets | не участвуют в данном live runtime пути | все перечисленные runtime credentials |
+
+Одинаковый Registry Bearer задаётся отдельно в Host, CP test Worker и Runner VM; expiry синхронизируется между Worker vars и Runner env. Ed25519 private key существует только на Runner VM, соответствующий public JWK — только в Host Worker vars. CP→Runner API key существует только в CP Worker secret store, а Runner хранит его hash в key registry. GCP SSH credential даёт административный доступ к VM и не является Registry runtime credential. После acceptance test-only values отзываются/истекают, а архитектурная документация сохраняет лишь имена bindings, владельца и процедуру ротации.
+
 ## 13. Два исследования: multimodal routing и интерактивное выполнение
 
 02.10.2026: Research A уточняет intent/domain/capability selection, input preparation и быстрые пути; Research B — [интерактивное выполнение](INTERACTIVE-EXECUTION-AND-USER-INPUT.md), формы/кнопки, ожидание и policy вопросов. Они неблокирующие относительно текущей PR-приёмки и нового ядра; исследование не является массовым rename/native agent implementation.
