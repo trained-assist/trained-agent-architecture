@@ -8,6 +8,8 @@
 
 [Workspace Views и доступ внешних сервисов](WORKSPACE-VIEWS-AND-CONSUMER-ACCESS.md) — проектный контракт доступа к выбранной папке через HTTP/Git, dev/main и scoped grants.
 
+[Publication adapters](PUBLICATION-ADAPTERS.md) — общий контракт публикации папок в Cloudflare, Yandex и Google; [пилот миграции сайтов Люды #163](https://github.com/trained-assist/trained-agent-architecture/issues/163).
+
 ## Начать работу
 
 1. [ARCHITECTURE.md](ARCHITECTURE.md) — единая целевая модель и инварианты.
