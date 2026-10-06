@@ -4,9 +4,9 @@
 
 **Связанные документы:**
 - [Run conflict — явный выбор](scenarios/interaction/run-conflict-explicit-choice.md) — целевая модель (сценарии RC-01…RC-08); решения владельца 30.09.2026.
-- [USER-STORIES-CONSISTENCY-AUDIT-2026-09-30](audits/USER-STORIES-CONSISTENCY-AUDIT-2026-09-30.md) — аудит существующих юзер-стори и противоречий, которые закрывает этот план.
+- [USER-STORIES-CONSISTENCY-AUDIT-2026-09-30](https://github.com/trained-assist/trained-agent-architecture/blob/dc50e7f4b0c001c15acd68497f06673922b25db6/audits/USER-STORIES-CONSISTENCY-AUDIT-2026-09-30.md) — аудит существующих юзер-стори и противоречий, которые закрывает этот план.
 - [План реализации и интеграции](IMPLEMENTATION-AND-INTEGRATION-PLAN.md) — зелёное поле параллельно живому сервису (I00–I10); см. границы ниже.
-- [ARCHITECTURE v0.6](ARCHITECTURE.md) (INV-03, INV-08), [контракты C01/C03](contracts/README.md), [Core 01](scenarios/sources/trained-assist-agent/docs/user-scenarios/core/01-channel-concurrency.md), [Core 02](scenarios/sources/trained-assist-agent/docs/user-scenarios/core/02-stop-and-supplement.md).
+- [ARCHITECTURE v0.6](ARCHITECTURE.md) (INV-03, INV-08), [контракты C01/C03](contracts/README.md), [Core 01](https://github.com/trained-assist/trained-agent-architecture/blob/dc50e7f4b0c001c15acd68497f06673922b25db6/scenarios/sources/trained-assist-agent/docs/user-scenarios/core/01-channel-concurrency.md), [Core 02](https://github.com/trained-assist/trained-agent-architecture/blob/dc50e7f4b0c001c15acd68497f06673922b25db6/scenarios/sources/trained-assist-agent/docs/user-scenarios/core/02-stop-and-supplement.md).
 
 ## 1. Границы плана
 
@@ -18,7 +18,7 @@
 
 ## 2. Факты: как устроено сейчас
 
-Ревизии, на которых проверено (см. также [CODE-BASELINE](audits/CODE-BASELINE.md)):
+Ревизии, на которых проверено (см. также [CODE-BASELINE](https://github.com/trained-assist/trained-agent-architecture/blob/dc50e7f4b0c001c15acd68497f06673922b25db6/audits/CODE-BASELINE.md)):
 
 | Репозиторий | Ревизия |
 |---|---|
@@ -87,7 +87,7 @@
 - Закрывает находку аудита A-5 и класс KNOWN-BUGS US-BUG-01 (находку A-4 закрывает Ф3 — там тап становится явным выбором).
 
 ### Ф2 — честный Стоп и supplement (без этого стоп-опции меню нельзя показывать)
-- Реализация уже распланирована в [Core 02, §5](scenarios/sources/trained-assist-agent/docs/user-scenarios/core/02-stop-and-supplement.md) (SS-13 сделан; SS-06/09/10 частично в шлюзе; тумбстоун/kill/`POST /tasks/supplement` — нет). Здесь фаза лишь привязывает эти PR к нашему плану и фиксирует связку: **стоп-опции меню включаются только после приёмки Ф2** (ОВ-4 сценария).
+- Реализация уже распланирована в [Core 02, §5](https://github.com/trained-assist/trained-agent-architecture/blob/dc50e7f4b0c001c15acd68497f06673922b25db6/scenarios/sources/trained-assist-agent/docs/user-scenarios/core/02-stop-and-supplement.md) (SS-13 сделан; SS-06/09/10 частично в шлюзе; тумбстоун/kill/`POST /tasks/supplement` — нет). Здесь фаза лишь привязывает эти PR к нашему плану и фиксирует связку: **стоп-опции меню включаются только после приёмки Ф2** (ОВ-4 сценария).
 - «Стоп гасит и очередь» (US-MISC-05) входит в Ф2 как SS-05.
 
 ### Ф3 — меню явного выбора
