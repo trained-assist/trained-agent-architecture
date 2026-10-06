@@ -329,6 +329,10 @@ userTaskId, gtdId, tenant/profile/audience и причинная связь пе
 
 Domain capabilities: software-engineering-playbooks, trained-assist-hh-skill, trained-assist-sales-skill, trained-assist-documents-skill, trained-assist-marketing-skill, trained-assist-freelance-skill, trained-assist-speech-skill, trained-assist-search-skill и trained-assist-communication-skills. Compatibility registration, новый Host registration и live readiness — отдельные факты. Их playbooks и domain policies не становятся business logic ядра. Подробности границ — [Connected Applications](CONNECTED-APPLICATIONS-AND-AI-LAYERS.md); current usage и старые имена — [карта репозиториев](REPOSITORIES.md).
 
+### Представления workspace для внешних сервисов
+
+[Workspace Views](WORKSPACE-VIEWS-AND-CONSUMER-ACCESS.md) описывает проектный read-only export выбранной папки через HTTP/Git и dev/main channels. Внешнему consumer не выдаётся upstream GitHub credential или object graph полного профиля. Canonical publication остаётся у WorkspaceService; View — производная проекция, не второй merge/storage owner. Контракт ещё требует реализации и приёмки.
+
 ### MCP, данные и credentials
 
 MCP — интерфейс, а не монолитное ядро: локальный stdio-процесс на запуск, удалённый MCP-сервис, фиксированный вызов handler из Job и каталог возможностей. Provider handlers не зависят от присутствия конкретного Agent Run: общий Host и run-local adapters используют один контракт. Compatibility stdio mounts не доказывают readiness нового Host. Готовность MCP измеряется, а не предполагается. Детали — [Router/MCP](TASK-ROUTER-AND-MCP.md).
