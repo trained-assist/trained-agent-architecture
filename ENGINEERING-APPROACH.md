@@ -10,6 +10,20 @@ Sandbox Driven Development означает проверку полного ра
 
 Sandbox — среда разработки. Agent clean room — граница доступа конкретного запуска. Одна sandbox VM может запускать несколько clean rooms. Работающий сервис, его credentials, webhook и пользовательские данные сохраняются отдельно.
 
+## Persistent instructions Codex
+
+Поддерживаемые пользовательские/проектные уровни: `~/.codex/AGENTS.md` (личные постоянные инструкции), `AGENTS.md` от корня репозитория до текущего каталога (более глубокие инструкции уточняют предыдущие), и доверенный проектный `.codex/config.toml` для настройки Codex. Codex config может выбирать approval/sandbox настройки, но проектная конфигурация загружается только для trusted repository. Проверено по [Codex instructions](https://developers.openai.com/codex/guides/agents-md/) и [configuration layers](https://developers.openai.com/codex/config-basic/).
+
+Глобальное правило SDE находится в `~/.codex/AGENTS.md`; конкретные ресурсы и permissions — в repository `AGENTS.md`. Не дублируем операционные контракты в `.codex/config.toml`: config не ограничивает права отдельными облачными ресурсами, а project config не является надёжной заменой repo instructions. Текущий user config уже имеет `approval_policy = "never"` и `sandbox_mode = "danger-full-access"`; это даёт достаточную локальную автономность и не нуждается в расширении. Codex не предоставляет пользователю настраиваемый механизм, чтобы переписать системные/host-managed ограничения; инструкции могут конкретизировать user/project поведение, но не отменяют system policy.
+
+## Sandbox-Driven Engineering: обязательная практика
+
+Останавливаться до безопасного dev/test/staging запуска или отказываться от теста только потому, что он может упасть, — вредно: так незамеченный дефект доходит дальше. В объявленных изолированных средах агент должен активно запускать и развёртывать код, подавать реалистичный input, наблюдать output/logs/state, разбирать реальные ошибки, исправлять их и повторять E2E. Не просить подтверждение для рутинного deploy/restart/test/reset явно disposable sandbox-ресурсов, если Environment Contract это разрешает. Статическая проверка не заменяет доступный runtime evidence.
+
+**Production остаётся отдельной trust boundary.** Свободная работа в dev/test/staging никогда не означает прямой deploy или mutation production. Каждый репозиторий объявляет проверенный Promotion to Production path; если он допускает непреднамеренный переход из PR/staging, это Sandbox Gap, который нужно закрепить issue и устранить.
+
+Для активного репозитория обязателен concise Environment Contract в `AGENTS.md`. Создатель или существенный владелец runtime-компонента поддерживает testability path `deploy/start sandbox → send test input → observe output → inspect logs/state → reset/retry`; изменение этого пути обновляет contract в той же PR. Недостающее свойство — Sandbox Gap: маленький пробел устранить сразу, большой описать с влиянием на evidence и issue owning repository; cross-project gap связать с architecture issue.
+
 ## Общие правила
 
 1. Каждый work item имеет воспроизводимый setup/run/evidence/teardown с pinned source/software/config versions и isolated resource namespace. Test fixture означает подготовленный сценарий, а не обязательный mock.

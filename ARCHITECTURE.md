@@ -417,6 +417,14 @@ Credentials имеют scopes shared/platform, private/user и replaceable-defau
 
 Практика разработки — [Sandbox Driven Development](ENGINEERING-APPROACH.md): воспроизводимая среда, контролируемые сбои, проверка логов и срока хранения на каждой итерации. Существующая VM сначала sandbox. Актуальные зависимости, карточки и параллельные потоки — [план реализации и интеграции](IMPLEMENTATION-AND-INTEGRATION-PLAN.md); практические среды и проверки — [Sandbox](SANDBOX.md). Standalone Runner/API готовятся параллельно; первый интеграционный сценарий control plane остаётся разговорным. Успешный bootstrap существующего агента на VM2 не означает приёмку нового Runner. [Capability Catalog](CAPABILITY-CATALOG-AND-FAST-REPLIES.md): четыре режима исполнения при трёх типах Job.
 
+### Sandbox-Driven Engineering и границы доверия
+
+Инженерный результат подтверждается исполнением в воспроизводимой среде. Пригодная dev/test/staging-среда предназначена для деплоя, рестарта, тестового трафика, контролируемых отказов и повторных прогонов. Отказ тестировать или остановка работы только потому, что sandbox может выдать ошибку, вредны: ошибка в изолированной среде — ожидаемое evidence для исправления, а не причина считать работу завершённой. Цикл: `understand → implement → sandbox deploy/run → E2E → observe → fix → repeat → commit → push → PR → CI/staging acceptance`.
+
+Каждый активно разрабатываемый репозиторий описывает concrete Environment Contract в своём `AGENTS.md`: фактические test/staging и production ресурсы, тестовый input, ожидаемые output, logs/state, retry/reset, права агента и promotion path. Владелец runtime-компонента оставляет этот contract пригодным для следующей инженерной сессии и обновляет его в той же PR при изменении testability. Недоказанные свойства указываются как gaps, не подразумеваются.
+
+Локальная/эфемерная среда и dev/test/staging — рабочие доверенные границы для высокой практической автономности. Production — отдельная защищённая граница: sandbox-разрешения никогда не разрешают прямое production-изменение; переход идёт только по проверенному promotion path репозитория. Sandbox Gap фиксируется в контракте и issue owning repository; cross-project gap связывается с архитектурным issue. CI, PR и runtime evidence дополняют друг друга, статический просмотр кода не заменяет доступный E2E. Rollout tracked in [#185](https://github.com/trained-assist/trained-agent-architecture/issues/185).
+
 Доставка артефактов: control API работает с manifest, ID и статусами; байты идут в object storage по scoped upload/download, с докачкой для больших файлов. Экспорт имеет свой статус, отдельный от результата Run; очистка — только после сохранения.
 
 ## 12. Блоки и инварианты
