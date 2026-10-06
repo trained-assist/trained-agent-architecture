@@ -31,6 +31,8 @@ Fast-path research: [алгоритм до запуска агента и про
 
 Интерактивность: [формы, кнопки, Awaiting user input и research B](INTERACTIVE-EXECUTION-AND-USER-INPUT.md). End-to-end не запрещает вопросы; формы открываются host handler без нового Agent Run.
 
+Приёмка ввода и стартовые окна: [SC-START-01](scenarios/interaction/SC-START-01-input-start-window.md), реализация [issue #170](https://github.com/trained-assist/trained-agent-architecture/issues/170). Общие правила создания и финализации пользовательских сценариев — [USER-SCENARIO-LIFECYCLE.md](USER-SCENARIO-LIFECYCLE.md).
+
 ## Начать разработку
 
 1. Прочитать [ARCHITECTURE](ARCHITECTURE.md): границы, ownership, инварианты и условия перехода с живого сервиса.
@@ -69,7 +71,7 @@ Fast-path research: [алгоритм до запуска агента и про
 |---|---|
 | Runner, API и файлы | [Runtime boundary](runtime/EXECUTION-RUNTIME.md), [Runner repo](https://github.com/trained-assist/ai-agent-runner), [Serverless API](SERVERLESS-AGENT-API.md), [Запуск и сохранение данных](AGENT-RUNNER-DATA-PERSISTENCE-IMPLEMENTATION.md); lifecycle данных — ARCHITECTURE §4.6 |
 | Router, MCP и быстрые ответы | [Router/MCP](TASK-ROUTER-AND-MCP.md), [Capability Catalog](CAPABILITY-CATALOG-AND-FAST-REPLIES.md). Router сначала модуль control plane |
-| Статусы, IDs и пользовательский ввод | [ID и Reporting](USER-TASK-IDS-AND-REPORTING.md), [Run conflict](scenarios/interaction/run-conflict-explicit-choice.md), [Stories](stories/README.md), [старые сценарии](scenarios/README.md) |
+| Статусы, IDs и пользовательский ввод | [ID и Reporting](USER-TASK-IDS-AND-REPORTING.md), [Run conflict](scenarios/interaction/run-conflict-explicit-choice.md), [SC-START-01](scenarios/interaction/SC-START-01-input-start-window.md), [Stories](stories/README.md), [legacy snapshot](scenarios/README.md) |
 | Разговорная сессия | [Conversation contract](CONVERSATIONAL-SESSION-CONTRACT.md): границы Conversation/Task/Run, что в Task Store, resume-семантика, связь с legacy session-store |
 | Планы, расписание и GTD | [Boundaries](PLAYBOOKS-VS-GETTING-THINGS-DONE-BOUNDARIES.md). GTD opt-in |
 | Provider-интеграции | [External Integration Gate](EXTERNAL-INTEGRATION-GATE.md) |
