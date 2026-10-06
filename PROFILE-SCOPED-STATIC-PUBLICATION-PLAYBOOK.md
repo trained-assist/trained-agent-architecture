@@ -8,7 +8,7 @@
 
 ## MCP-вызов Markdown → HTML
 
-Тонкий MCP-метод называется `put_md_to_web_as_html`. Он принимает **относительные пути внутри pinned Workspace View**, а не содержимое, абсолютные пути, GitHub URL или произвольные repo/branch от модели:
+Тонкий MCP-метод называется `put_md_to_web_as_html`. Он принимает **относительные пути внутри pinned Workspace View**, а не содержимое, абсолютные пути, GitHub URL или произвольные repo/branch от модели. Для обычного документа:
 
 ```json
 {
@@ -22,13 +22,17 @@
 
 Host-owned publication handler разрешает оба пути в одном View и на одной revision, проверяет типы файлов и ограничения размера, разбирает `web-theme.json` по версионированной allowlist-схеме, рендерит Markdown в HTML и формирует отдельную staging-папку. Cloudflare adapter получает только эту папку и pinned publication target; он не получает ссылку на весь репозиторий и не клонирует его. Preview/production policy и сохранение исходников через WorkspaceService/CAS остаются ответственностью host, не MCP.
 
+Для готового многофайлового сайта метод имеет режим `rich-html`: вместо `markdown_path`/`theme_path` передаётся `site_path` — относительный путь к одной папке сайта в том же View. В ней лежит весь статический сайт (`index.html`, assets и при необходимости `_headers`, `_redirects`). Renderer не меняет HTML/CSS/JS; host валидирует manifest, MIME-типы, лимиты, symlinks и выход за subtree, затем копирует только эту папку в staging и передаёт её Cloudflare Direct Upload adapter. Это покрывает готовый HTML/CSS/JS, но не запускает произвольные build-команды и не поддерживает backend/Pages Functions в пилотном контракте.
+
+Cloudflare Pages Direct Upload принимает собранную папку статических файлов, например `wrangler pages deploy <DIRECTORY> --project-name <PROJECT>`. Провайдеру отправляются файлы staging-папки; URL или ссылка на GitHub-подпапку сама по себе не является deploy input. Git-ветка и source commit фиксируются host-side, а Cloudflare branch — отдельный label preview deployment. Файлы попадают в корень Pages deployment; публикация под существующим URL-prefix требует отдельного route/mirror binding с проверкой совместимости путей.
+
 `web-theme.json` — данные оформления, не CSS/HTML/JS для исполнения. Схема v1 задаёт `schemaVersion`, `preset`, `colors` (`background`, `surface`, `text`, `muted`, `accent`, `border`), `font` (`body`, `heading`, `mono` из разрешённого набора) и `layout` (`maxWidth`, `density`). Неизвестные ключи, CSS, JS, `url()`, внешние font imports и небезопасные цвета/размеры отклоняются. При отсутствии theme handler использует закреплённый project preset; произвольный default не должен молча менять оформление существующей публикации.
 
 Рендерер экранирует/санитизирует raw HTML по принятой политике, сохраняет Markdown-структуру и разрешает локальные assets только внутри View. Пути assets нормализуются, выход за subtree блокируется. Выходный HTML и выбранный theme preset/version входят в manifest и digest candidate.
 
-Ответ MCP содержит status (`preview_ready`/`published`/ошибка), publication/deployment ID, URL, исходный commit SHA, `markdown_path`, `theme_path`, renderer/theme schema versions и candidate digest. Секреты, полный inventory и содержимое Markdown в receipt/logs не включаются. Production deployment выполняется только по отдельной policy/approval текущего publication flow; сам факт вызова генератора не обходит preview/cutover gate.
+Ответ MCP содержит status (`preview_ready`/`published`/ошибка), publication/deployment ID, URL, режим (`markdown-html`/`rich-html`), исходный commit SHA, выбранные относительные пути, renderer/theme schema versions (для Markdown) и candidate digest. Секреты, полный inventory и содержимое Markdown в receipt/logs не включаются. Production deployment выполняется только по отдельной policy/approval текущего publication flow; сам факт вызова генератора не обходит preview/cutover gate.
 
-**Текущее состояние:** контракт метода описан для реализации; legacy `publish_page` и `site_deploy` не обеспечивают этот поток. `site_deploy` принимает локальную папку, а `branch` задаёт label Cloudflare deployment, не GitHub source revision.
+**Текущее состояние:** контракт метода описан для реализации; legacy `publish_page` и `site_deploy` не обеспечивают этот поток. `site_deploy` принимает локальную папку, а `branch` задаёт label Cloudflare deployment, не GitHub source revision. Cloudflare Direct Upload умеет принимать папку статических assets через Wrangler: [официальный пример](https://developers.cloudflare.com/pages/how-to/use-direct-upload-with-continuous-integration/) и [справка `pages deploy`](https://developers.cloudflare.com/workers/wrangler/commands/pages/).
 
 ## Шаги
 
