@@ -309,29 +309,29 @@ userTaskId, gtdId, tenant/profile/audience и причинная связь пе
 
 ## 9. Репозитории и ownership
 
-Статус: **Принято**, кроме строк с пометкой «предложено».
+Репозиторий выделяется по независимому контракту и жизненному циклу. Полный каталог активных, переходных, вспомогательных и испытательных repos — [REPOSITORIES.md](REPOSITORIES.md). Ни эта таблица, ни существование repo не объявляют production cutover выполненным.
 
-Репозиторий выделяется по независимому контракту и жизненному циклу, а не по каждому прямоугольнику схемы.
-
-| Репозиторий | Ответственность |
+| Владелец | Ответственность |
 |---|---|
-| trained-agent-architecture | Эта архитектура, контракты, сценарии, аудит |
-| **Control plane — один новый репозиторий** [trained-assist-control-plane](https://github.com/trained-assist/trained-assist-control-plane) (создан 30.09.2026) | Input, Router, Output, GTD, Journal, Reporting API — модули над одним Task Store; Workflow Port и его адаптеры. Router выделяется отдельно, только если у него появится свой жизненный цикл |
-| trained-assist-tg-bot | Telegram: приём, доставка, ID сообщений, UX канала; буфер и outbox приёма **В проде ✅**; выбор исполнителя отсюда уходит; статус задачи и владение повторами до durable ACK — тоже не здесь (C02/C01, приложение A к контрактам) |
-| trained-assist-web | Web UI и просмотр задач через общий API |
-| ai-agent-runner | Clean room, адаптеры движков, размещение по регионам, жизненный цикл Run; изоляция слотами переносится из ядра |
-| trained-assist-agent | Текущее ядро; источник переносимых модулей (раздел 6) |
-| trained-assist-llm-ladder | Выбор модели и провайдера **В проде ✅**; не выбор типа Job |
-| [trained-assist-integration-gate](https://github.com/trained-assist/trained-assist-integration-gate) (создан 30.09.2026) | Provider API/webhook adapters, bindings, inbox, квитанции |
-| [trained-assist-error-watcher](https://github.com/trained-assist/trained-assist-error-watcher) (создан 30.09.2026) | Ошибки → инциденты → диагностика → обход/issue/отчёт |
-| Credential Broker / Storage (размещение открыто) | Scoped credentials, snapshots, artifacts |
-| Общие contracts/schema | Версионированные envelopes, без бизнес-логики |
+| trained-agent-architecture | Единая модель, межсервисные контракты и пользовательские сценарии |
+| trained-assist-control-plane | Input, Router, Output, GTD, Journal, Reporting, Task Store и Workflow Port; Router пока модуль, не самостоятельный repo |
+| trained-assist-tg-bot | Telegram ingress/buffer, UX, IDs сообщений и доставка; исполнение задачи и routing policy принадлежат CP |
+| trained-assist-web | Общий пользовательский web UI и проекция статуса через backend adapter |
+| ai-agent-runner | Собственный Agent Run API, launch/result/reconcile, trusted profile workspace lifecycle; выбранный worker владеет engine process/clean room |
+| trained-assist-mcp-host | MCP catalog, HTTP/stdio adapters, scoped authorization и binding resolution; бизнес-handlers остаются в domain repos |
+| trained-assist-agent | Legacy orchestration и compatibility-библиотеки/схемы/testkit; источник переноса, не новая цель общей orchestration |
+| trained-assist-llm-ladder | Выбор модели/провайдера и model accounting; не выбор типа Job |
+| trained-assist-integration-gate | Provider API/webhook transport, bindings, inbox, receipts и reconcile |
+| trained-assist-error-watcher | Зарегистрированные ошибки → incidents/suppression → bounded diagnosis/report |
+| trained-assist-recruiting-web | Connected recruiting application: собственные presentation, domain data/processes и AI bindings |
+| Credential Broker / Storage | Scoped credentials, snapshots и artifact bytes; логический контракт, физический owner выбирается явно |
+| Contracts/schema | Версионированные envelopes у владельца контракта, без копий бизнес-логики |
 
-Доменные репозитории **В проде ✅**: software-engineering-playbooks, trained-assist-hh-skill, trained-assist-sales-skill, trained-assist-documents-skill, trained-assist-marketing-skill, trained-assist-freelance-skill, trained-assist-speech-skill, trained-assist-search-skill. Их playbooks и contracts требуют inventory; общая архитектура не переносит их playbooks в core. Подробнее — [review](REVIEW-WITH-REAL-PLAYBOOKS.md) и [scenarios](scenarios/README.md).
+Domain capabilities: software-engineering-playbooks, trained-assist-hh-skill, trained-assist-sales-skill, trained-assist-documents-skill, trained-assist-marketing-skill, trained-assist-freelance-skill, trained-assist-speech-skill, trained-assist-search-skill и trained-assist-communication-skills. Compatibility registration, новый Host registration и live readiness — отдельные факты. Их playbooks и domain policies не становятся business logic ядра. Подробности границ — [Connected Applications](CONNECTED-APPLICATIONS-AND-AI-LAYERS.md); current usage и старые имена — [карта репозиториев](REPOSITORIES.md).
 
 ### MCP, данные и credentials
 
-MCP — интерфейс, а не монолитное ядро: локальный stdio-процесс на запуск, удалённый MCP-сервис, фиксированный вызов handler из Job и каталог возможностей. Схема «доменный скил — свой MCP-сервер в конфигурации запуска» **В проде ✅**. Готовность MCP измеряется, а не предполагается. Детали — [Router/MCP](TASK-ROUTER-AND-MCP.md).
+MCP — интерфейс, а не монолитное ядро: локальный stdio-процесс на запуск, удалённый MCP-сервис, фиксированный вызов handler из Job и каталог возможностей. Provider handlers не зависят от присутствия конкретного Agent Run: общий Host и run-local adapters используют один контракт. Compatibility stdio mounts не доказывают readiness нового Host. Готовность MCP измеряется, а не предполагается. Детали — [Router/MCP](TASK-ROUTER-AND-MCP.md).
 
 **Решение 04.10:** каждый профиль имеет связанный приватный Git repository постоянного workspace. В нём — текстовые файлы, папки и ссылки/manifest тяжёлых artifacts; bytes artifacts — в object storage, credentials — в Broker. Profile Workspace module владеет provisioning/binding и versioned publication; Runner получает snapshot с baseRevision и после Run передаёт разрешённый manifest изменений. Логи Run и engine resume state хранятся отдельно.
 
