@@ -18,3 +18,7 @@ Do not edit generated context or add it to main. Regenerate it via Repository co
 Production — отдельная защищённая граница. Sandbox-разрешения не дают права напрямую менять или развёртывать production; следуйте проверенному Promotion to Production path. Конкретная граница среды и reset описаны ниже/в профильных документах.
 
 Используйте [Environment Contract template](contracts/ENVIRONMENT-CONTRACT-TEMPLATE.md) для repository-specific среды; архитектура и общий принцип принадлежат [Engineering Approach](ENGINEERING-APPROACH.md).
+
+## PR hygiene
+
+Устаревшие, superseded или противоречащие новым решениям открытые PR создают неоднозначность и растущий delivery-риск. Считайте открытые PR в scope текущей задачи: при 3–5 самостоятельно разбирайте очевидные дубли/superseded PR, кратко указывайте причину закрытия и обновляйте актуальные описания; при 8+ сообщите пользователю о красной очереди и спросите, делать ли разбор первым. Пока ждёте ответ, продолжайте независимую безопасную работу, но не закрывайте спорные PR и не плодите новые. Не переписывайте историю и не force-push.
