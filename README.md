@@ -6,6 +6,8 @@
 
 **Где что живёт:** [карта всех репозиториев](REPOSITORIES.md) — основной контур, доменные capabilities, legacy-границы, отдельные продукты, benchmarks и test fixtures. Активная разработка и live использование различаются.
 
+[Workspace Views и доступ внешних сервисов](WORKSPACE-VIEWS-AND-CONSUMER-ACCESS.md) — проектный контракт доступа к выбранной папке через HTTP/Git, dev/main и scoped grants.
+
 ## Начать работу
 
 1. [ARCHITECTURE.md](ARCHITECTURE.md) — единая целевая модель и инварианты.
