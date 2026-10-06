@@ -4,7 +4,7 @@
 
 ## 1. Модель
 
-**Workspace View** — постоянное, разрешённое пользователем представление выбранной подпапки workspace. Внешний сервис получает собственный scoped grant к View; upstream GitHub credential не выдаётся. GitHub — текущий storage adapter, не часть публичного контракта.
+**Workspace View** — постоянное, разрешённое пользователем представление выбранной подпапки workspace. Внешний сервис получает собственный scoped grant к View; upstream GitHub credential не выдаётся. Git-ветки и commits — единственный источник версий; отдельные main/dev pointers и второй журнал публикации профиля не создаются. GitHub — текущий storage adapter, не часть публичного контракта.
 
 Разделяем три операции:
 - export: сделать разрешённые данные доступными consumer;
@@ -29,11 +29,11 @@ flowchart TD
 | Сущность | Поля / смысл |
 |---|---|
 | SourceBinding | bindingId, tenantId, profileId, workspaceId, repositoryBindingRef, directory, policyVersion; создаёт trusted host после согласия пользователя |
-| WorkspaceView | viewId, sourceBindingId, consumer policy, channel pointers, generation; живёт дольше Run |
+| WorkspaceView | viewId, sourceBindingId, consumer policy и правило выбора веток; живёт дольше Run |
 | ViewRevision | viewRevisionId, sourceCommit, sourceTree, projectionCommit, manifestDigest, exportPolicyVersion, artifact refs; неизменяема |
-| Channel | dev или main; pointer на ViewRevision, generation, sourceRunId при наличии |
+| Channel alias | main/dev — вычисляется из доступных Git refs; branch, sourceCommit, sourceRunId при наличии. Не самостоятельный authoritative state |
 | ConsumerGrant | grantId, authenticated consumerId, tenant/profile/view binding, channels/revisions, scopes, audience, expiry, revocation |
-| ExecutionReceipt | executionId, consumerId, viewRevisionId, channelGeneration, operationId, outcome, resultRefs; привязка результата к реально использованным исходникам |
+| ExecutionReceipt | executionId, consumerId, viewRevisionId, selectionDigest, operationId, outcome, resultRefs; привязка результата к реально использованным исходникам |
 | Publication | publicationId, URL и последний успешный deployment; существует только для consumers, публикующих результат |
 
 SourceBinding и grants — host-owned. Агент может предложить папку, но не подменить user/tenant/repository или сам выдать себе доступ. Tenant/profile выводятся из аутентифицированной сессии. Сервис читает upstream только через существующий credential resolver, без ambient credentials.
@@ -50,30 +50,32 @@ Consumer видит содержимое разрешённой папки ка�
 
 Доверие consumer не разрешает ему видеть больше согласованного scope. Build scripts запускаются на изолированном представлении; полный профиль не монтируется как «удобная dependency».
 
-## 4. Dev и main: две версии без путаницы
+## 4. Ветки — источник версий; main/dev — удобные имена
 
-main означает подтверждённый committedRevision WorkspaceService, а не предположительно существующую GitHub ветку с буквальным именем main. dev — выбранная пользователем/host рабочая версия конкретного Run или явного checkpoint.
+**Упрощённое правило:** main — canonical branch существующего workspace binding. Все разрешённые не-main ветки с этой папкой — доступные рабочие версии. dev — alias самой свежей такой версии. Если рабочих версий нет, dev совпадает с main; наружу возвращается одна уникальная версия с двумя labels. Если canonical пока отсутствует, отдаётся только доступная dev версия.
 
-| Ситуация | Ответ resolver |
+Сервис может перечислить все разрешённые версии и выбрать конкретную branch, а не только alias. Grant задаёт allowed refs policy: все разрешённые рабочие версии этой папки или ограниченный subset. Перечисление версий не раскрывает содержимое других папок или чужие workspace refs.
+
+«Самая свежая» означает время последнего подтверждённого checkpoint/push из existing trusted workspace/run state, а не author/committer date внутри пользовательского commit и не номер в ответе GitHub API. При равном времени применяется стабильная сортировка по branch ID. Если trusted freshness недоступна, resolver возвращает freshness_unknown и версии для явного выбора; не выдумывает время. Reconcile после потерянного события использует existing receipts/state. Отдельный durable branch registry только ради alias не строится.
+
+| Ситуация | Поведение |
 |---|---|
-| Есть только canonical версия | main доступен; dev по умолчанию alias той же ViewRevision; одна уникальная версия, channels=[dev,main] |
-| Есть только dev | dev доступен, main отсутствует; не создавать ложную production версию |
-| Есть обе и содержимое отличается | Две версии: dev и main с разными revision/digest |
-| Обе проецируются в одинаковые файлы | Одна ViewRevision, два channel labels; не создавать вторую сборку из-за изменений соседней папки |
-| Несколько run-веток | Только явно выбранный dev binding; остальные candidates можно перечислить владельцу, не выбирать по времени последнего push |
-| Рабочая ветка удалена | Reconcile по состоянию WorkspaceService publication; не считать deletion доказательством merge |
-| Папка отсутствует в новой canonical revision | main/source_unavailable или explicit retirement; не подменять другой папкой |
-| Export/build не готов или упал | Новый pointer не активируется; предыдущая рабочая revision остаётся доступной с явным current/stale состоянием |
+| main и одна рабочая ветка | main + dev, dev указывает на рабочую ветку |
+| Несколько рабочих веток | Все разрешённые версии перечислены; dev выбирается по правилу выше |
+| Ветки имеют одинаковую папку | Branch identities сохранены; export dedup по digest, не две одинаковые сборки |
+| Новая рабочая ветка/push | Следующий resolve может выбрать новый dev; выполняющийся build остаётся на прежнем SHA |
+| Рабочая ветка удалена | Перечитать refs: dev становится следующей доступной рабочей версией либо main |
+| Ветка смержена и удалена | main уже изменён существующим WorkspaceService; resolver просто видит новые refs |
+| Ветка удалена без merge | main не меняется и ничего не мерджится; resolver не объявляет старую работу опубликованной |
+| Папка отсутствует в branch | Эта branch не доступна для View; отсутствие main показывается явно |
+| Merge конфликтует/исход unknown | Доступные run-версии остаются читаемыми; canonical не меняется до existing CAS/conflict/reconcile |
+| Export/build упал | Git refs не меняются; последняя успешная consumer publication остаётся по её собственной политике |
 
-Dev создаётся автоматически как логический channel при создании View. Пока нет собственных изменений, он может совпадать с main; обещание двух отдельных deployments не даётся.
+Каждый resolve возвращает branch, sourceCommit, export digest и selectionDigest. SelectionDigest связывает View policy, branch и commit; это не отдельный sequence counter. Для execution consumer закрепляет SHA и immutable export descriptor. Старый build result сохраняется как история; consumer перед переключением live URL проверяет, что результат относится к выбранной версии/его deployment request. Не следует считать старый callback текущим только по имени dev.
 
-Каждое выполнение сначала resolves channel в immutable ViewRevision. Даже если dev/main сдвинулись во время build, consumer продолжает читать ту же revision. Результат для старой generation сохраняется как история, но не заменяет live deployment нового запроса.
+Для агента, работающего в конкретном Run, команда публикации передаёт его branch/SHA явно. Автоматический newest-dev удобен для обзорного UI/consumer polling, но не должен публиковать чужую более свежую run-ветку вместо текущей агентской работы.
 
-Dev refresh вызывается после подтверждённого push/checkpoint, а не после несохранённого изменения локального файла. Event и bounded reconciliation дополняют друг друга: webhook может потеряться. GitHub event — подсказка перечитать trusted state, не команда доверять payload.
-
-После WorkspaceService published: resolve фактический committedRevision → export папки → проверить manifest → CAS-update main pointer. Если выбранный dev соответствует опубликованным изменениям, host может rebind dev на canonical с учётом новых merge-изменений. Conflict/unknown не продвигают main; используется существующий reconcile, агент повторно не запускается.
-
-Удаление исходной ветки не уничтожает уже экспортированную revision. Сохранение deployment при исчезновении папки — политика Publication; source API честно показывает отсутствие источника. Grant revocation немедленно блокирует новые чтения; уже скачанные bytes невозможно отозвать задним числом.
+GitHub events ускоряют refresh, но не являются командой merge. Export revision — воспроизводимый derived snapshot/cache, не второе хранение исходников. Удаление branch не уничтожает уже развернутый сайт; это сохраняет deployment provider. Grant revocation блокирует новые чтения; ранее скачанные bytes невозможно отозвать задним числом.
 
 ## 5. API: control и data planes
 
@@ -83,10 +85,10 @@ Dev refresh вызывается после подтверждённого push/
 |---|---|
 | POST /v1/workspace-views | Создать View: workspaceBindingRef, directory, policyRef, idempotencyKey; tenant/profile берутся из identity |
 | GET /v1/workspace-views/{viewId} | Разрешённая metadata и доступные channels; без upstream credential |
-| PUT /v1/workspace-views/{viewId}/channels/dev | Host выбирает run binding/checkpoint или canonical; expectedGeneration, operationId |
-| POST /v1/workspace-views/{viewId}/refresh | Host refresh/reconcile заданного канала; может вернуть 202 + operationId |
-| GET /v1/workspace-views/{viewId}/versions | Один или два уникальных разрешённых revision records с channel labels и readiness |
-| GET /v1/workspace-views/{viewId}/resolve?channel=dev | descriptor: viewRevisionId, sourceCommit, projectionCommit, manifestDigest, generation, formats, scoped data URLs |
+| PATCH /v1/workspace-views/{viewId} | Owner меняет allowed refs/selection policy; If-Match и operationId. Default newest-dev не требует этой операции |
+| POST /v1/workspace-views/{viewId}/refresh | Refresh/reconcile refs и derived exports; может вернуть 202 + operationId |
+| GET /v1/workspace-views/{viewId}/versions | Все разрешённые branch/revision records, main/dev labels, trusted freshness, digest и readiness |
+| GET /v1/workspace-views/{viewId}/resolve?channel=dev | descriptor: viewRevisionId, sourceCommit, projectionCommit, manifestDigest, branch, selectionDigest, formats, scoped data URLs |
 | POST /v1/workspace-views/{viewId}/grants | Owner/host выдаёт конкретному consumer ограниченный доступ; consumerId, channels, scopes, audience, expiresAt |
 | POST /v1/consumer-access/token | Authenticated consumer обменивает существующий grant на короткоживущий credential; не создаёт новый grant |
 | DELETE /v1/consumer-grants/{grantId} | Отозвать доступ |
@@ -94,17 +96,17 @@ Dev refresh вызывается после подтверждённого push/
 | GET /v1/view-revisions/{revisionId}/archive | Детерминированный tar/zip той же revision; checksum и limits |
 | GET /v1/view-revisions/{revisionId}/files/{path} | Чтение разрешённого файла; отсутствие и forbidden scope различаются без раскрытия чужих ресурсов |
 | GET /v1/view-revisions/{revisionId}/objects/{objectId} | Разрешённые тяжёлые bytes, range/checksum; никакого произвольного upstream key |
-| POST /v1/consumer-executions/{executionId}/results | Идемпотентный result/deployment receipt с pinned revision, generation и operationId |
+| POST /v1/consumer-executions/{executionId}/results | Идемпотентный result/deployment receipt с pinned revision, selectionDigest и operationId |
 
 Scopes разделяются: view:read, objects:read, results:write, view:configure. Default consumer — read-only; config/admin scopes не выдаются вместе с clone token. Grant renewal требует действующего consumer identity и не расширяет scope. Базовый формат — opaque bearer, hash lookup и revocation в durable store; JWT допустим при эквивалентной проверке binding/version/expiry. RFC 8693 — стандартный вариант exchange при наличии OAuth инфраструктуры, не обязательный новый IdP.
 
 Git client может получать credential через credential helper/HTTP authentication. Токен не в URL, prompt, RunSpec или commit. Audience привязан к gateway и consumer binding; identity consumer отдельно проверяется при выдаче. Для bearer possession остаётся полномочием чтения до expiry/revocation; sender-constrained credentials — отдельное усиление, не обещание MVP.
 
-IdempotencyKey связан с identity и payload digest. Повтор с другим payload — 409. Pointer/config mutations требуют expectedGeneration/If-Match. Auth — 401, запрет scope — 403 или закрытый 404 по политике, source missing — typed state, pending export — 202, upstream failure — retriable/unknown без автоматического переключения канала.
+IdempotencyKey связан с identity и payload digest. Повтор с другим payload — 409. Config/grant mutations требуют If-Match. Resolver не мутирует Git refs или отдельные channel pointers. Auth — 401, запрет scope — 403 или закрытый 404 по политике, source missing — typed state, pending export — 202, upstream failure — retriable/unknown без автоматического переключения канала.
 
 ## 6. Git transport без раскрытия профиля
 
-Потребитель получает обычный read-only Git URL вида https://workspace.example/v1/git/{viewId}.git и refs/heads/dev, refs/heads/main, если соответствующая версия доступна. На Git-запрос refs pinned revisions проверяются тем же grant. HEAD указывает на dev; consumer может явно выбрать main.
+Потребитель получает обычный read-only Git URL вида https://workspace.example/v1/git/{viewId}.git и разрешённые source branch refs, плюс refs/heads/dev как вычисляемый alias и refs/heads/main при наличии canonical версии. Коллизии имён резервных aliases нормализуются в descriptor, не скрывают ветки. На Git-запрос refs pinned revisions проверяются тем же grant. HEAD указывает на dev; consumer может явно выбрать main.
 
 Это **проецированный Git repository**, не HTTP proxy полного upstream repo. В нём отдельная object database и синтетические commits, содержащие только разрешённые export snapshots, с нейтральными metadata. Upstream SHA хранится в descriptor отдельно: projection SHA другой. Source history/parents не копируются; default snapshot не наследует старые files/secrets. История экспортированных snapshots возможна только при явно согласованной retention/read policy.
 
@@ -127,7 +129,7 @@ HTTPS API и object storage могут быть serverless. Git projection/expor
 5. Receipt подтверждает исходники и outcome; пользователь получает URL только при подтверждённом deployment.
 6. Canonical publication через WorkspaceService обновляет main по правилам раздела 4; текущая жизнь агента для этого не нужна.
 
-MCP/CLI — тонкие adapters create/select/refresh/build/deploy/status; data transport — HTTP/Git. Сервис не должен зависеть от MCP process в clean room. CP хранит user task/run/reporting, View service — channel/grant/export state, consumer — execution/deployment state; IDs связываются без нового GTD loop. Ordinary refresh не запускает LLM.
+MCP/CLI — тонкие adapters create/select/refresh/build/deploy/status; data transport — HTTP/Git. Сервис не должен зависеть от MCP process в clean room. CP хранит user task/run/reporting, View service — binding/grant policy и derived export cache; branches остаются в существующем workspace repository, consumer — execution/deployment state; IDs связываются без нового GTD loop. Ordinary refresh не запускает LLM.
 
 View lease не подменяет publication lock. Tenant/profile isolation, operationId, channelGeneration, viewRevisionId, sourceRunId и consumer executionId передаются явно. Logs не содержат credentials или файловый content; пользовательские ошибки содержат profile и userTaskId/runId при наличии. TTL follows [Observability](OBSERVABILITY-AND-ERROR-CONTRACT.md); история активных grants/revisions/receipts удерживается по явной retention policy, не удаляется вместе с Run.
 
@@ -136,16 +138,16 @@ View lease не подменяет publication lock. Tenant/profile isolation, o
 Предлагаемая модульная структура:
 - contracts/: schemas descriptors/grants/receipts и OpenAPI;
 - bindings/: trusted profile/workspace source binding;
-- resolver/: dev/main pointers, fencing и event reconciliation;
+- resolver/: refs listing, newest-dev alias и event reconciliation без нового channel store;
 - projection/: manifest, archive и Git snapshots;
 - access/: consumer auth, grant exchange/revoke и scoped object reads;
 - transports/: HTTP и Git adapters;
 - consumers/: build/deploy/run adapters без копирования WorkspaceService;
 - tests/fixtures/: synthetic multi-tenant workspace и fake Git/object/provider ports.
 
-GitHubSourcePort, ObjectStoragePort, CredentialResolverPort, RevisionStorePort, ExportBuilderPort и ConsumerAdapter инъектируются. WorkspaceService publication events переиспользуются; CAS/conflict алгоритм не переносится и не копируется.
+GitHubSourcePort, ObjectStoragePort, CredentialResolverPort, DerivedCachePort, ExportBuilderPort и ConsumerAdapter инъектируются. WorkspaceService publication events переиспользуются; CAS/conflict алгоритм не переносится и не копируется.
 
-Обязательные sandbox сценарии: два профиля и соседняя secret folder; arbitrary Git object/history/ref probes; symlink/traversal/submodule; artifact ref чужого профиля; build зависимость за границей; только dev, только canonical, две версии и одинаковая проекция; несколько run branches с явным выбором; потерянный webhook; merge/conflict/unknown; удаление ветки без merge и удаление папки; revoked/expired/wrong-audience grant; restart export/CAS replay; старый consumer callback; bounded large files; обычный git clone/fetch и archive дают одинаковый manifest.
+Обязательные sandbox сценарии: два профиля и соседняя secret folder; arbitrary Git object/history/ref probes; symlink/traversal/submodule; artifact ref чужого профиля; build зависимость за границей; только dev, только canonical, несколько версий и одинаковая проекция; newest-dev, ties, freshness_unknown и явный выбор run branch; потерянный webhook; merge/conflict/unknown; удаление ветки без merge и удаление папки; revoked/expired/wrong-audience grant; restart export/CAS replay; старый consumer callback; bounded large files; обычный git clone/fetch и archive дают одинаковый manifest.
 
 Первый runnable slice — scoped archive и revision/grant semantics с synthetic workspace; Git adapter проходит отдельный compatibility gate обычным клиентом. Реальные consumers подключаются после contract checks, не через новые зависимости на выводимой GCP VM. Статусы и шаги реализации ведутся в issue, не в этом документе.
 
