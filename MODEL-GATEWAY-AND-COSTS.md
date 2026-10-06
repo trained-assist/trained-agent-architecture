@@ -18,7 +18,7 @@ Budget policy проверяется до платного вызова. Общ�
 
 Владелец сообщил о существующем LLM Ledger. Его полный путь доставки всех engine calls пока не подтверждён. Изученный trained-assist-llm-ladder revision 9907dcb6b27307450bdfc826f67dd5490283d2c8 содержит model routing, health/key rotation и D1 traces; прежний аудит обнаружил неполное streaming usage и отсутствие денежной стоимости в найденной trace schema.
 
-Подробные факты и pinned links: [Code baseline](audits/CODE-BASELINE.md). Это историческая проверка, не утверждение нынешнего production coverage.
+Подробные факты и pinned links: [Code baseline](https://github.com/trained-assist/trained-agent-architecture/blob/dc50e7f4b0c001c15acd68497f06673922b25db6/audits/CODE-BASELINE.md). Это историческая проверка, не утверждение нынешнего production coverage.
 
 ## Цены и инфраструктура
 
