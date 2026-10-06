@@ -97,7 +97,7 @@ false-fast назначен до holdout и равен **нулю**: выдум�
 заполнено только в 30 записях, поэтому долю «ходов, дошедших до агента», по нему
 посчитать нельзя (исследование §1, §5.5). Теневой роутер пишет решение в
 `agent-data/input-router-shadow.jsonl`, но на поведение не влияет
-([CURRENT-STATE.md US-ROUTE-01](../../scenarios/sources/trained-assist-tg-bot/docs/user-stories/CURRENT-STATE.md)).
+([CURRENT-STATE.md US-ROUTE-01](https://github.com/trained-assist/trained-agent-architecture/blob/dc50e7f4b0c001c15acd68497f06673922b25db6/scenarios/sources/trained-assist-tg-bot/docs/user-stories/CURRENT-STATE.md)).
 
 Следствия, которые обязаны оставаться в виду:
 
