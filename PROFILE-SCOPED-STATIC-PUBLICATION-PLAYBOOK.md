@@ -6,6 +6,30 @@
 
 В Git сохраняется исходник в его проектном контексте: генератор, нужные assets и сгенерированный результат. В Cloudflare Pages отправляется только согласованная папка публикации. Размер остального репозитория не определяет deploy scope: границу задаёт staging directory/Workspace View и проверяет host-owned resolver.
 
+## MCP-вызов Markdown → HTML
+
+Тонкий MCP-метод называется `put_md_to_web_as_html`. Он принимает **относительные пути внутри pinned Workspace View**, а не содержимое, абсолютные пути, GitHub URL или произвольные repo/branch от модели:
+
+```json
+{
+  "markdown_path": "projects/example/page.md",
+  "theme_path": "projects/example/web-theme.json",
+  "publication_id": "pub_example"
+}
+```
+
+`publication_id` связывает вызов с заранее настроенным route/provider target; его можно не передавать только если host однозначно привязал текущий вызов к одной публикации. Tenant/profile, Git repository, branch и revision берутся из доверенного principal и host binding. В receipt фиксируется конкретный commit SHA. Если binding или target неоднозначны, метод отказывает до чтения/записи.
+
+Host-owned publication handler разрешает оба пути в одном View и на одной revision, проверяет типы файлов и ограничения размера, разбирает `web-theme.json` по версионированной allowlist-схеме, рендерит Markdown в HTML и формирует отдельную staging-папку. Cloudflare adapter получает только эту папку и pinned publication target; он не получает ссылку на весь репозиторий и не клонирует его. Preview/production policy и сохранение исходников через WorkspaceService/CAS остаются ответственностью host, не MCP.
+
+`web-theme.json` — данные оформления, не CSS/HTML/JS для исполнения. Схема v1 задаёт `schemaVersion`, `preset`, `colors` (`background`, `surface`, `text`, `muted`, `accent`, `border`), `font` (`body`, `heading`, `mono` из разрешённого набора) и `layout` (`maxWidth`, `density`). Неизвестные ключи, CSS, JS, `url()`, внешние font imports и небезопасные цвета/размеры отклоняются. При отсутствии theme handler использует закреплённый project preset; произвольный default не должен молча менять оформление существующей публикации.
+
+Рендерер экранирует/санитизирует raw HTML по принятой политике, сохраняет Markdown-структуру и разрешает локальные assets только внутри View. Пути assets нормализуются, выход за subtree блокируется. Выходный HTML и выбранный theme preset/version входят в manifest и digest candidate.
+
+Ответ MCP содержит status (`preview_ready`/`published`/ошибка), publication/deployment ID, URL, исходный commit SHA, `markdown_path`, `theme_path`, renderer/theme schema versions и candidate digest. Секреты, полный inventory и содержимое Markdown в receipt/logs не включаются. Production deployment выполняется только по отдельной policy/approval текущего publication flow; сам факт вызова генератора не обходит preview/cutover gate.
+
+**Текущее состояние:** контракт метода описан для реализации; legacy `publish_page` и `site_deploy` не обеспечивают этот поток. `site_deploy` принимает локальную папку, а `branch` задаёт label Cloudflare deployment, не GitHub source revision.
+
 ## Шаги
 
 1. **Разобрать запрос.** Выделить сущность, аудиторию, событие/этап входа и ожидаемый результат. Найти её в существующем source tree по пользовательскому контексту и сверить связь с действующей страницей/навигацией. Не выбирать `index.html` только по наличию.
