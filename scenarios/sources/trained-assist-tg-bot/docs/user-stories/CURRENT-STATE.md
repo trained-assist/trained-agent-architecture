@@ -5,7 +5,7 @@
 `src/intake-buffer.js`, `src/handlers/{message,callbacks}.js`,
 `src/project-choice.js`, `trained-assist-agent/src/server.js` (`/project-decision`).
 
-Формат Story — см. [`README.md`](./README.md).
+Формат Story — см. [`README.md`](https://github.com/trained-assist/trained-agent-architecture/blob/dc50e7f4b0c001c15acd68497f06673922b25db6/scenarios/sources/trained-assist-tg-bot/docs/user-stories/README.md).
 
 ---
 
