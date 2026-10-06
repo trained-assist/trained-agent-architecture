@@ -237,7 +237,7 @@ Card-level зависимости имеют приоритет над milestone
 
 Карточка добавляет только специфический outcome, зависимости и evidence. Done требует positive/controlled failure, читаемые scoped logs, pinned versions и воспроизводимый transcript; affected API/recovery/cleanup/compatibility проверяются согласно её scope.
 
-Общий гейт Done, типы доказательств и сквозные проверки инвариантов — [Acceptance](ACCEPTANCE-CHECKLIST.md). Чек-листы конкретной карточки и этапа — в issue карточки и эпике этапа. Порядок работ остаётся только в этом плане.
+Общий компактный protocol и safeguards — [Architecture Acceptance Protocol](ACCEPTANCE-CHECKLIST.md); behavior-changing cross-repository work дополнительно проходит [Architecture Change Management & Acceptance](SCENARIO-CHANGE-MANAGEMENT.md). Компонентные инварианты и проверочные команды принадлежат owning contracts/issues. Порядок работ остаётся только в этом плане.
 
 ## Sandbox и требования к логам
 

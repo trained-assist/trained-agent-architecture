@@ -227,7 +227,7 @@ Journal — небольшой shared operational module, не новый биз
 - Пользователь не может читать чужую задачу по известному ID.
 - Следующий hourly запуск получает новый userTaskId.
 
-Проверки — AC-260…AC-268 в [Acceptance §5](ACCEPTANCE-CHECKLIST.md#5-сквозные-инварианты-и-контракты); чек-лист — в issue [P12 #51](https://github.com/trained-assist/trained-agent-architecture/issues/51).
+Проверки — в этом контракте и затронутых scenario/component probes; cross-repository acceptance evidence фиксируется по [Architecture Acceptance Protocol](ACCEPTANCE-CHECKLIST.md). Исторические AC-260…AC-268 больше не являются отдельной копией требований. Чек-лист карточки P12 ведётся в issue [#51](https://github.com/trained-assist/trained-agent-architecture/issues/51).
 
 Сначала доводим этот lifecycle одной задачи. Playbook/group/batch layer будет следующей абстракцией и не участвует в этой модели.
 

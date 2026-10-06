@@ -68,4 +68,4 @@ README и AGENTS.md указывают краткую карту, способ �
 - [ARCHITECTURE](ARCHITECTURE.md) — ownership, связь Workflow/Runner/диска и критерии перехода.
 - Runnable setup/teardown и fixtures — в соответствующем implementation repo.
 
-Статус карточек и их чек-листы — в issues и [Project «Trained Assist — Migration»](https://github.com/orgs/trained-assist/projects/1); общий гейт Done и типы доказательств — [Acceptance](ACCEPTANCE-CHECKLIST.md). GitHub Project/issues не являются runtime Task Store или GTD. Общие правила находятся здесь; issues карточек содержат специфическую приёмку и ссылки, а не копии этих правил.
+Статус карточек и их чек-листы — в issues и [Project «Trained Assist — Migration»](https://github.com/orgs/trained-assist/projects/1); поведенческие изменения проходят [Architecture Change Management & Acceptance](SCENARIO-CHANGE-MANAGEMENT.md), а короткие общие safeguards перечислены в [Acceptance Protocol](ACCEPTANCE-CHECKLIST.md). Bugfix без изменения target поведения проходит обычные issue/PR/CI owning repository. GitHub Project/issues не являются runtime Task Store или GTD. Issues содержат специфическую приёмку и ссылки, а не копии общих правил.
