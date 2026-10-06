@@ -11,22 +11,25 @@
 | Артефакт | Для чего | Кто обновляет |
 |---|---|---|
 | История в `stories/` | Кто получает ценность, шаги пользователя и внешнее «готово, когда» | Владелец продукта/архитектуры |
-| Scenario в architecture repo | Согласованный целевой сквозной контракт и затем проверенное реализованное поведение | Автор contract PR; после реализации — автор финализирующего PR |
+| Scenario-change PR в architecture repo | Целевой сквозной контракт; остаётся открытым до реализации и затем фиксирует проверенный факт | Владелец изменения сценария |
 | Implementation issue / GitHub Project card | Владелец, scope, зависимости, чек-лист, состояние и блокеры реализации | Implementation owner |
 | Implementation PR в runtime/service repo | Код, тесты, rollout и evidence своей реализации | Runtime/service owner |
-| Follow-up scenario PR в architecture repo | Сопоставить target с фактом, закрепить source revisions/evidence и финализировать scenario status | Implementation owner после подтверждения |
 
 GitHub issue/Project не является runtime task, а архитектурный документ не является трекером исполнения.
 
 ## Последовательность
 
-1. **Найти существующую историю и сценарии.** Проверить `stories/`, `scenarios/`, contracts, архитектуру и implementation owners; выявить дубли, несовместимые формулировки и старые snapshot-ограничения. Не редактировать imported sources как будто это live spec.
-2. **Открыть implementation issue до реализации.** Issue фиксирует проблему, пользовательскую ценность, scope, владельца поиска runtime owner, зависимости, риски, acceptance criteria и evidence. Если владелец ещё не известен, issue назначает его определить, не выдумывая репозиторий.
-3. **Открыть архитектурный contract PR и связать с issue.** PR создаёт/уточняет целевой сценарий: статус `target/proposed`, точные потоки, наблюдаемые результаты, каналы, состояния, повторы/отказы/гонки, контракты и criteria для реализации. В описании написать `Refs #N`, чтобы связать обсуждение. Этот PR сам по себе не доказывает реализацию.
-4. **Реализовать в owner repository.** Implementation PR ссылается на issue/карточку и scenario ID; содержит тесты, безопасный rollout и воспроизводимое evidence. Архитектурное описание не переписывается в состояние «работает» на основании локальных тестов, намерений или статуса PR.
-5. **Проверить acceptance и merge implementation.** Implementation owner прикладывает source revision, тестовые результаты и сквозные evidence к implementation issue. Проверка должна покрывать обязательные внешние границы и релевантные failure paths; новый runtime не считается продовым от одного unit-теста.
-6. **Финализировать отдельным architecture PR.** После подтверждения реализации тот же owner открывает follow-up PR, который обновляет scenario: `implemented/verified` (или более точный статус), runtime repo/PR/revision, дату и ссылки на evidence, известные ограничения/непокрытые каналы. Закрывает именно этот PR после review/merge. Исходный contract PR не закрывает сценарий.
-7. **При расхождении исправить контракт или реализацию.** Если implementation изменилось относительно target, до merge определить, является ли это согласованным изменением поведения; обновить целевой сценарий/issue и повторно проверить критерии. Не маскировать drift в evidence.
+1. **Найти существующую историю и сценарии.** Проверить `stories/`, `scenarios/`, contracts, архитектуру и implementation owners; выявить дубли и несовместимые формулировки.
+2. **Для feature/scenario change открыть architecture issue и scenario-change PR до runtime-кода.** Это обязательно для изменения целевого пользовательского поведения, но не для bugfix, который только возвращает уже описанный target. Если исправление меняет target behavior, это scenario change.
+3. **В открытом architecture PR зафиксировать target и implementation map.** PR создаёт/уточняет scenario со статусом `target/in_implementation`: точный flow/UX, состояния, failure paths, acceptance и ссылки на все implementation issues в затронутых репозиториях. Implementation issues и PR-ы ссылаются обратно на architecture issue/PR и scenario ID.
+4. **Architecture PR не merge до реализации.** Он является живым change gate: остаётся открытым, пока обязательные implementation issues не завершены и нет проверяемого evidence. Merge target-only документа до runtime-реализации не считается нормальным lifecycle.
+5. **Реализовать в owner repositories.** Implementation PR содержит тесты, sandbox/replay evidence и безопасный rollout. Production promotion выполняется только штатным CI/CD соответствующего репозитория.
+6. **Перед merge architecture PR сверить target с фактом.** Добавить фактические runtime PR/revisions/evidence, отметить ограничения и проверить drift. Если реализация отличается от target, сначала согласовать и обновить scenario либо реализацию.
+7. **Merge/close architecture PR завершает scenario change.** После review и подтверждения acceptance merge означает, что изменение сценария реализовано и архитектурно зафиксировано. Отдельный follow-up architecture PR в обычном случае не нужен.
+
+## Будущий architecture meta-CI
+
+Целевой gate можно автоматизировать отдельным meta-CI: агент читает scenario-change PR, проходит связанные implementation issues/PRs и их pinned revisions, запускает доступный сквозной sandbox/replay и проверяет наблюдаемое поведение и evidence. Meta-CI должен проверять соответствие target ↔ implementation, а не подменять CI сервисных репозиториев. До появления такого gate эти проверки выполняются вручную и фиксируются в architecture PR.
 
 ## Минимальный формат scenario
 
@@ -52,7 +55,7 @@ GitHub issue/Project не является runtime task, а архитектур
 - Отделять факт текущей системы, принятое target-поведение и предложение. Не переносить статус из старого snapshot без проверки.
 - Явно указывать time units, что сбрасывает timer, порядок сообщений, idempotency key/generation, источник истины и race winner.
 - Не обещать «exactly once» без описания атомарного перехода и проверки повторов; предпочитать формулировку «не более одного durable dispatch при idempotent recovery».
-- Не считать merge contract PR, issue closure или локальный test pass подтверждением пользовательского результата.
+- Не считать issue closure или локальный test pass подтверждением пользовательского результата; scenario-change PR merge допустим только после подтверждённой реализации и evidence.
 
 ## Связи с существующими правилами
 
