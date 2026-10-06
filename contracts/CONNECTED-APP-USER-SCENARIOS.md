@@ -75,6 +75,8 @@ Publishing is a separate consequential command. Before deployment, the app must 
 
 **Logical API operations to define:** `deal.createFromParticipant`, `deal.getOperation`, `deal.reconcileOperation`. `createFromParticipant` owns domain validation/idempotency and delegates to the CRM adapter; `get/reconcileOperation` make retry safe. The capability owner can expose one `create_deal_from_catalog` tool mapped to the command and a status/reconcile tool only if the agent needs recovery. Do not recreate generic Weeek CRUD as app-specific MCP tools.
 
+**Connected App scopes:** catalog visibility (`crm.catalog.read`) and deal status (`crm.deals.read`) remain independent. Deal creation requires its own `crm.deals.create` grant and the separate operation-bound approval receipt; either alone is insufficient to create a provider deal.
+
 ### R-00 — Connect and check the recruiting account
 
 **User story:** The recruiting user securely connects their HH account to the intended agent profile and can verify access or disconnect it without exposing the credential to the model or another profile.
