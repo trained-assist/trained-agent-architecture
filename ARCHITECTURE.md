@@ -425,6 +425,18 @@ Credentials имеют scopes shared/platform, private/user и replaceable-defau
 
 Локальная/эфемерная среда и dev/test/staging — рабочие доверенные границы для высокой практической автономности. Production — отдельная защищённая граница: sandbox-разрешения никогда не разрешают прямое production-изменение; переход идёт только по проверенному promotion path репозитория. Sandbox Gap фиксируется в контракте и issue owning repository; cross-project gap связывается с архитектурным issue. CI, PR и runtime evidence дополняют друг друга, статический просмотр кода не заменяет доступный E2E. Rollout tracked in [#185](https://github.com/trained-assist/trained-agent-architecture/issues/185).
 
+### Статус legacy-репозиториев и приоритет работы
+
+Legacy — статус направления разработки, а не утверждение, что сервис уже выключен или безопасен для удаления. Источник статусов — эта таблица; перед задачей сверяйте связанный owning issue. Не начинать самостоятельный rollout Sandbox-Driven Engineering, крупную feature-разработку, архитектурный рефакторинг или расширение обязанностей legacy-компонента только потому, что он присутствует в архитектуре. В legacy выполняются только работа, необходимая для безопасности и непрерывности, инвентаризация/экспорт/передача владения, а также минимальная задача, прямо входящая в принятый migration/retirement issue. Текущую операционную обязанность без нужды не ломать. Общие критические security/incident исправления выполняются по отдельной owning issue.
+
+| Репозиторий / компонент | Статус | Разрешённый фокус |
+|---|---|---|
+| [trained-assist-agent](https://github.com/trained-assist/trained-assist-agent) | **Legacy / migration-only** | Сохранение и перенос необходимых функций/данных, безопасная эксплуатация прежних пользователей, shutdown gate в [#145](https://github.com/trained-assist/trained-agent-architecture/issues/145). Не добавлять новые runtime-обязанности и не строить отдельный sandbox rollout без конкретной migration/security задачи. |
+| [trained-assist-tg-bot](https://github.com/trained-assist/trained-assist-tg-bot) | **Legacy channel / migration-coordination** | Поддержка работающего Telegram-канала и задачи перехода к принятому Control Plane contract; не запускать самостоятельную общую модернизацию. Новые channel/runtime изменения требуют owning issue и проверки целевой интеграции; production boundary tracked in [#392](https://github.com/trained-assist/trained-assist-tg-bot/issues/392). |
+| [trained-assist-web](https://github.com/trained-assist/trained-assist-web) | **Active integration, gated production** | Sandbox/локальная разработка разрешены по контракту; production promotion защищён отдельно, issue [#71](https://github.com/trained-assist/trained-assist-web/issues/71). |
+
+Все остальные явно активные репозитории из раздела 9 получают обычный Sandbox-Driven Engineering цикл. Если статус репозитория не указан или owning issue не найден, сначала уточнить ownership по архитектуре и текущему issue; не объявлять legacy только по возрасту или старому коду.
+
 Доставка артефактов: control API работает с manifest, ID и статусами; байты идут в object storage по scoped upload/download, с докачкой для больших файлов. Экспорт имеет свой статус, отдельный от результата Run; очистка — только после сохранения.
 
 ## 12. Блоки и инварианты
