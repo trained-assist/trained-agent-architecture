@@ -38,7 +38,7 @@ Fast-path research: [алгоритм до запуска агента и про
 1. Прочитать [ARCHITECTURE](ARCHITECTURE.md): границы, ownership, инварианты и условия перехода с живого сервиса.
 2. Понять, какую ценность и кому даёт этап — [истории](stories/README.md) (ценность и шаги для человека, API-клиента, оператора). Выбрать карточку в [Project](https://github.com/orgs/trained-assist/projects/1) или таблице карточек [плана реализации и интеграции](IMPLEMENTATION-AND-INTEGRATION-PLAN.md#карточки), открыть её issue, проверить зависимости и текущий порядок работ. Номера I/P — идентификаторы, не требование выполнять всё последовательно.
    Нулевой исследовательский этап R00: [вопросы, инструменты и VM-пилоты](TOOLING-RESEARCH-AND-VM-PILOTS.md). Перед добавлением зависимости проверить её evidence/решение; весь tooling backlog читать перед каждой карточкой не требуется.
-3. Прочитать [Engineering Approach](ENGINEERING-APPROACH.md) и раздел нужного этапа в [Sandbox](SANDBOX.md). Подготовка отсутствующего sandbox входит в работу.
+3. Прочитать [Engineering Approach](ENGINEERING-APPROACH.md) и раздел нужного этапа в [Sandbox](SANDBOX.md). Для живых Telegram-проверок сначала сверить занятость и общий downstream в разделе [Live Telegram test lanes](SANDBOX.md#live-telegram-test-lanes). Подготовка отсутствующего sandbox входит в работу.
 4. Открыть только относящиеся к карточке контракты и локальные спецификации ниже.
 5. Создать PR (и при необходимости issue) в implementation repo со ссылкой на issue карточки; evidence приёмки — воспроизводимый запуск, controlled failure, scoped logs — прикладывать в issue карточки и отмечать там пункты чек-листа.
 

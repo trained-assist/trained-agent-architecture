@@ -44,6 +44,33 @@ Contract/fixture checks дешёвые и воспроизводимые. Real e
 
 ## Средства песочницы
 
+### Live Telegram test lanes
+
+Two deployed Telegram ingress lanes are available for sandbox E2E. They are separate at the gateway layer, but **not independent end-to-end sandboxes**: both currently bind to the same Control Plane Worker and therefore share its Task Store/Workflow and downstream Runner route. For test selection, the bot/chat lane is what matters; testers do not need to inspect or provide a principal/profile. The shared downstream is relevant only when checking contention or claiming full-stack isolation.
+
+| Lane | Test bot / gateway Worker | Config | Shared Control Plane |
+|---|---|---|---|
+| `tg-probability` | `@probability_cat_bot` / `trained-assist-tg-ux-sandbox` | `trained-assist-tg-bot/wrangler.sandbox-tg-existing-ux.toml` | `trained-assist-cp-telegram-ux-v1-sandbox` |
+| `tg-shturman` | `@Shturman_bot` / `trained-assist-tg-shturman-sandbox` | `trained-assist-tg-bot/wrangler.sandbox-tg-shturman.toml` | `trained-assist-cp-telegram-ux-v1-sandbox` |
+
+Both gateway `/health` routes returned HTTP 200 on 2026-10-07; this proves liveness only, not an idle collector, usable Runner, or successful task execution. Their per-chat collector state and Telegram session namespaces are separate. The most recent Shturman attempt reached CP and failed at Runner submission. The Runner multiline-contract correction is merged, but the owning repo still tracks the missing deployed non-production Runner path in [ai-agent-runner#173](https://github.com/trained-assist/ai-agent-runner/issues/173). Check that issue before claiming a live full-stack lane is ready.
+
+**Simple test flow:** check the lane claims in [architecture sandbox issue #185](https://github.com/trained-assist/trained-agent-architecture/issues/185). If one lane is claimed or occupied, use the other bot. Send one uniquely marked message from the already allowlisted Telegram account; no API key or Cloudflare login is needed in the Telegram chat. I can start and inspect the matching Worker tail and correlate its logs with collector/CP state, so the tester does not need to operate Wrangler. Record the selected bot and marker, then release the claim with `RELEASE <lane>` when evidence is captured. Until CP/Runner concurrency and isolation are proven, avoid parallel tests that exercise shared workspace/capacity.
+
+**Checking occupancy:** unauthenticated `/health` is not an occupancy check. The gateway's protected `GET /collector-state?chatId=<allowlisted-chat-id>` reports `busy`, `launching`, `buf`, `retryBatch`, and `controlPlaneBarrier` (`unresolvedLaunchCount`, `busyRequestCount`, `stopPending`). Read it only through the existing authorized integration script or with the sandbox webhook-secret header kept in the local secret store. Treat a lane as unavailable if a lease is active, `busy`/`launching` is set, held/retry input is non-empty, `stopPending` is true, or an unresolved launch exists. Do not clear this state to make a lane appear free. Also reconcile any nonterminal CP task before retrying its scenario.
+
+**Submitting and observing:** a human may send a normal message to the assigned test bot; the configured Telegram account/chat allowlist still applies. No API key is entered into Telegram. I can tail the exact Worker from the already authenticated workstation and correlate a unique marker with Task IDs; the user does not need to operate Wrangler. Commands for an operator/session with Cloudflare access:
+
+```bash
+cd trained-assist-tg-bot
+npx wrangler tail trained-assist-tg-shturman-sandbox --config wrangler.sandbox-tg-shturman.toml
+npx wrangler tail trained-assist-tg-ux-sandbox --config wrangler.sandbox-tg-existing-ux.toml
+```
+
+Cloudflare's Tail API is an administrative API and requires a Cloudflare API token/authorized account, unlike the test bot's normal Telegram UX ([Cloudflare Tail API](https://developers.cloudflare.com/api/resources/workers/subresources/scripts/subresources/tail/methods/create/)).
+
+**No-login HTTP seed/feed:** there is currently no public endpoint that accepts arbitrary sandbox tasks and provides an SSE result subscription. `/health` is public liveness only; `/webhook`, `/collector-state`, `/deliveries`, and CP task routes retain their existing provider/principal authentication. Do not describe a raw unauthenticated submit or Cloudflare log-tail endpoint as available. The requested test convenience should be implemented as a distinct sandbox-only seed/feed adapter: no account/API-key login for test callers, fixed sandbox principal/profile and hard budget/rate/body limits, no production tools or credentials, per-run opaque receipt capability for a private SSE stream, bounded TTL, and no endpoint for listing other sessions' inputs/results. The opaque receipt is a scoped read capability, not a user account. Keep Cloudflare Tail credentials and protected collector diagnostics private. Implementation is tracked in [trained-assist-tg-bot#402](https://github.com/trained-assist/trained-assist-tg-bot/issues/402).
+
 | Средство | Метод | Construction/проверка |
 |---|---|---|
 | VM/Runner | Existing sandbox VM + separate experiment namespace | Reproducible setup/teardown, OS/process/resource boundary, two synthetic profiles |
