@@ -1,6 +1,6 @@
 # Task Router — routing, fast replies и MCP
 
-Статус: актуальная спецификация Task Router/MCP · 01.10.2026. Реализация и точный wire API не объявляются готовыми. Размещение по [ARCHITECTURE §9](ARCHITECTURE.md): **Router сначала модуль общего control plane над Task Store**. Отдельный репозиторий — возможное последующее выделение при независимом жизненном цикле, не prerequisite реализации. Этот документ специфицирует routing/MCP, не вводит второго владельца task state.
+Статус: актуальная спецификация Task Router/MCP · 06.10.2026. Реализация и точный общий wire API не объявляются готовыми; ниже отдельно зафиксирован проверенный Registry MCP test contract. Размещение по [ARCHITECTURE §9](ARCHITECTURE.md): **Router сначала модуль общего control plane над Task Store**. Отдельный репозиторий — возможное последующее выделение при независимом жизненном цикле, не prerequisite реализации. Этот документ специфицирует routing/MCP, не вводит второго владельца task state.
 
 ## Принятая policy 30.09.2026
 
@@ -294,7 +294,23 @@ Fault fixtures: invalid/refused/truncated JSON, timeout, budget denied, no enabl
 
 Точное число candidates, контекстный budget, один/два вызова и качество модели — **наши проверяемые гипотезы**, не универсальные best practices с гарантией.
 
-## 12. Два исследования: multimodal routing и интерактивное выполнение
+## 12. Trusted Registry MCP: discovery и run-bound invocation — test contract (06.10.2026)
+
+Этот контракт проверяет Registry fixture между Control Plane (CP), Agent Runner и MCP Host; он не объявляет live deployment готовым и не меняет общий MCP wire API.
+
+**Зафиксированные значения test profile:** profile/principal `integration-telegram-ux-v1`; server `trained-assist-registry-test`; bindingRef `registry-mcp-test-160-read`; единственный tool `registry.fixture_read`; scope `registry:fixture-read`; policyVersion `registry-fixture-policy-v1`; catalogueVersion `registry-fixture-catalogue-v1`; registryDigest `129ab5033964c3ed5be47414711026cc2469b3d9af90ce83ee071cba7f005ea9`.
+
+**Версии и доверенная policy.** `catalogueId` — случайный ID только для поиска конкретного CP discovery snapshot. `catalogueVersion` — стабильная версия trusted Registry-конфигурации. `registryDigest` — закреплённый ожидаемый digest. Policy связывает как минимум scope, serverId, bindingRef, allowlisted tools, policyVersion, catalogueVersion и registryDigest. Ни пользователь, ни модель не задают URL, serverId, bindingRef, tools, scope, версии или digest. PolicyKey учитывает всю эту связку.
+
+**Discovery до submit.** CP выполняет только `tools/list` с отдельным `mcp:discover` scope, без `runId`; CP никогда не вызывает `tools/call`. Stable policy fields и digest проходят по цепочке trusted binding → discovery snapshot → selected instruction → Output descriptor → Workflow params → RunSpec. CP сверяет instruction с актуальной trusted policy при выборе capability и непосредственно перед Runner submit. Любой drift блокирует submit с `MCP_REVALIDATION_REQUIRED`, требует повторной discovery/валидации и не вызывает тихую пересборку descriptor. Dispatch сохраняет эту причину и пользовательский статус; disabled host, missing binding, discovery/network failure и другие причины не переименовываются в drift. Повторный dispatch после admission сначала сверяет GTD owner/existing run и не объявляет уже принятую задачу незапущенной из-за последующего MCP отказа.
+
+**Invocation после admission.** Runner сначала выполняет admission и получает настоящий receipt `runId`; только затем подписывает invocation binding и передаёт его Host. Host проверяет подпись, claims, фактические invocation headers и pinned policy/digest. При действительном run-bound proof нативный клиент может сделать `initialize`, `notifications/initialized` и `tools/list`; listing возвращает только allowlisted tools. `tools/call` требует то же invocation authorization. Такое listing не расширяет отдельное CP discovery permission.
+
+**Пройденное offline evidence (06.10.2026):** один сериализованный CP submit проходит Runner AgentApi admission, ExternalWorkerAdapter signing/resolver и фактический Host Worker JSON-RPC путь (`initialize` → `tools/list` → `tools/call`) с Registry fixture. Отдельные проверки подтверждают отказы при изменении policy/version/digest/scope/headers, и что drift останавливается до подписи/launch. Повторный CP dispatch после принятого запуска покрыт отдельно.
+
+**Граница и следующий acceptance:** это offline cross-repository contract, без деплоя и без доказательства сетевого доступа к живому Worker. Следующий прогон — один test-only live вызов после того, как владельцы Host и Runner настроят одинаковый secret через trusted stores, JWK/верификацию Runner и будущий expiry, а CP binding указывает ту же policy. Сначала проверить CP discovery `tools/list`, затем Runner admission + proof-bound Host `tools/list` и единственный fixture `tools/call`; собрать run ID, версии/digest, outcome и sanitized stream evidence. Если Worker всё ещё отвечает `503` из-за отсутствующей конфигурации, не запускать повторно агента: это setup blocker, а не новый тестовый результат. Не передавать секреты в чат/репозиторий.
+
+## 13. Два исследования: multimodal routing и интерактивное выполнение
 
 02.10.2026: Research A уточняет intent/domain/capability selection, input preparation и быстрые пути; Research B — [интерактивное выполнение](INTERACTIVE-EXECUTION-AND-USER-INPUT.md), формы/кнопки, ожидание и policy вопросов. Они неблокирующие относительно текущей PR-приёмки и нового ядра; исследование не является массовым rename/native agent implementation.
 

@@ -84,6 +84,14 @@ Org Project: **[Trained Assist — Migration](https://github.com/orgs/trained-as
 
 **Ближайшая цель own-API dogfood достигнута по отчёту исполнителя; повторять этапы среза 03.10 ниже не нужно.** Этот раздел имеет приоритет для текущего порядка работ. Отчёты не равны независимому повторному прогону и массовому production cutover.
 
+### Обновление: Registry MCP CP → Runner → Host — 06.10.2026
+
+Сквозной offline-контракт Registry проверен совместно; запуск ещё одного агента до готовности test Worker не добавит evidence. CP PR [#74](https://github.com/trained-assist/trained-assist-control-plane/pull/74) и Host PR [#5](https://github.com/trained-assist/trained-assist-mcp-host/pull/5) влиты в `main`; Runner PR [#131](https://github.com/trained-assist/ai-agent-runner/pull/131) и [#154](https://github.com/trained-assist/ai-agent-runner/pull/154) влиты в `integration/runner-v1-20261005`. Последнее не означает promotion/deploy в production.
+
+Единый offline test передаёт serialized CP submit через Runner admission и подпись после выдачи run receipt к Host Worker: `initialize` → proof-bound `tools/list` → `tools/call` fixture. CP discovery отдельно остаётся pre-submit `tools/list` без runId/call. Проверены stable catalogueVersion/digest, drift отказ до launch, run-bound listing только разрешённого tool и повторный dispatch после принятого run. Это доказывает контракт/совместимость кода, но не доступность развернутого Worker, configured secrets и живой сетевой stream.
+
+**Следующий приоритет — один live test-only Registry smoke после настройки trusted bindings.** Владельцы Host и Runner настраивают одинаковый Bearer только через trusted secret stores, ключ/claims verification и будущий expiry; CP связывает тот же trusted profile/policy. Затем отдельно фиксируются CP discovery и реальный Runner invocation/Host listing + fixture call. Записать deployment/revision, status, `catalogueVersion`, `registryDigest`, policy/binding, runId и sanitized stream outcome. При `503` из-за отсутствующей auth/expiry конфигурации повторный запуск агента не делать: сначала устранить setup blocker. Секреты в документацию/evidence не записывать.
+
 ### Где остановилась работа
 
 Последний опубликованный результат Runner — [PR #69](https://github.com/trained-assist/ai-agent-runner/pull/69), смержен **04.10 03:49 МСК**: материализация refs/snapshot с проверкой владельца, пути, sha256/size и staging. [Итог #52](https://github.com/trained-assist/ai-agent-runner/issues/52#issuecomment-5975132790) снимает предшествующий СТОП по snapshot. По GitHub видно последнее завершённое действие; состояние/причину смерти локальной сессии этот аудит не устанавливает.
