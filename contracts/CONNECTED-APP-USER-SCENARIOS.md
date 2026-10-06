@@ -10,7 +10,7 @@ The target authority and separate browser, agent-relay and schedule handoffs are
 
 Every scenario below inherits these rules:
 
-1. The platform authenticates the agent user, selects the active profile and supplies opaque trusted principal/profile references and scopes. The model cannot choose or override them.
+1. The Agent identity/profile authority authenticates the agent user, owns user-to-profile membership and the active profile selection, and supplies a short-lived trusted principal/profile assertion. The Control Plane brokers app-specific grants and tokens from that assertion. The model and browser cannot choose or override identity fields.
 2. The connected app owns its domain entities and workflow invariants. It does not own a competing agent login/profile. Every request, record, attachment, scheduled job and audit event is bound to the trusted profile context.
 3. Web UI and agent relay reach the same application handler. They return the same domain object/revision and typed outcome. UI session and relay identity must resolve to the same profile binding.
 4. Handoffs use stable domain object references and operation receipts. Task/run IDs correlate execution; they are not profile identity. Share only the context needed for that step, with an explicit scope.
@@ -166,7 +166,7 @@ This baseline covers the named user work: sales catalog use and deal creation; r
 
 The map is sufficiently complete for the five outcomes the user named: exhibition catalog use, deal creation, response work, cold search and client report preparation, including key prerequisites, state and failure paths. It is not a complete inventory of every capability in the source repositories: the explicit “not yet” rows and general CRM tools need a product scope decision before claiming all legacy functionality has migrated. No reliable usage-frequency data was found, so scenario order is a risk/tractability proposal, not a measured priority ranking.
 
-**Real web identity is an implementation gate:** a web session must be established by a trusted platform/app authentication handoff and resolved server-side to principal/profile. A browser-supplied profile ID is never proof of identity. Synthetic tests may inject a fake trusted identity resolver; the production adapter remains unspecified until the platform auth owner approves the binding flow.
+**Real web identity is an implementation gate:** a web session must be established by the Agent-owned identity/profile authority and resolved server-side to principal/profile; the Control Plane then brokers a client/audience-bound app session. A browser-supplied profile ID or legacy profile cookie is never proof of identity. Synthetic tests may inject a fake signed-assertion verifier at the external Agent authority boundary; production issuance remains disabled until Agent membership evidence and the CP adapter are reviewed.
 
 ## Method ownership rule
 
