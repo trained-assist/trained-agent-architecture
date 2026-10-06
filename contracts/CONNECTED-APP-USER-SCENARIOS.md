@@ -10,7 +10,7 @@ The target authority and separate browser, agent-relay and schedule handoffs are
 
 Every scenario below inherits these rules:
 
-1. The platform authenticates the agent user, selects the active profile and supplies opaque trusted principal/profile references and scopes. The model cannot choose or override them.
+1. The Agent identity/profile authority authenticates the agent user, owns user-to-profile membership and active profile selection, and supplies a verified principal/profile context to the Connected App broker. The broker issues app-specific grants and tokens from that context. If the authority is separately deployed, the handoff is a short-lived signed assertion; the model and browser cannot choose or override identity fields.
 2. The connected app owns its domain entities and workflow invariants. It does not own a competing agent login/profile. Every request, record, attachment, scheduled job and audit event is bound to the trusted profile context.
 3. Web UI and agent relay reach the same application handler. They return the same domain object/revision and typed outcome. UI session and relay identity must resolve to the same profile binding.
 4. Handoffs use stable domain object references and operation receipts. Task/run IDs correlate execution; they are not profile identity. Share only the context needed for that step, with an explicit scope.
@@ -74,6 +74,8 @@ Publishing is a separate consequential command. Before deployment, the app must 
 **Current source evidence:** catalog deep link in `src/catalog-template/index.html`; `flexi_create_deal` and `flexi_sync_deal_status` in `trained-assist-sales-skill/src/mcp-skills/tools/92-flexi-sales.js`; Weeek create validation in `30-weeek.js`; notes state in `flexi-crm-automation/workers/telegram-deal-bot`. Canonical owner is unresolved: Weeek stores deals, while app-side code keeps operation bindings and prelead status.
 
 **Logical API operations to define:** `deal.createFromParticipant`, `deal.getOperation`, `deal.reconcileOperation`. `createFromParticipant` owns domain validation/idempotency and delegates to the CRM adapter; `get/reconcileOperation` make retry safe. The capability owner can expose one `create_deal_from_catalog` tool mapped to the command and a status/reconcile tool only if the agent needs recovery. Do not recreate generic Weeek CRUD as app-specific MCP tools.
+
+**Connected App scopes:** catalog visibility (`crm.catalog.read`) and deal status (`crm.deals.read`) remain independent. Deal creation requires its own `crm.deals.create` grant and the separate operation-bound approval receipt; either alone is insufficient to create a provider deal.
 
 ### R-00 — Connect and check the recruiting account
 
@@ -139,6 +141,8 @@ Publishing is a separate consequential command. Before deployment, the app must 
 
 **Minimum app responsibilities:** report schema with internal/client audiences and field-level scopes; candidate/resume source revision; structured draft and edit history; deterministic escaped template renderer; validation and redaction report; preview separate from publication; publication policy/access expiry or password requirement; actor/profile/audience audit; unpublish/revoke; stable report ref for agent/web continuity.
 
+**Connected App scopes:** source read, draft creation, and recruiter review are separate grants: `recruiting.reports.read`, `recruiting.reports.create`, and `recruiting.reports.review`. The current private workflow can prepare and review a draft; publication/share/revoke remain separate capabilities and must not be implied by these grants. Assignment-plan review uses its own `recruiting.assignment.review` scope.
+
 **Acceptance examples:** wrong candidate/vacancy pairing is blocked; internal-only fields never render into client output; forbidden terms/unsafe HTML are rejected/escaped; PII-bearing report cannot publish without explicit audience/access choice; publish failure leaves draft intact; only authorized profile/client can view; update/revoke has auditable result; agent HTML/Markdown/JSON paths agree on the same selected source revision.
 
 **Current source evidence and gaps:** `97-candidate-client-report.js` context/note/HTML tools and `hh-candidate-report.js` render/store; separate `hh_list`/Markdown report in `90-hh.js`; `100-hermes.js` structured assessment JSON; v2 render/download routes in `hh-routes.js`. These are parallel flows; automatic composition/persistence for v2 is unverified. Existing HTML tool publishes by default while password is optional (`97-candidate-client-report.js`), so the new app must require explicit publication policy rather than carry over that default.
@@ -166,7 +170,7 @@ This baseline covers the named user work: sales catalog use and deal creation; r
 
 The map is sufficiently complete for the five outcomes the user named: exhibition catalog use, deal creation, response work, cold search and client report preparation, including key prerequisites, state and failure paths. It is not a complete inventory of every capability in the source repositories: the explicit “not yet” rows and general CRM tools need a product scope decision before claiming all legacy functionality has migrated. No reliable usage-frequency data was found, so scenario order is a risk/tractability proposal, not a measured priority ranking.
 
-**Real web identity is an implementation gate:** a web session must be established by a trusted platform/app authentication handoff and resolved server-side to principal/profile. A browser-supplied profile ID is never proof of identity. Synthetic tests may inject a fake trusted identity resolver; the production adapter remains unspecified until the platform auth owner approves the binding flow.
+**Real web identity is an implementation gate:** a web session must be established by the Agent-owned identity/profile authority and resolved server-side to principal/profile; the Control Plane then brokers a client/audience-bound app session. The authority may be a separately versioned module in the supported Agent Control Plane Worker. A browser-supplied profile ID or legacy profile cookie is never proof of identity. Synthetic tests may inject a fake verified-context resolver at the Agent authority boundary; production issuance remains disabled until Agent membership evidence and the CP adapter are reviewed.
 
 ## Method ownership rule
 
