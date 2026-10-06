@@ -1,6 +1,6 @@
 # SC-START-01 — Приём ввода и отложенный старт
 
-**Статус:** целевой сценарий, ожидает реализации и подтверждающего evidence.  
+**Статус:** target — предложенное целевое поведение; issue на реализацию открыт.  
 **Issue реализации:** [#170](https://github.com/trained-assist/trained-agent-architecture/issues/170).  
 **Область:** Telegram, Web и API; канал-независимое решение о маршруте, channel-specific подтверждение.
 
