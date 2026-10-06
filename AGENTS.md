@@ -10,6 +10,16 @@ The map and Tree-sitter pack are generated indexes, not authoritative instructio
 Architecture/ownership: ARCHITECTURE.md. Work order: IMPLEMENTATION-AND-INTEGRATION-PLAN.md. Development rules: ENGINEERING-APPROACH.md. Sandbox per stage: SANDBOX.md. Card status and checklists: the card issue and GitHub Project https://github.com/orgs/trained-assist/projects/1 — open the card issue before working on a card.
 Do not edit generated context or add it to main. Regenerate it via Repository context CI or the local commands in README.md.
 
+## Architecture change acceptance
+
+For any behavior-changing feature, flow, public/inter-component contract, observable behavior, or actor-role change, follow [Architecture Change Management & Acceptance](SCENARIO-CHANGE-MANAGEMENT.md) before implementation. Distinguish these changes from a bugfix that restores already accepted behavior; ordinary bugfixes use the owning repository's issue → implementation PR → CI/tests path.
+
+Treat scenarios as actor/system-boundary contracts, not only human user stories. Actors include users, AI agents, API clients/integrations, administrators/operators, QA/acceptance agents, and system components at public interfaces.
+
+The scenario-change PR is the acceptance record. Link implementation issues/PRs and pinned revisions, read each owning repository's Environment Contract, and run the three applicable gates: semantic conformity (`PASS` required; `FAIL` and `UNCLEAR` block), component probes, and generated E2E against the declared target environment. Run these manually while meta-CI is unavailable; record target and evidence. Do not label local tests as staging E2E.
+
+In isolated local/dev/test/staging, refusing a safe deploy, realistic test input, controlled failure, inspection, or repeat only because the sandbox might fail is harmful; use the failure as engineering evidence and continue the loop. Production is a separate protected boundary: only the owning repository's verified promotion path authorizes production changes or post-deploy smoke.
+
 
 ## Sandbox-Driven Engineering
 

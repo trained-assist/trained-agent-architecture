@@ -35,6 +35,8 @@ Fast-path research: [алгоритм до запуска агента и про
 
 ## Начать разработку
 
+Сначала классифицируйте изменение. Если меняется ожидаемое поведение, flow, публичный/inter-component контракт или роли акторов — следуйте [Architecture Change Management & Acceptance](SCENARIO-CHANGE-MANAGEMENT.md) и откройте scenario-change issue/PR до runtime-кода. Если это bugfix, возвращающий уже принятое поведение, scenario PR не нужен: работайте через issue и обычный implementation PR/CI owning repository. Пока acceptance gates не автоматизированы, агент запускает и записывает их вручную, используя Environment Contracts.
+
 1. Прочитать [ARCHITECTURE](ARCHITECTURE.md): границы, ownership, инварианты и условия перехода с живого сервиса.
 2. Понять, какую ценность и кому даёт этап — [истории](stories/README.md) (ценность и шаги для человека, API-клиента, оператора). Выбрать карточку в [Project](https://github.com/orgs/trained-assist/projects/1) или таблице карточек [плана реализации и интеграции](IMPLEMENTATION-AND-INTEGRATION-PLAN.md#карточки), открыть её issue, проверить зависимости и текущий порядок работ. Номера I/P — идентификаторы, не требование выполнять всё последовательно.
    Нулевой исследовательский этап R00: [вопросы, инструменты и VM-пилоты](TOOLING-RESEARCH-AND-VM-PILOTS.md). Перед добавлением зависимости проверить её evidence/решение; весь tooling backlog читать перед каждой карточкой не требуется.
