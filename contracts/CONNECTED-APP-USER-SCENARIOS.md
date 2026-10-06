@@ -6,6 +6,8 @@ Status: source-informed scenario baseline · 2026-10-06. This describes workflow
 
 The user and the selected profile are the through-line. The user can work through the agent, open a connected web app to inspect or edit richer domain state, and return to the agent; supported handoffs resolve to the same authorized profile and canonical domain object. The app provides a useful workspace around the user's work. The agent remains the user's conversational coordinator and invokes only app capabilities needed by the scenario.
 
+The target authority and separate browser, agent-relay and schedule handoffs are specified in [CONNECTED-APP-IDENTITY-TARGET.md](CONNECTED-APP-IDENTITY-TARGET.md).
+
 Every scenario below inherits these rules:
 
 1. The platform authenticates the agent user, selects the active profile and supplies opaque trusted principal/profile references and scopes. The model cannot choose or override them.
