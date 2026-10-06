@@ -1,250 +1,34 @@
-# План реализации и интеграции Trained Assist
+# Зависимости реализации и интеграции Trained Assist
 
-## Решение владельца 05.10.2026: вывод старой GCP VM
+Документы содержат действующие требования, контракты и инструкции. Планы выполнения, статусы, ревью прошлых версий и evidence ведутся в GitHub issues/PR/Project. Целевая модель не является утверждением о текущем deployment; его готовность проверяется по конкретным SHA и приёмке.
 
-Старая Google Cloud VM `alesa-personal-assistent/us-central1-a/alesa-vm` (instance ID `7077705867419574607`) больше не является площадкой для новых работ: запрещены новые сервисы, cron, агентские запуски, sandbox и зависимости. Доступ к ней ограничен инвентаризацией, экспортом, сверкой, завершением прежних операций и отключением. Существующие исторические описания VM-пилотов ниже сохраняются как история, а не как актуальная инструкция размещения.
+Документ сохраняет ID карточек и обязательные зависимости, но не датированные критические пути, очереди мержа или счётчики выполненных тестов. Оператор выбирает следующий шаг по актуальному issue; ID I/P не задаёт обязательную линейную очередь.
 
-Целевой путь — serverless и уже работающий собственный Agent Run API. Постоянный процесс или локальный ресурс размещается на существующей VM во Франции только после подтверждения необходимости и владельца ресурса. Google Cloud Storage, Secret Manager и другие нужные сервисы Google остаются разрешены. Статус, инвентарь, приёмка, граница с интегратором #140/#141 и cutoff ведутся в [issue #145](https://github.com/trained-assist/trained-agent-architecture/issues/145).
+## Путь интеграции
 
-Выключение блокируется, пока не сохранены **все** пользовательские профили, проекты, файлы и незавершённые изменения и не проверено восстановление вне старой VM. Перед stop требуется сверить активные/ожидающие задачи, writers, callbacks и outbox, перенести или отключить оставшиеся зависимости, доказать работу нового пути без старой машины и согласовать конкретный cutoff с интегратором/владельцем. Stop VM не удаляет диск; сохранённый диск не доказывает доступность данных новой архитектуре. Удаление дисков, snapshots и backup — отдельное решение после проверки остаточных расходов и срока хранения.
-
-Draft v0.9 · 04.10.2026. Это документ implementation/integration: долговечная структура плана — решения владельца, путь интеграции, этапы, зависимости, общие правила приёмки, scope репозиториев и риски. Статус карточек и чек-листы ведутся в [Project «Trained Assist — Migration»](https://github.com/orgs/trained-assist/projects/1) и issues. Это не runtime GTD/checklist. Документ задаёт план, а не запускает инфраструктуру. Уже выполненные прогоны учитываются по ссылкам и границам evidence; migrations и production переключения требуют отдельной приёмки.
-
-## Решение владельца: новая реализация параллельно живому сервису
-
-**Работающий сервис сохраняем.** На этом этапе не заменяем и не удаляем старые репозитории, не переключаем production endpoints, не переносим активные задачи и не переписываем действующие базы/профили. Новые компоненты собираем с нуля в новых implementation repos либо в уже созданном новом ai-agent-runner, с собственными sandbox deployments.
-
-Старые репозитории — reference для contract/scenario inventory и read-only анализа. Можно переносить проверенные самостоятельные части кода/методики, если у них явный контракт; greenfield не означает обязательного переписывания каждого formatter или domain handler. Новый компонент не импортирует скрытые internals старого core. Domain playbooks остаются в своих repos, используются по pinned version.
-
-Для Web/TG создаём новый sandbox adapter/gateway к новому API, а не меняем работающий bot/webhook или current frontend deployment. Поле target repo в карточках обозначает ownership/reference; если там указан существующий live repo, новый implementation adapter размещается отдельно до решения о способе интеграции. Автоматического overwrite старого repo нет.
-
-Stage 0 AutoFix/config/context profile сначала проверяется на isolated checkouts и новых repos. Для действующих repos — read-only inventory и отдельное предложение изменений, без незаметного merge в production. «Для всех repo» означает coverage и onboarding, а не одновременную замену всех процессов.
-
-### Путь интеграции с действующей системой
-
-1. **Reference → standalone:** фиксируем старые сценарии/contracts и запускаем новый Runner/API независимо.
-2. **New endpoints → sandbox clients:** отдельные base URLs, users/keys, bot/webhook, Workers/bindings и storage. Один synthetic external user проходит полный цикл.
-3. **Compatibility evidence:** старые сценарии воспроизводим в новом sandbox; sanitized inputs/replays допустимы, реальные mutating requests не дублируем в два сервиса.
-4. **Pilot route:** после sandbox приёмки отдельным решением подключаем выбранного test/pilot клиента. Один dispatch owner выбирает ровно одного исполнителя на запрос; result/delivery также однозначны.
-5. **Cohort rollout + rollback:** переключаем только новые задания разрешённого cohort. Уже принятые старые задания завершает старый владелец; нет двух очередей, продолжающих одну работу.
-6. **Дальнейшая судьба legacy:** сохраняется до отдельного решения после evidence и retention. Удаление/архивирование не входит в этот план.
-
-IDs и credentials старой/новой системы связываются явным mapping contract. Не копируем production secrets и профили в sandbox. Если форматы не совпадают, adapter сохраняет stable external correlation; это отдельная работа, а не допущение о готовой миграции.
-
-Все старые production изменения, migration и cutover — отдельные implementation actions после review. В этой задаче создаётся только документация.
-
-## Review исходного предложения
-
-Нулевой исследовательский этап R00: обзор готовых инструментов по всем карточкам и измеряемые VM-пилоты до выбора затронутых зависимостей. Затем I00: AutoFix + сжатие context всех репозиториев + обязательный observability baseline. Карточки исходного плана сохранены с прежними IDs. Актуальная последовательность ниже согласована с ARCHITECTURE §11: первый интеграционный сценарий control plane — разговорная сессия; самостоятельный Runner/API развивается параллельно. Номер Stage не задаёт жёсткую очередь. Добавлены Gate/Watcher и promotion как последующие самостоятельные этапы.
-
-Уточнения:
-- I02 разделена на I02A API lifecycle и I02B artifact transfer; это две приёмки одной второй итерации.
-- Сначала Web (меньше внешней доставки), затем Telegram-equivalent CI fixture и отдельный test bot smoke.
-- Playbook artifact не равен MCP: MCP передаёт capability/definition; plan progression и GTD появляются только I07.
-- Существующая sandbox VM рассматривается доступной по сообщению владельца. Первый этап создаёт reproducible setup и fault fixtures, а не начинает с покупки новой VM.
-- Sandbox methods, которые можно сделать, входят в работу. Необходимые credentials/config фиксируются как binding при implementation; отсутствие текущего fixture — задача разработки, а не причина отказаться от автономной приёмки.
-- Free-only по умолчанию: allowlist и paid fallback off. Бесплатные APIs имеют limits и не заменяют deterministic tests; число live runs ограничено конфигом.
-- Артефакты доставляются object refs + direct signed transfers; API несёт manifest/status, без FTP и больших bodies.
-- URL/keyword regex — high-precision routing features, не правило «любая ссылка значит агент».
-- template/deterministic/llm/agent — modes capabilities; Job types остаются прежними тремя.
-- Two-stage LLM pipeline — вариант для eval I06, а не навязанная замена one-call пути.
-- Автоматическая escalation до OpenCode, дальше engine лестницы нет; GTD opt-in.
-- Critical isolation/recovery/logging входят сразу в I01/I02, не откладываются до финала.
-
-Источники: [Architecture](https://github.com/trained-assist/trained-agent-architecture/blob/main/ARCHITECTURE.md), [Runner draft](https://github.com/trained-assist/ai-agent-runner/blob/main/ARCHITECTURE.md), [Router/MCP](https://github.com/trained-assist/trained-agent-architecture/blob/main/TASK-ROUTER-AND-MCP.md), [Observability](https://github.com/trained-assist/trained-agent-architecture/blob/main/OBSERVABILITY-AND-ERROR-CONTRACT.md).
-
-На 03.10.2026 Runner/API/storage/MCP и control-plane admission/adapter/Web/reporting реализованы. Это не полная приёмка изоляции и автоматической очистки Agent clean room; точные остатки и live evidence — в срезе ниже.
-
-## Структура плана и Project
-
-Org Project: **[Trained Assist — Migration](https://github.com/orgs/trained-assist/projects/1)**. Он — источник статуса карточек и чек-листов приёмки; этот документ хранит только долговечную структуру: этапы, зависимости, IDs и общие правила.
-
-- Каждая карточка R01–R03, Z01–Z03, P-DB и P01–P30 — issue в этом репозитории, sub-issue своего этапного эпика (R00, E0–E7). В issue: работа, sandbox, specific acceptance, logs acceptance, зависимости и перенесённые чек-листы (AC-xx, блокеры, предусловия). Исходные IDs сохранены.
-- Перед работой над карточкой сначала открыть её issue: там актуальный статус, чек-лист и evidence. Implementation issue/PR в целевом repo ссылается на issue карточки.
-- Status: Draft, Ready, In progress, Verification, Blocked, Done. Done требует acceptance evidence в issue.
-- Поля Project: Stage (R00/Ixx/Ops), Card, Target repo, Depends on, Sandbox.
-- Stage — milestone grouping. Календарные sprint dates/estimates не выдумываем до первого measured cycle. Status — release readiness, не runtime gtdState.
-- GitHub Project не источник Run/task state; execution receipts/logs остаются в платформе.
-
-## Актуальный порядок старта
-
-Источник целевых границ — [ARCHITECTURE §9/§11](ARCHITECTURE.md). Ниже единственный рабочий порядок плана; старые номера I/P сохраняются для ссылок.
-
-0. R00: сразу обзор вопросов по всем этапам, затем небольшие партии VM-пилотов перед соответствующими зависимостями. [Список кандидатов и протокол](TOOLING-RESEARCH-AND-VM-PILOTS.md). R01 и I00 inventory можно делать параллельно; выбор runtime-зависимости требует R02/R03 по ней, но поздние tooling-пилоты не блокируют весь старт.
-1. I00: общий development baseline. Учесть уроки VM2 в P01/P03; прошлый bootstrap существующего агента не закрывает карточки нового Runner.
-2. Предпосылки control plane документированы и проверены: P-DB cloud smoke завершён (PR #93), [схема Task Store v1](TASK-STORE-SCHEMA-V1.md) и [conversation contract](CONVERSATIONAL-SESSION-CONTRACT.md) смержены (#89/#88). Их реализация уже смержена в control-plane repo; ближайшие остатки — production-shaped own-API dogfood и clean room lifecycle (срез ниже). Защита терминальных состояний (#90) обязательна до приёмки; условия деплоя/пробуждения (#91/#92) входят в release и latency проверки.
-3. Первый интеграционный slice: новый control plane + Web, пять уточнений с рестартом и сохранением контекста (P10/P12 плюс нужные части P02/P05/P06). Для него достаточно bounded default route; полный MCP/fast path не prerequisite.
-4. Параллельно готовить standalone Runner → API → artifacts (P01–P09). Standalone API не зависит от platform GTD/Telegram и не заменяет разговорную приёмку.
-5. Расписание — ранний отдельный пилот после Workflow Port/Task Store (P22), без обязательного GTD. MCP/catalog, fast replies и GTD/playbooks развиваются по своим контрактам после базового slice.
-6. Gate/Watcher — независимые последующие интеграции. Promotion — по проверенным сценариям, а не только по номеру последней итерации.
-
-Это уточнение зависимостей, не переименование 33 карточек и не объявление их выполненными. Для первой интеграции части карточек можно выделять в малые PR; полная карточка Done только после всей её приёмки.
-
-## Актуальная приёмка и критический путь — 04.10.2026
-
-**Ближайшая цель own-API dogfood достигнута по отчёту исполнителя; повторять этапы среза 03.10 ниже не нужно.** Этот раздел имеет приоритет для текущего порядка работ. Отчёты не равны независимому повторному прогону и массовому production cutover.
-
-### Где остановилась работа
-
-Последний опубликованный результат Runner — [PR #69](https://github.com/trained-assist/ai-agent-runner/pull/69), смержен **04.10 03:49 МСК**: материализация refs/snapshot с проверкой владельца, пути, sha256/size и staging. [Итог #52](https://github.com/trained-assist/ai-agent-runner/issues/52#issuecomment-5975132790) снимает предшествующий СТОП по snapshot. По GitHub видно последнее завершённое действие; состояние/причину смерти локальной сессии этот аудит не устанавливает.
-
-Control plane после own-API работы продолжил fast-path: [#29](https://github.com/trained-assist/trained-assist-control-plane/pull/29) P16, [#30](https://github.com/trained-assist/trained-assist-control-plane/pull/30) P17, [#31](https://github.com/trained-assist/trained-assist-control-plane/pull/31) P20 (последний merge **04.10 06:20 МСК**). Поэтому «агент остановился» не означает незавершённый запуск ядра.
-
-### Что реально подтверждено
-
-| Контур | Evidence | Граница |
+| Условие | Обязательство | Владельцы |
 |---|---|---|
-| Own API | Control plane #24–28 в main; [финальный report #23](https://github.com/trained-assist/trained-assist-control-plane/issues/23#issuecomment-5974803166) | Deployed Cloudflare → VM Runner → настоящий OpenCode free; настоящий engineText, пользовательский ответ отдельно |
-| Артефакты и teardown | Тот же report: answer.txt/index.html/report.md, sha256 совпал, ключа в URL нет; room/workspace/home/tmp отсутствуют после persist | Нельзя подменять этим проверку неизвестного набора domain tools |
-| Restart / unknown | startedCount=1, admissions 1→1 после restart; connection_lost = unknown без rerun; host ask durable wait/answer/continuation | Контролируемые сценарии отчёта, не обещание восстановления любой VM/потерянного диска |
-| OS boundary | [#51 evidence](https://github.com/trained-assist/ai-agent-runner/issues/51#issuecomment-5973258177): разные Unix uid, cross-run EACCES/EPERM, 81/81; последующие #59/#61–68 исправили VM-дефекты | В отчёте #51 строка «два настоящих OpenCode одновременно» осталась открыта. Более поздний #23 доказывает реальный engine, но не явно эту concurrent matrix |
-| Materialize / snapshot | Runner #69, #52 closed: snapshot указывает на durable artifact bytes; checksum/path/owner guards до spawn, следующая попытка читает разрешённые refs | Проверить, что deploy Runner включает #69: merge main сам по себе не подтверждает установленную версию сервиса |
-| Fast-path | P16/P17/P20 в main | Не требуется для fixed-route API dogfood; самостоятельная приёмка корпуса/режимов/UX остаётся по карточкам |
+| Допуск и recovery | Durable receipt до dispatch, устойчивый operationId, fencing, неизвестный launch сверяется без дублирования | [CP](https://github.com/trained-assist/trained-assist-control-plane), [Runner #92](https://github.com/trained-assist/ai-agent-runner/issues/92) |
+| Запуск через собственный API | Async admission → status/events/result/cancel; чистая среда и scoped credentials | [Runner #136](https://github.com/trained-assist/ai-agent-runner/issues/136) |
+| Накопительное состояние профиля | Trusted binding, prepare base revision, run branch, единственный WorkspaceService CAS/conflict, committedRevision для следующего Run | [Runner #95](https://github.com/trained-assist/ai-agent-runner/issues/95), [persistence contract](AGENT-RUNNER-DATA-PERSISTENCE-IMPLEMENTATION.md) |
+| Канал | Request/destination сохраняются, receipt отделена от terminal result, один delivery owner | [Integrator #140](https://github.com/trained-assist/trained-agent-architecture/issues/140) |
+| Инструменты и ввод | Scoped capabilities работают без Agent Run; registered forms/choices продолжают конкретную задачу | [MCP #146](https://github.com/trained-assist/trained-agent-architecture/issues/146) |
+| Перенос пользователей | Проверенный импорт, финальная дельта после остановки старых writers, readback следующего Run | [GCP exit #145](https://github.com/trained-assist/trained-agent-architecture/issues/145) |
+| Cutover | Один admission owner, ограниченная когорта, rollback новых операций без повторного исполнения unknown mutations | [rollout contract](https://github.com/trained-assist/trained-assist-control-plane/blob/main/docs/ROLLOUT-COHORT-FLAG-OWNER-ROLLBACK.md) |
 
-### Обновление evidence — 04.10.2026, 16:30 МСК
+## Регион и ресурсы
 
-- [Control plane #32](https://github.com/trained-assist/trained-assist-control-plane/pull/32) смержен: snapshotId проходит public Task input → RunSpec → Runner. Report: Run A экспортировал, Run B прочитал SEED-42, 14/14. **Граница:** CP локальный, VM Runner/OpenCode настоящие; это не повтор deployed Cloudflare snapshot пути и не автоматический Git saveback.
-- [Runner #70](https://github.com/trained-assist/ai-agent-runner/pull/70) и [#71](https://github.com/trained-assist/ai-agent-runner/pull/71) смержены: исправлена гонка exit/stdio при resolveSlot. На VM2 два настоящих OpenCode разных uid одновременно, report 12/12; concurrency больше не невыполненный пункт.
-- [Architecture #131](https://github.com/trained-assist/trained-agent-architecture/pull/131) смержен: постоянный репозиторий профиля принят.
-- [Runner #72](https://github.com/trained-assist/ai-agent-runner/pull/72) смержен (`743c7e4e`): независимый `src/workspace`, восемь методов + `evaluate_workspace_cleanup`; report 101 локальный тест, 485 passed/3 skipped всего. Это готовый кандидат для ревью, не подключённый lifecycle и не live Git/storage acceptance.
-- [Architecture #133](https://github.com/trained-assist/trained-agent-architecture/pull/133) смержен: уточнения workspace контракта (v0.4) — двенадцать уточнений в раздел «Постоянный пользовательский workspace».
-- [Control plane #33](https://github.com/trained-assist/trained-assist-control-plane/pull/33) смержен: дедлайн старта + детектор «принято, но не начато» (arch#132 R1–R5).
-- [Control plane #34](https://github.com/trained-assist/trained-assist-control-plane/pull/34) закрыт без мержа: add/add с #33 по `stuck-input-watchdog.ts`; работа поглощена #35.
-- [tg-bot #345](https://github.com/trained-assist/trained-assist-tg-bot/pull/345) закрыт без мержа: пересечение по `intake-buffer.js` с уже принятым решением.
-- [Agent #2095](https://github.com/trained-assist/trained-assist-agent/pull/2095) и [#2097](https://github.com/trained-assist/trained-assist-agent/pull/2097) смержены: прямые вызовы провайдера убраны из `media-vision`, `site-connector`, `intake-gate`, `llm-client`; `OPENROUTER_API_KEY` убран из реестра секретов. Issue [#2092](https://github.com/trained-assist/trained-assist-agent/issues/2092) закрыт.
+Canary выполняется через API: Франция на OpenCode → отдельно РФ на OpenCode → отдельно GHA. Готовность CLI не доказывает готовность worker/API. При CPU или RAM >=60% новая нагрузка на VM не допускается и проходит установленную policy GHA; недоступность fallback не разрешает обход лимита. Claude/Codex в РФ запрещены, включая fallback. GCP VM не является fallback. Источник конкретной реализации/метрик — [#136](https://github.com/trained-assist/ai-agent-runner/issues/136).
 
-### Критический путь — 04.10.2026, 16:30 МСК
+## Совместная разработка
 
-1. ✅ **Закрепить текущий deploy и повторить короткий own-API smoke.** Runner `d20c274` (`vm2-final-cp23-r10`, cfg 12) + CP `ed65278d`. Smoke: 12/12 (два настоящих OpenCode одновременно, 47 с перекрытием), snapshot ref 14/14. **Закрыто.**
-2. ✅ **Закрыть concurrent OpenCode строку #51.** Гонка exit/stdio исправлена (#70), два настоящих OpenCode разных uid одновременно (#71, 12/12). **Закрыто.**
-3. 🔄 **Замкнуть постоянный workspace пользователя до переноса существующих профилей.** Контракт принят в [#131](https://github.com/trained-assist/trained-agent-architecture/pull/131), уточнён в #133 (v0.4). Модуль `src/workspace` реализован в [Runner #72](https://github.com/trained-assist/ai-agent-runner/pull/72) (8 методов, 101 тест). **Не сделано:** hooks H1–H5 не подключены к lifecycle Runner и control plane, живой прогон на private repo с настоящим Git API и object storage не выполнен, массовый импорт профилей не выполнялся. Перенос пользователей блокируется до интеграции и живой приёмки; разовый own-API dogfood не блокируется.
-4. ⬜ **Подключить только нужные первому пользователю capabilities.** Service capabilities — Cloudflare API с тонким MCP adapter на VM; run-local tools — в clean room. Решение и приёмка: [agent #2061](https://github.com/trained-assist/trained-assist-agent/issues/2061), communication [#2034](https://github.com/trained-assist/trained-assist-agent/issues/2034). Доменный UI и Agent Run вызывают одну реализацию; клики UI не создают агентскую сессию. Полный перенос всех MCP не блокирует запуск.
-5. ⬜ **Выбрать один реальный канал/сценарий и принять compatibility.** Sandbox Web либо API client, затем Telegram; проверить полный input/context, профиль/проект, статус/stop/continue, настоящее awaiting choice/form, результат и файл. Не переключать все каналы по зелёному transport test.
-6. ⬜ **Разрешённый cohort и rollback.** Только новые задачи идут новому owner, старые остаются legacy. Отдельное решение о переключении endpoint; данные/события читаются после rollback, mutation с неизвестным исходом не повторяется.
+Общие deployments, endpoints, bindings и lifecycle имеют одного интеграционного владельца. Независимые модули разрабатываются в собственных ветках. Состояния engine/publication/cleanup не объединяются. Повтор публикации не запускает движок заново. При неизвестном исходе сначала reconcile.
 
-### Пересчёт под внешний эфемерный worker — 04.10.2026, 20:11 МСК
-
-Владелец выбрал serverless-запуск через внешний worker. Это меняет место выполнения, а не отменяет durability Task/Run, scoped isolation и сохранение данных. Serverless для клиента не означает «вся система хранит состояние только в памяти». Старый VM путь остаётся fallback до принятия нового; production/cohort не переключается этим документом.
-
-**Факты:** Runner #72/#77 смержены: workspace методы, per-run branches, CAS merge профиля, live Git probe и migration rehearsal по отчёту #77. Runner #75/#76 открыты: внешний serving path и удаление прежних подсистем ещё не приняты. #76 stacked на #75, не самостоятельный первый merge. Control plane #35/#36/#37 в main: pending-input/watchdog/cohort runbook; merge не доказывает deploy или реальную канальную доставку. Ревизии deployed из сообщения куратора (Runner d20c274, CP ed65278) требуют runtime перепроверки и не равны main.
-
-### Целевые границы и обязательные исправления
-
-- Control plane/D1/Workflow — authoritative task/run ownership, operationId/generation, принятый worker execution handle, status/result/artifact/log refs и recovery. HTTP API может быть stateless adapter; in-memory receipts не источник истины.
-- Worker — запуск engine, clean room, разрешённый input, scoped tools, upload/publish и teardown. На worker допустим временный диск. «Нет долговечного локального состояния» не означает отсутствие cwd и staging.
-- Worker launch обязан дедуплицировать один operationId/runId после рестарта API и давать handle/status/cancel/result. Timeout после dispatch = unknown; сначала reconcile существующего запуска. Повтор с новым ключом из #75 не является безопасным recovery. #73 имеет смешанный started+terminal ответ: согласовать async receipt/status/result вместо зависимости от одного долгого HTTP вызова.
-- Worker/finalizer рядом с данными сохраняет run branch, bytes artifacts и журнал до уничтожения среды. Stateless API без доступа к worker disk не вызывает bare WorkspaceService над исчезнувшим cwd. WorkspaceService #72/#77 переносится/переиспользуется на стороне исполнения либо отдельного durable finalizer.
-- Кодовая repository задача: agent-run/<runId>, pinned commit и merge URL; default branch не меняется автоматически. Постоянный profile workspace: публикация run branch плюс versioned canonical merge/конфликт, чтобы следующий Run читал накопленное состояние. Смешивать два назначения repository нельзя.
-- Git хранит текст/дерево/manifest; крупные/binary outputs — object storage с hashes. GitHub blob URL private repo не гарантирует скачивание API клиентом: нужен authenticated artifact retrieval/proxy или scoped URL, принятой доступности конкретному пользователю.
-- Изоляция API host может быть none, но isolation worker должна быть отдельно declared/verified. Snapshot/materialize, artifacts, MCP и interaction гарантии переносятся или заменяются эквивалентом, а не считаются ненужными из-за удаления routes.
-- Live events и log archive — разные контракты. Финальный logUrl в GCS не доказывает streaming/cursor replay. GCS logs приватны, доступ scoped; cleanup VM после verified recovery copy, не после одного engine exit.
-
-### Новый критический путь
-
-1. **Исправить канонический #74/#73 и расхождения #75.** Зафиксировать границы выше, durable launch/reconcile, async status, distinction profile/code repo, heavy artifacts, эффективную worker isolation и перенос сохранения. Это ревью изменённого контракта, не повторный запрос выбора serverless у владельца.
-2. **Принять внешний worker отдельно.** Указать конкретный repository/PR/release, launch/status/cancel контракт и durable backend execution handle. Прогнать настоящий engine, scope/identity, artifact/log persist и удаление ephemeral ресурса. Mock worker из #75 не заменяет эту приёмку.
-3. **Доработать adapter #75 и связку control plane.** Task API продолжает authoritative state; повтор/restart/reconnect читает тот же worker execution. Reporting/download/awaiting input работают через выбранный новый backend. Engine/config placement проверяются по zone. Не строить ещё один независимый orchestration store.
-4. **Перенести/reuse workspace #72/#77 в execution/finalizer.** Ensure/import, pinned profile prepare, publish branch + canonical CAS merge, conflict/pending, read-back storage. Run A → destroy resource → B на новой среде видит профиль. Local mirrors/journal не могут быть единственной durable копией на уничтожаемой VM.
-5. **Совместимая sandbox приёмка нового пути.** Через наш public Task API: настоящий external launch → answer/stream-or-poll → downloadable artifact/checksum → verified persist → ресурс удалён. Duplicate dispatch, API/worker crash, связь unknown без rerun, cancel, storage/push failure, concurrent profiles и conflict; host input → continuation по typed binding. Старые #23/#32/#71 — evidence прежнего backend, сценарии переиспользовать, результат автоматически не переносить.
-6. **Merge/deploy безопасным порядком.** Исправленный #75 и worker/CP compatibility — после sandbox gate; #76 отдельно только когда migration matrix не оставляет consumer без реализации и нужные workspace/isolation/storage/MCP код и тесты сохранены в новом owner repo. Перемещение исходников/тестов до удаления, не «26k строк мертвы потому что API их не импортирует». Единственный API target Cloudflare/VM выбирается по working deployment; перенос HTTP adapter в Cloudflare не блокирует сам внешний engine.
-7. **Один канал + watchdog + cohort.** #35/#36 deploy/миграции отдельно от включения routing flag, если backward-compatible; проверить реальный scheduler/channel delivery/кнопку/алерт и observability. #37 — процедура, не принятый rollout. Импорт копии профиля и compatibility принимаются до живой когорты; endpoint switch отдельно, rollback сохраняет новый execution owner и доступ к результатам.
-
-**Параллельно, не блокируя worker gate:** secrets #2054/#2045 — rebase, проверить новые имена во всех consumers/deploy bindings и удалённый OpenRouter, затем CI; конфликты OPTIONAL сами не доказывают correctness. Capabilities #2061/#2034 — минимальный набор первого сценария. Cohort, fleet, autoresolver и полный fast-path не ставятся перед standalone external API acceptance.
-
-**Ближайший deliverable:** один synthetic профиль через наш Task API выполняет настоящий external worker Run, после API restart нет второго запуска, пользователь читает ответ/артефакт, ephemeral ресурс исчезает только после persist, следующая среда видит сохранённые данные. До этого #75/#76 не считаются завершённой serverless миграцией.
-
-## Исторический срез реализации — 03.10.2026
-
-Цель текущей итерации: **мы сами используем свой API для настоящего OpenCode Run в отдельной Agent clean room; ответ и файлы сохраняются, временная среда очищается автоматически**. Это не массовое переключение старого Telegram/Web. M1 transport и demo conversation уже построены; их не начинаем заново.
-
-Проверенные main: Runner `4f4a0d1f540a26337e8a096d18f74b30f173ca62`, control plane `8bd71c10014b1d58afc1ea5c0d142a7efd2e7bec`. Смерженный код, тесты, VM transcript и production readiness различаются. Статусы карточек — в issues/Project; срез не закрывает их повторно.
-
-| Область | Уже сделано | Граница доказательства / остаток |
-|---|---|---|
-| Control plane | PR [#6](https://github.com/trained-assist/trained-assist-control-plane/pull/6), [#8](https://github.com/trained-assist/trained-assist-control-plane/pull/8), [#9](https://github.com/trained-assist/trained-assist-control-plane/pull/9), [#11](https://github.com/trained-assist/trained-assist-control-plane/pull/11), [#12](https://github.com/trained-assist/trained-assist-control-plane/pull/12), [#14](https://github.com/trained-assist/trained-assist-control-plane/pull/14), [#15–19](https://github.com/trained-assist/trained-assist-control-plane/pull/19), [#20](https://github.com/trained-assist/trained-assist-control-plane/pull/20): admission, replay/status, cancel/delivery, Web sandbox, awaiting, pilot routing, настоящий Runner adapter и reporting | `database_id` placeholder; README явно говорит, что новый control plane на Cloudflare не deployed. Внешнюю проверку ключа перед trusted `X-Principal` надо реально подключить; клиентский заголовок не удостоверяет личность |
-| VM Runner ↔ control plane | [#122 live report](https://github.com/trained-assist/trained-agent-architecture/issues/122#issuecomment-5958159459): local control plane → ssh tunnel → настоящий VM Runner, engine=fake; artifact HTTP 200, связь lost → unknown, восстановление возвращает тот же Run | Не доказан полный Cloudflare → VM → OpenCode путь. Runner standalone OpenCode dogfood и fake adapter smoke — два отдельных evidence |
-| Runner API и storage | [#36](https://github.com/trained-assist/ai-agent-runner/pull/36) capabilities/conversation/artifacts, [#43](https://github.com/trained-assist/ai-agent-runner/pull/43) VM transcripts, [#44](https://github.com/trained-assist/ai-agent-runner/pull/44) C01–C03 compatibility, [#45](https://github.com/trained-assist/ai-agent-runner/pull/45) export/upload/snapshot в main; recovery и reboot уже есть | `materialize()` сейчас mkdir + clone, не полный input/profile snapshot loader. Snapshot metadata и безопасные artifact paths не доказывают автоматический restore всей следующей попытки |
-| Clean room | API выдаёт уникальный `workspaces/<runId>`; API owner/scopes и путь проверяются | `OpenCodeAdapter.spawn` работает под service UID, capabilities: `osIsolation=not_proven_service_uid_only`. Отдельный cwd не ограничивает shell/read. Остаток: [Runner #51](https://github.com/trained-assist/ai-agent-runner/issues/51) |
-| Persist / cleanup | Export загружает объявленные `spec.outputs` и проверяет storage перед удалением их локальных копий | Не удаляет весь cwd/HOME/tmp. `cleanupStatus()` может вернуть completed без sweep workspace. Sole copy нельзя удалять; нужен recoverable sweep: [Runner #52](https://github.com/trained-assist/ai-agent-runner/issues/52) |
-| MCP / interaction | Runner [#46](https://github.com/trained-assist/ai-agent-runner/pull/46)/[#47](https://github.com/trained-assist/ai-agent-runner/pull/47): per-run MCP, bridge, scoped bindings, общий handler. [#115](https://github.com/trained-assist/trained-agent-architecture/issues/115) spike выбрал host-owned interaction; [#116](https://github.com/trained-assist/trained-agent-architecture/issues/116) и [#121](https://github.com/trained-assist/trained-agent-architecture/pull/121) доказали durable outbox на пилоте | Не считать закрытые spike/pilot полной VM-интеграцией каждого domain/interaction tool. Связка host ask → реальный Run → continuation проверяется отдельно |
-| Workflow pilot | [#111](https://github.com/trained-assist/trained-agent-architecture/pull/111) guard/deploy diagnostics и #121 outbox в main; #90/#91/#92/#116 отсутствуют среди открытых issues | Cloud pilot не deployment нового приложения. Release-version и wake/recovery проверки повторяются на выбранном production-shaped пути, без автоматического rerun неизвестных эффектов |
-| Расписание / GTD / fleet | Control plane [#21](https://github.com/trained-assist/trained-assist-control-plane/pull/21)/[#22](https://github.com/trained-assist/trained-assist-control-plane/pull/22): P22/P23; Runner [#48](https://github.com/trained-assist/ai-agent-runner/pull/48)/[#49](https://github.com/trained-assist/ai-agent-runner/pull/49)/[#50](https://github.com/trained-assist/ai-agent-runner/pull/50): promotion/placement и VM probe | Полезные готовые блоки, но не доказательство OS boundary, полного sweep или миграции пользователей. Не расширять ими ближайший one-VM dogfood |
-| Fast-path | Architecture [#126](https://github.com/trained-assist/trained-agent-architecture/pull/126)/[#127](https://github.com/trained-assist/trained-agent-architecture/pull/127): versioned corpus, baseline/label gate, profile-data prohibition | P16/P17/P19–P21 и research остаются отдельным треком; baseline не доказывает снижение числа агентских запусков |
-| Tooling и каналы | AutoFix/context tooling и совместимые TG/Web сценарии подготовлены ранее | Z01–Z03 остаются открытыми. Scope-specific приёмку не заменяет org-wide rollout. Перенос Telegram и чистка legacy не блокируют запуск нового isolated API sandbox |
-
-### Что в плане было запутано
-
-1. Предыдущий срез ставил реализацию admission/adapter/Web и закрытие #115/#116 впереди. Эти реализации/spike уже есть; остаток теперь **интеграция и подтверждение**, а не повторная разработка M1.
-2. В демо `conversation-plan.ts` после `submit-runner` безусловно открывается `mark-awaiting`, а result.answer берётся из ответа человека. Для обычного one-shot запроса wait должен возникать только по реальной необходимости; конечный ответ обязан быть результатом агента.
-3. `RunnerApiAdapter.submit` пока не передаёт output/repository/MCP/snapshot bindings; demo dispatch даёт `inputRefs=[]`. Байты и identity не передаются через модель; нужен согласованный host mapping разрешённых refs и результатов.
-4. **Отдельная папка ≠ изоляция; output prune ≠ clean room sweep; engine exit ≠ результат доставлен.** Закрытые карточки остаются историей своей приёмки; новые найденные интеграционные остатки заведены ниже.
-5. «Serverless» — интерфейс для заказчика. Не создаём/удаляем VM на каждый Run. Постоянные API daemon и supervisor живут; engine/MCP и временные ресурсы конкретного Run завершаются. Долгая архивация — отдельная фаза с durable ownership файлов.
-
-### Новый критический путь: собственный API → clean room → результат → очистка
-
-| Порядок | Работа / owner | Приёмочный результат |
-|---|---|---|
-| 1 | [Control plane #23](https://github.com/trained-assist/trained-assist-control-plane/issues/23): one-shot путь, полный разрешённый Task → RunSpec mapping и реальный конечный ответ | Обычный запрос не требует demo «да». Наш клиент идёт в тот же Task API, что Web/TG; control plane вызывает Runner `POST /v1/runs`, без прямого spawn/ручного upload результата |
-| 2 | [Runner #51](https://github.com/trained-assist/ai-agent-runner/issues/51): минимальная OS boundary | Два реальных Run не читают чужой cwd/HOME/secrets, не управляют чужими процессами; сломанная изоляция отказывает до spawn |
-| 3 | [Runner #52](https://github.com/trained-assist/ai-agent-runner/issues/52): materialize, verified persist, recoverable sweep | Агент получает refs/snapshot, сохраняет ответ/файл; после подтверждённого persist cwd/HOME/tmp/MCP config очищены. Storage failure сохраняет sole copy с cleanup pending; crash не повторяет execution |
-| 4 | #23: изолированный Cloudflare sandbox + authenticated доступ к VM API | Настоящие bindings/миграции, доказанная auth boundary, ключ Runner из SM/binding. Локальный ssh tunnel больше не единственный доступ. Выбор private/public network transport фиксируется явно |
-| 5 | #23 + Runner [#7](https://github.com/trained-assist/ai-agent-runner/issues/7): own-API OpenCode dogfood | Бесплатный OpenCode через весь путь создаёт MD/HTML; наш пользователь читает реальный ответ и скачивает файл после cleanup. Duplicate/reconnect/restart/unknown проверены; версии deployed совпадают с transcript |
-| 6 | Разрешённый pilot/rollback по M1, затем Web/TG integration | Новые задачи идут выбранному owner, старые остаются legacy. Реальный host ask, callback форм и continuation проверены перед заявлением поддержки интерактивных сценариев |
-
-Пункты 1–3 можно подготовить независимо по разным путям/репозиториям; совместная VM приёмка идёт только после согласования контрактов. На VM уже можно выполнять технический dogfood с synthetic данными; **цель «каждый Run изолирован и среда убирается» достигнута только после 2–3**. Нет новой покупки VM и нет требования закончить весь MCP/fast-path/GTD/fleet/AutoFix backlog перед этим исследовательским прогоном. Обязательные baseline/logs/free-only/secret gates остаются; открытый I00 нельзя объявлять Done или скрыто отменять.
-
-Финальный transcript должен быть одним связанным сценарием, а не суммой независимых PASS: наш API client → authenticated Task API → control plane → VM Runner API → настоящий OpenCode → verified external artifact/result → clean room sweep → чтение результата после restart. Все IDs и deployed SHA закреплены; никаких production переключений этой правкой.
-
-## Параллельный research: Fast-path до запуска агента
-
-Решение владельца 01.10: до production интеграции подробно исследовать необязательные Agent Runs. [Алгоритм, JSON outcomes, corpus и eval](TASK-ROUTER-AND-MCP.md#11-fast-path-v1-алгоритм-до-запуска-агента), [explicit aliases и compact catalog](CAPABILITY-CATALOG-AND-FAST-REPLIES.md#explicit-names-и-compact-catalog-v1--01102026).
-
-Это неблокирующий research track в отдельном pilot/fast-path каталоге нового control-plane repo, с собственным владельцем/веткой/worktree. При пересечении с исполнителем ядра согласовать пути до изменений. Не менять живые adapters, shared VM services, native MCP names и ветки текущей приёмки PR. Результат: catalog inventory/mapping, утверждённый sanitized corpus, сравнение one-pass/two-pass, mock replay harness, live-model holdout report и решение по promotion. Использует существующие карточки catalog/fast replies; не является prerequisite первого Web vertical slice.
-
-Текущие MCP имена сохраняем через compatibility mapping. Full request/context по умолчанию; head/tail только preview, не доказательство полноты ответа. Host-owned bounded tool execution не превращает llm-recipe-job в автономного агента. Формальные thresholds выбираем до holdout; нет blanket обещания экономии токенов или качества.
-
-## Итерации и зависимости
-
-| Stage | Результат | Зависимости |
-|---|---|---|
-| R00 | Обзор tooling по всем карточкам, VM-пилоты и решения по измеренной пользе | Нет для обзора; VM/bindings и baseline для конкретной партии. Без глобального ожидания всего списка |
-| I00 | AutoFix, context compression и logs baseline для всех repo | Нет; перечислить participating repos |
-| I01 | Agent Runner на существующей sandbox VM | I00 accepted; VM существует по сообщению владельца |
-| I02A | Внешний Serverless Agent API | I01 accepted |
-| I02B | Артефакты и пользовательский workspace через API | I02A; object-store sandbox |
-| I03 | Web conversation slice, затем Telegram на том же API | Task Store/Workflow Port и conversation contract; basic Runner/status. I02B нужен для сценариев файлов, не для первого текстового диалога |
-| I04 | MCP и доменные capabilities | I03; первые fake domain adapters |
-| I05 | Первый надёжный fast path | I04; старт corpus collection с I01 |
-| I06 | Компактный capability catalog и глубокая проверка быстрых ответов | I05; P18 baseline |
-| I07 | Расписание, планы и выборочный GTD | P22 после Workflow Port/Task Store; P23/P24 после нужных plan/MCP contracts; полный I06 не блокирует простой schedule pilot |
-| I08 | External Integration Gate | I04 базовый handler; MVP может идти параллельно I05–I07 |
-| I09 | Error Watcher | I01 error contract, I05/I06 diagnosis routing; не блокирует первые API Runs |
-| I10 | Promotion, совместимость и RU/EU | Accepted core path I01–I07; подключённые Gate/Watcher пилоты когда готовы |
-
-Card-level зависимости имеют приоритет над milestone порядком: P18 corpus collection начинается сразу после P03/P12; P27 aggregation можно готовить раньше I09, diagnosis P28 ждёт fast-path contracts. I08 может идти после I04 параллельно быстрому ответу. I09 использует уже накопленные errors, но не является блокером первых Runs. I10 — promotion gate, не обещание полного релиза до всех незакрытых требований.
-
-## Общая приёмка каждой карточки
-
-Общие правила — [Engineering Approach](ENGINEERING-APPROACH.md); envelope/retention — [Observability](OBSERVABILITY-AND-ERROR-CONTRACT.md); environments, bindings, controlled failures и stage-specific logs checks — [Sandbox](SANDBOX.md).
-
-Карточка добавляет только специфический outcome, зависимости и evidence. Done требует positive/controlled failure, читаемые scoped logs, pinned versions и воспроизводимый transcript; affected API/recovery/cleanup/compatibility проверяются согласно её scope.
-
-Общий гейт Done, типы доказательств и сквозные проверки инвариантов — [Acceptance](ACCEPTANCE-CHECKLIST.md). Чек-листы конкретной карточки и этапа — в issue карточки и эпике этапа. Порядок работ остаётся только в этом плане.
-
-## Sandbox и требования к логам
-
-Конкретные окружения, значение test fixture, bindings, принудительные сбои и logging acceptance каждого этапа — в [Sandbox](SANDBOX.md). Каждая карточка сохраняет свой обязательный logging gate в своём issue. Нельзя объявить её Done только по успешному ответу агента.
+Fast-path и interaction research расширяют контракт после corpus/eval: ограниченные tool calls не требуют полного агента, а end-to-end цель не запрещает обязательный user input. GTD остаётся opt-in. Требования к логам и TTL проверяются в каждой карточке по [Observability](OBSERVABILITY-AND-ERROR-CONTRACT.md).
 
 ## Scope границ репозиториев
 
-Runner/API/artifact adapters — ai-agent-runner; reusable storage contract по общей архитектуре.
-Web/TG — новые sandbox adapters с существующими gateways как reference. Router — модуль нового общего control-plane repo по ARCHITECTURE §9.
-MCP/domain methods — domain repos, тонкие platform facade/adapters.
-Input, Output, GTD, Journal, Reporting и Workflow Port — модули того же control plane над единым Task Store; отдельные repos не prerequisite P12/P23.
-Integration Gate и Error Watcher — самостоятельные repos.
-
-Созданные новые repos (30.09.2026, публичные): [trained-assist-control-plane](https://github.com/trained-assist/trained-assist-control-plane) — control plane; [trained-assist-integration-gate](https://github.com/trained-assist/trained-assist-integration-gate) — I08; [trained-assist-error-watcher](https://github.com/trained-assist/trained-assist-error-watcher) — I09. Control plane уже содержит Task Store и Workflow Port (срез выше); Gate/Watcher пока без принятой прикладной реализации. Runner — уже существующий ai-agent-runner. Остальной I00 onboarding (AutoFix, staging) — по Z01/Z02.
-Ни одна карточка не требует предварительно создать repo для каждого логического прямоугольника.
+Ownership задаёт [ARCHITECTURE §9](ARCHITECTURE.md#9-репозитории-и-ownership). Здесь не создаётся второй реестр владельцев. Runtime code, runnable probes и fixtures живут в implementation repo; shared contracts и пользовательские истории — в архитектурном. Статусы и чеклисты — в [Project](https://github.com/orgs/trained-assist/projects/1) и issue карточки.
 
 ## Карточки
 
@@ -294,44 +78,6 @@ Integration Gate и Error Watcher — самостоятельные repos.
 
 Трактовка «сжатия» в I00: compact repository map + task-relevant context bundle/brief с refs; исходный код не удаляется. Название/продукт автофиксера не задан, используем configurable AutoFix contract.
 
-## Review рисков и решения
+## История
 
-| Риск | Решение в плане |
-|---|---|
-| Бесплатный провайдер нестабилен/недоступен | Fixtures дают детерминированную приёмку, live smoke отдельный; квота не обещает unlimited calls |
-| Старое ядро незаметно осталось dependency Runner | I01 standalone fixture без frontend/GTD/domain modules |
-| Межканальные profile IDs потеряны | I03 mapping/receipts и обязательные error fields, separate affected scope |
-| Бриф красивый, capability реально недоступна | readiness/binding/permissions и versioned catalog, negative eval |
-| Итерация превращается в долгий mega-PR | P cards — acceptance outcomes; реализация может разбить их на малые PR; parallel independent adapters |
-| GTD создает recursive bookkeeping | opt-in registration и next-check/caps; no self-control |
-| Raw HTML/файлы через API блокируют Gateway | artifact manifests/direct transfer, serving policy отдельно от публикации сайта |
-| Sandbox VM превращается в prod с мусором | clean promotion/reprovision + recreate sandbox, pinned config и rollout |
-| Ранние API endpoints порождают второй orchestration owner | minimal admission/result adapter; один dispatcher, versioned handoff |
-| Объём: greenfield шести сервисов при запрете импорта внутренностей старого core | Намеренная цена за отсутствие скрытых контрактов; переносим только самостоятельные части с явным контрактом. План не является оценкой сроков |
-| Каждая карточка — отдельный неизменяемый PR с зелёными CI и staging | Длинный хвост, а не препятствие: постановка по карточкам, а не «пройти всё за одну сессию» |
-
-Не блокирующие вопросы для refinement: место хранения workspace/artifacts в RU/EU; стартовые quotas/concurrency/TTL; ID выбранной VM и sandbox base URL в config registry; первое реальное доменное capability для P14. До получения ответов используются local fixtures и существующая заявленная VM. Точные credentials в Project не размещаются.
-
-Архитектурные refinements опубликованы: [Engineering Approach](https://github.com/trained-assist/trained-agent-architecture/blob/main/ENGINEERING-APPROACH.md), [Capability Catalog](https://github.com/trained-assist/trained-agent-architecture/blob/main/CAPABILITY-CATALOG-AND-FAST-REPLIES.md). Карточки — planning items; выполнение отмечается только по их evidence. Уже есть отдельные прогоны P-DB и bootstrap существующего агента на VM2; они не объявляют карточки нового Runner закрытыми.
-
-## Дополнение 30.09.2026
-
-Стадия 0 — prerequisite implementation. AutoFix/context compression применяются ко всем репозиториям через общий reusable workflow и repo-specific profile, без центрального mega-build. Для нового repo — тот же onboarding. Requirements по logs указаны у каждого этапа (Sandbox) и в issue каждой карточки; Done без diagnostic evidence невозможен.
-
-Связанный документ: [SANDBOX.md](SANDBOX.md). При расхождении прежних proposal о замене live core действует правило параллельной новой реализации из этого документа.
-
-## Уточнение: потеря связи и lifecycle рабочих данных — 30.09.2026
-
-Применяется к существующим карточкам, без изменения порядка итераций. Нормативная граница — [ARCHITECTURE §4.6](ARCHITECTURE.md#46-связка-workflow--runner--рабочие-данные); Runner и [Serverless API](SERVERLESS-AGENT-API.md) согласованы с ней.
-
-Workflow/control plane хранит управляющее состояние вне VM и принимает решения о запуске; Runner исполняет и финализирует. Connection_lost — неизвестный исход, уведомление и ожидание связи/явного сигнала, без автоматического rerun по heartbeat/lease timeout. Смерть процесса не означает потерю диска. Данные задачи переживают Run и доступны следующей разрешённой попытке. После engine exit финализация сохраняет артефакты; её повтор не повторяет исполнение.
-
-Обязательные logs/evidence в затронутых карточках: connection_lost/reconnected, restart signal и его источник, previous/new runId и generation, workspace/volume refs, manifest/checkpoint versions, finalization/export progress/commit/error, cleanup decision. Секреты и signed URLs не логируются. Retention-классы задаются отдельно для рабочих данных, результатов и журналов; timeout не стирает единственную копию молча.
-
-## Research B: интерактивность и user-action без лишнего Run
-
-02.10.2026: [INTERACTIVE-EXECUTION-AND-USER-INPUT.md](INTERACTIVE-EXECUTION-AND-USER-INPUT.md) описывает interaction policy отдельно от execution mode, typed choices/forms, ZeroCreds adapter, durable waits и возобновление без живого agent process. Research A расширен multimodal inputs, domain/intent tagging и candidate tool docs (§12 Router); naming mapping входит в него.
-
-Можно вести обе части одной research-сессией, но два набора labels/evidence. Работу разместить в согласованных pilot paths отдельной ветки/worktree control plane, не трогать текущие PR/production. Сначала собрать и утвердить sanitized corpus (Research A §11.8/12, Research B §8), затем deterministic interaction/multimodal replay и live-model holdout. Новый native agent loop, массовый rename и production rollout не входят в research.
-
-Первый acceptance fixture: пользователь нажал «Ввести ключ» → host открыл mocked form; 0 LLM calls, 0 Agent Runs. Callback обновил readiness и продолжил правильную задачу после restart; duplicate/cancelled/stale responses не повторяют execution. Реальный ZeroCreds/Broker callback и engine checkpoint — отдельная integration приёмка.
+Прежние критические пути, инвентари и merge-последовательности доступны по pinned revision в [#161](https://github.com/trained-assist/trained-agent-architecture/issues/161). Их наличие не означает, что перечисленная работа всё ещё открыта.
