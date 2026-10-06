@@ -73,6 +73,7 @@ Fast-path research: [алгоритм до запуска агента и про
 | Статусы, IDs и пользовательский ввод | [ID и Reporting](USER-TASK-IDS-AND-REPORTING.md), [Run conflict](scenarios/interaction/run-conflict-explicit-choice.md), [Stories](stories/README.md), [старые сценарии](scenarios/README.md) |
 | Разговорная сессия | [Conversation contract](CONVERSATIONAL-SESSION-CONTRACT.md): границы Conversation/Task/Run, что в Task Store, resume-семантика, связь с legacy session-store |
 | Планы, расписание и GTD | [Boundaries](PLAYBOOKS-VS-GETTING-THINGS-DONE-BOUNDARIES.md). GTD opt-in |
+| Connected Applications: автономность и offline tests | [Mock MCP без Agent Run](CONNECTED-APPS-OFFLINE-MCP-TESTING.md); модель слоёв — [PR #149](https://github.com/trained-assist/trained-agent-architecture/pull/149) |
 | Provider-интеграции | [External Integration Gate](EXTERNAL-INTEGRATION-GATE.md) |
 | Ошибки и диагностика | [System Error Watcher](SYSTEM-ERROR-WATCHER.md), общий Observability contract |
 | Модели, бюджет и учёт | [Model Gateway and Costs](MODEL-GATEWAY-AND-COSTS.md) |
