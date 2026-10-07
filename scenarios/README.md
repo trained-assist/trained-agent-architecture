@@ -19,6 +19,7 @@
 Новые истории пишутся в [stories/](../stories/README.md). Детальные сценарии поведения, которые не помещаются в историю (как RC ниже), остаются здесь и ссылаются на ID истории.
 
 - [interaction/SC-SBX-01-anonymous-test-ingress.md](interaction/SC-SBX-01-anonymous-test-ingress.md) — детерминированная sandbox-проверка приёма и событий без Telegram, учётных данных или расходов на модель (API-16).
+- [interaction/SC-AUTH-01-sandbox-login-handoff.md](interaction/SC-AUTH-01-sandbox-login-handoff.md) — однокомандная выдача sandbox-доступа через приватный одноразовый login handoff; implementation issue [trained-assist-tg-bot#432](https://github.com/trained-assist/trained-assist-tg-bot/issues/432), coordination issue [#210](https://github.com/trained-assist/trained-agent-architecture/issues/210).
 - [interaction/run-conflict-explicit-choice.md](interaction/run-conflict-explicit-choice.md) — RC-01…RC-08: явный выбор при новой задаче во время работающего рана (TG/Web/API), решения владельца 30.09.2026; закрывает/уточняет US-QUEUE-01, US-MISC-01, US-BUF-02, CH-01, SS-06/07.
 
 ## Каталог
