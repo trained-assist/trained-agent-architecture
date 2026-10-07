@@ -31,9 +31,11 @@ Fast-path research: [алгоритм до запуска агента и про
 
 Интерактивность: [формы, кнопки, Awaiting user input и research B](INTERACTIVE-EXECUTION-AND-USER-INPUT.md). End-to-end не запрещает вопросы; формы открываются host handler без нового Agent Run.
 
-Приёмка ввода и стартовые окна: [SC-START-01](scenarios/interaction/SC-START-01-input-start-window.md), реализация [issue #170](https://github.com/trained-assist/trained-agent-architecture/issues/170). Общие правила создания и финализации пользовательских сценариев — [USER-SCENARIO-LIFECYCLE.md](USER-SCENARIO-LIFECYCLE.md).
+Приёмка ввода и стартовые окна: [SC-START-01](scenarios/interaction/SC-START-01-input-start-window.md), реализация [issue #170](https://github.com/trained-assist/trained-agent-architecture/issues/170). Общие правила Architecture Change Management & Acceptance (включая сценарии для пользователя, агента, API, оператора и QA) — [SCENARIO-CHANGE-MANAGEMENT.md](SCENARIO-CHANGE-MANAGEMENT.md).
 
 ## Начать разработку
+
+Сначала классифицируйте изменение. Если меняется ожидаемое поведение, flow, публичный/inter-component контракт или роли акторов — следуйте [Architecture Change Management & Acceptance](SCENARIO-CHANGE-MANAGEMENT.md) и откройте scenario-change issue/PR до runtime-кода. Если это bugfix, возвращающий уже принятое поведение, scenario PR не нужен: работайте через issue и обычный implementation PR/CI owning repository. Пока acceptance gates не автоматизированы, агент запускает и записывает их вручную, используя Environment Contracts.
 
 1. Прочитать [ARCHITECTURE](ARCHITECTURE.md): границы, ownership, инварианты и условия перехода с живого сервиса.
 2. Понять, какую ценность и кому даёт этап — [истории](stories/README.md) (ценность и шаги для человека, API-клиента, оператора). Выбрать карточку в [Project](https://github.com/orgs/trained-assist/projects/1) или таблице карточек [плана реализации и интеграции](IMPLEMENTATION-AND-INTEGRATION-PLAN.md#карточки), открыть её issue, проверить зависимости и текущий порядок работ. Номера I/P — идентификаторы, не требование выполнять всё последовательно.
@@ -56,7 +58,8 @@ Fast-path research: [алгоритм до запуска агента и про
 | [Task Store v1 schema](TASK-STORE-SCHEMA-V1.md) | Инвентарь прод `durable-tasks/state.db` (read-only) и целевая схема Task Store: userTaskId, журнал событий, сигналы с дедуп, awaiting input, delivery, conversation |
 | [Engineering Approach](ENGINEERING-APPROACH.md) | Концепция Sandbox Driven Development и общие правила разработки |
 | [Environment Contract template](contracts/ENVIRONMENT-CONTRACT-TEMPLATE.md) | Единый шаблон проверенных repository boundaries и Sandbox Gaps |
-| [Acceptance](ACCEPTANCE-CHECKLIST.md) | Типы доказательств, общий гейт Done карточки, сквозные проверки инвариантов и контрактов; где теперь лежат чек-листы. Не план и не трекер |
+| [Architecture Acceptance Protocol](ACCEPTANCE-CHECKLIST.md) | Короткие критерии acceptance scenario changes, evidence и production trust boundary; компонентные требования остаются в owning contracts |
+| [Scenario Change Management](SCENARIO-CHANGE-MANAGEMENT.md) | Область behavior changes, actor model, scenario lifecycle и три-gate cross-repository acceptance pipeline |
 | [Sandbox](SANDBOX.md) | Песочница каждого этапа R00, I00–I10: что запускаем, сбои, ожидаемый результат, классы bindings/credentials, logs checks; правила и механизмы хранения credentials (без значений) |
 | [Tooling Research / R00](TOOLING-RESEARCH-AND-VM-PILOTS.md) | Вопросы по всем карточкам, shortlist инструментов и измеряемые VM-пилоты; кандидаты не равны принятому stack |
 | [MCP / capabilities review](MCP-CAPABILITY-REVIEW.md) | R1 static evidence snapshot for issue #146; partial audit with pinned source revisions and explicit measurement gaps |

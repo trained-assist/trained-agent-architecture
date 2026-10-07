@@ -140,7 +140,7 @@ TTL отсчитывается по выбранному class timestamp; active
 
 ## Sandbox Driven Development: observable acceptance
 
-Каждый новый модуль/adapter/agent contract в sandbox показывает не только successful output, но и диагностику намеренно вызванных failures. Обязательные свойства (в приёмке — AC-230…AC-235 [общего гейта](ACCEPTANCE-CHECKLIST.md#5-сквозные-инварианты-и-контракты)):
+Каждый новый модуль/adapter/agent contract в sandbox показывает не только successful output, но и диагностику намеренно вызванных failures. Обязательные свойства определены здесь и проверяются scenario/component probes по [Architecture Acceptance Protocol](ACCEPTANCE-CHECKLIST.md); старые AC-230…AC-235 — исторические ссылки, не отдельный источник требований:
 
 - Зарегистрирован источник и определены error/lifecycle schemas + TTL.
 - Ошибка user path содержит правильный profile и известный replyContext, сквозные Task/Run IDs.
