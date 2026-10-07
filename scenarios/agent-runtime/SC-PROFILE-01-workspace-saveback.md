@@ -2,7 +2,7 @@
 
 **Статус:** target; cross-repository acceptance не пройдена.
 **Scenario-change:** [architecture #194](https://github.com/trained-assist/trained-agent-architecture/issues/194).
-**Implementation tracking:** [agent-runner #186](https://github.com/trained-assist/ai-agent-runner/issues/186), [pipeline epic #192](https://github.com/trained-assist/trained-agent-architecture/issues/192).
+**Implementation tracking:** [agent-runner #186](https://github.com/trained-assist/ai-agent-runner/issues/186), [GHA runner #29](https://github.com/vovalikessmoothy-png/opencode-gha-runner/issues/29), [pipeline epic #192](https://github.com/trained-assist/trained-agent-architecture/issues/192).
 **Граница:** доверенный Agent API, France VM Runner или GHA Runner, агентский процесс и закреплённый Git-профиль. Россия и старая GCP VM не входят в целевую agent route.
 
 ## Ценность и акторы
@@ -42,16 +42,19 @@
 
 | Gate | Проверка | Текущий статус |
 |---|---|---|
-| 1. Semantic conformity | Сопоставить сценарий, implementation PRs и pinned revisions с каждым outcome/failure path | `UNCLEAR` — review и traceability ещё не записаны |
+| 1. Semantic conformity | Сопоставить сценарий, implementation PRs и pinned revisions с каждым outcome/failure path | `PASS` — проверена связка ниже; candidate GHA revision зафиксирована, секреты не выдаются владельцу GHA workflow |
 | 2. Component verification | Capability scope/expiry; path/policy/checksum; upload partial/restart; publication; route refusal before admission и no reroute after acceptance; GHA parity | `UNCLEAR` — локальный harness/unit tests есть, заявленного staging target нет |
 | 3. Generated E2E | На объявленном test/staging target выполнить два последовательных реальных agent runs: первый записывает уникальный маркер; второй читает и дописывает его; проверить streaming, receipts, state, commits и logs | `UNCLEAR` — live E2E не выполнялся |
 
-Локальные проверки PR [#184](https://github.com/trained-assist/ai-agent-runner/pull/184) проверяют snapshot pinning, изменённые/новые файлы, удаление, checksums, отсутствие capability в durable Runner state и fallback при pre-admission refusal. Это локальные component evidence, не staging E2E.
+Проверка semantic conformity 2026-10-07 сопоставила этот сценарий с API implementation `trained-assist/ai-agent-runner@767a2f14f910b6a98632ef653b36d41fbfe0b9c9` и GHA candidate `vovalikessmoothy-png/opencode-gha-runner@8d0c7ed` (включая feature commit `bbb41eb`). API выдаёт run-scoped capability; durable journal очищает snapshot URL и token; VM/GHA отправляют файлы и манифест, а API публикует только после полного манифеста. Ошибка saveback остаётся ошибкой persistence, не превращается в пустую публикацию. GHA не получает owner GitHub token для profile run. GHA issue [#29](https://github.com/vovalikessmoothy-png/opencode-gha-runner/issues/29) отслеживает upstream PR, Environment Contract и оставшиеся component edge cases.
+
+CI component tests на API/VM PR [#184](https://github.com/trained-assist/ai-agent-runner/pull/184) и GHA candidate прошли; повторный локальный `npm test` на GHA candidate дал 204/204. Они покрывают snapshot pinning, изменения/новые файлы, удаления, checksums, отсутствие capability в durable Runner state и неполный upload. Это component evidence, не France staging E2E. France/Russia drift workflow после merge docs PR [#185](https://github.com/trained-assist/ai-agent-runner/pull/185) всё ещё видит worker `0.3.1`; подписанный `0.3.2` не установлен.
 
 ## Реализация и ограничения
 
 - API saveback foundation: [ai-agent-runner PR #183](https://github.com/trained-assist/ai-agent-runner/pull/183), merged.
 - VM API-owned saveback: [ai-agent-runner PR #184](https://github.com/trained-assist/ai-agent-runner/pull/184), merged at `767a2f14f910b6a98632ef653b36d41fbfe0b9c9`.
+- GHA saveback candidate: [opencode-gha-runner issue #29](https://github.com/vovalikessmoothy-png/opencode-gha-runner/issues/29), branch `fix/profile-saver-boundary-20261007`, feature commit `bbb41eb`, upload-manifest fix `8d0c7ed`; not yet in a PR/main.
 - Подписанный candidate: `vm-worker-v0.3.2`; France/Russia endpoint на дату проверки сообщают `0.3.1`, оба readiness зелёные. France deployment target/key не подтверждены, поэтому candidate не установлен.
 - Environment Contract и live E2E tracking: [ai-agent-runner issue #186](https://github.com/trained-assist/ai-agent-runner/issues/186).
 
