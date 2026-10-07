@@ -27,7 +27,7 @@ Every scenario below inherits these rules:
 
 **Minimum app responsibilities:** versioned event and participant records; stable unique company IDs per event; catalog UI and query; filter definitions; target/near-target/unknown status; clear provenance/freshness for enrichment; safe deep link/object reference. Search and display are profile-authorized if catalog visibility is profile-scoped; public exhibition facts must be explicitly marked public and separated from profile notes/status.
 
-**Acceptance examples:** same event/company appears through UI and agent query; filters produce the expected set; missing enrichment is displayed as unknown rather than invented; duplicate company IDs block action links; switching profiles hides profile-specific notes and statuses while leaving only explicitly public catalog facts.
+**Acceptance examples:** same event/company appears through UI and agent query; filters produce the expected set; missing enrichment is displayed as unknown rather than invented; duplicate company IDs block action links; switching profiles hides profile-specific notes and statuses while leaving only explicitly public catalog facts. During legacy migration, retain the source category, description and segment, revenue and profit in RUB with their nullable source years, and search/display those facts through the CRM participant list and detail. Keep stable event/company identity and the reviewed classification. Exclude phone, email and director fields from the migrated participant projection.
 
 **Failure variants:** source page/catalog missing; scrape or enrichment unavailable; registry unknown; stale catalog; duplicate/unsafe IDs; no matching company; app unavailable. Report partial data and provenance instead of fabricating a result.
 
@@ -70,6 +70,8 @@ Publishing is a separate consequential command. Before deployment, the app must 
 **Minimum app responsibilities:** one command handler and input/output schema; authoritative duplicate/idempotency key tied to event+company+operation; validation and typed missing-field errors; CRM provider adapter; operation ledger with `pending/created/unknown/rejected`; verified deal ID before setting `deal` status; retry/reconcile endpoint; audit with profile and actor; stable link from event/company to deal. Provider credentials remain in approved secret/broker flow.
 
 **Acceptance examples:** incomplete details do not create a deal; confirmation is required; repeating a confirmed operation returns the same deal; provider timeout does not create a second deal on retry; status-link failure is repairable without recreating the CRM deal; UI and relay return identical deal ID/state; other profiles cannot query the operation.
+
+For a participant imported from the legacy catalog, deal preparation must resolve the same event/company object and keep the approved catalog facts available in its detail view; starting a deal must not silently replace or discard those facts.
 
 **Current source evidence:** catalog deep link in `src/catalog-template/index.html`; `flexi_create_deal` and `flexi_sync_deal_status` in `trained-assist-sales-skill/src/mcp-skills/tools/92-flexi-sales.js`; Weeek create validation in `30-weeek.js`; notes state in `flexi-crm-automation/workers/telegram-deal-bot`. Canonical owner is unresolved: Weeek stores deals, while app-side code keeps operation bindings and prelead status.
 
