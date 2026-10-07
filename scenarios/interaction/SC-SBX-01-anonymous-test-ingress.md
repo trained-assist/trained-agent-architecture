@@ -1,6 +1,8 @@
-# SC-SBX-01 — Анонимная проверка приёма запроса в песочнице
+# SC-SBX-01 — Анонимная accept-only проверка приёма в песочнице
 
-**Статус:** target; архитектурное изменение #197. Связанная история: [API-16](../../stories/API.md#api-16-проверить-приём-запроса-в-песочнице-без-учётных-данных). Implementation issue: [trained-assist-tg-bot#402](https://github.com/trained-assist/trained-assist-tg-bot/issues/402).
+**Статус:** implemented slice; architecture change #197. Scope is limited to bounded accept-only admission and ticket-scoped cursor polling. Full sandbox lanes, idempotency, SSE, and agent execution are not part of this scenario revision. Связанная история: [API-16](../../stories/API.md#api-16-проверить-приём-запроса-в-песочнице-без-учётных-данных). Implementation issue: [trained-assist-tg-bot#402](https://github.com/trained-assist/trained-assist-tg-bot/issues/402).
+
+**Implementation evidence:** trained-assist-tg-bot PR [#412](https://github.com/trained-assist/trained-assist-tg-bot/pull/412), implementation commit `2cc2901c0be4fc437180741e6881a4778cfd0bf9` (PR head `d5c39838e8b4f00424e4333ac5422ac22e344c8c` also merges the subsequent #411 UX fix); deployed Shturman sandbox Worker version `24fac577-46ad-4270-bb37-e85f7c48fdfc`.
 
 ## Актор и цель
 
@@ -11,23 +13,21 @@
 - Цель — явно изолированный sandbox; endpoint выключен по умолчанию и недоступен на production bindings.
 - Платформа выбирает фиксированный sandbox principal/profile. Клиент не задаёт и не повышает полномочия, бюджет или список инструментов.
 - Режим этого сценария — `accept-only`: он сохраняет запрос и возвращает квитанцию, но не вызывает классификатор, MCP, модель, Agent Run, Runner или внешнее действие.
-- Есть лимиты размера, частоты и времени хранения; активная lease имеет TTL. Секреты и пользовательские данные не попадают в публичный статус и логи.
+- Есть лимиты размера, частоты и времени хранения. Capability не возвращает входной текст. Проверка захвата request body платформенной observability остаётся отдельным privacy evidence gate до принятия сценария.
 
 ## Основной поток
 
 1. Клиент отправляет один короткий синтетический текст на sandbox seed endpoint без `Authorization` header.
-2. Endpoint проверяет sandbox-only binding, feature flag, body size, rate/quota и свободную lease до сохранения ввода.
-3. При успехе клиент получает task/request correlation IDs и случайный run-scoped read capability. В ответе явно указано, что принято только в `accept-only` режиме и выполнение агента не запускалось.
-4. Клиент подписывается на SSE или читает события с курсором, используя capability. Он видит только свою квитанцию и состояние `accepted_only`; переподключение не создаёт новую задачу.
-5. Capability другого запроса не раскрывает наличие, вход, результат или ID этой задачи. Истёкший capability отказывает.
-6. Агрегатный lane status показывает только `free`, `busy` или `blocked`; lease освобождается по завершении/TTL.
+2. Endpoint проверяет sandbox-only binding, feature flag, body size, request quota и срок хранения до сохранения ввода.
+3. При успехе клиент получает request correlation ID и случайный run-scoped read capability. В ответе явно указано `accepted_only`: выполнение агента не запускалось; это не исполняемая задача и не Agent Run.
+4. Клиент читает квитанцию с курсором, используя capability. Он видит только собственное событие `accepted_only`; повторное чтение с курсором не создаёт новую запись.
+5. Capability другого запроса не раскрывает наличие, вход, результат или ID этой записи. Истёкший capability отказывает.
 
 ## Отказы и повтор
 
-- Disabled flag, production binding, unavailable budget/run policy, malformed/oversized input или исчерпанная квота дают явный отказ до классификации и Agent Run.
-- Занятая lease не принимает вторую задачу в тот же lane; параллельные клиенты могут получить различные изолированные lanes, если они настроены.
-- Потеря ответа не порождает повторное выполнение. Идемпотентный retry того же request key возвращает прежнюю квитанцию; новый ключ — новый запрос только после проверки lease/quota.
-- Потеря SSE-соединения восстанавливается курсором; capability остаётся ограниченной одной задачей и имеет срок действия.
+- Disabled flag, production binding, malformed/oversized input или исчерпанная квота дают явный отказ; ни один исход не вызывает классификацию или Agent Run.
+- Потеря ответа не запускает исполнение. Доступный replay читает только сохранённое событие по capability и курсору; контракт idempotency key для повторного POST этим сценарием не задаётся.
+- Capability остаётся ограниченной одной записи и имеет срок действия.
 
 ## Граница доказательства
 
@@ -35,7 +35,13 @@ PASS этого сценария доказывает только sandbox API i
 
 ## Приёмка
 
-- Semantic review подтверждает, что анонимная capability выдаётся только для одного sandbox запроса и не обходит principal auth.
-- Component probes проверяют request/body/rate limits, expired/malformed/cross-run capability, повтор с тем же ключом, конкурентные и истёкшие leases, production fail-closed, отсутствие classifier/Runner вызовов и нулевой token usage.
-- Generated E2E выполняется на заявленном isolated sandbox и фиксирует source revision, receipt/task ID, событие `accepted_only`, replay и отказ чтения чужой capability. Локальный тест не называется staging E2E.
-- В evidence отдельно указано, что Runner execution и Telegram delivery не покрыты.
+- Semantic review для суженного accept-only/polling контракта: **PASS** — capability случайна, хранится только её SHA-256, связана с одной записью, cross-ticket replay даёт 404; полномочия principal/profile заданы платформой. Независимая проверка: архитектурный PR #198, комментарий от 2026-10-07.
+- Component probes проверяют request/body/rate limits, expired/malformed/cross-run capability, production fail-closed, отсутствие classifier/Runner вызовов и нулевой token usage.
+- Component probes: PR #412 CI passed; six focused tests include size/rate limits, expiry, cross-ticket isolation, fail-closed production configuration and proof that CP/Runner are not called.
+- Generated E2E against isolated sandbox: **PASS for API acceptance/replay only** — deployed Worker version above; POST without chat ID returned 202, ticket replay returned `accepted_only` with 200, cross-ticket replay returned 404, receipt reported `executionStarted=false` and `tokenUsage=0`. This is deployed sandbox evidence, not full executor/Runner E2E.
+- Platform observability body-capture review: **UNCLEAR / blocking before scenario acceptance**. Application code does not log input, but platform-level request-body capture has not been independently verified.
+- В evidence отдельно указано, что SSE, idempotency POST, lane leases/status, Runner execution и Telegram delivery не покрыты.
+
+## Отдельные follow-up границы
+
+SSE transport, idempotent POST keys, aggregate lane status/leases and lease expiry belong to subsequent sandbox-ingress work under #402; they are intentionally excluded from this accept-only slice. Classifier/Runner execution and Telegram delivery remain separate scenarios requiring hard end-to-end budget enforcement and an isolated Runner.
