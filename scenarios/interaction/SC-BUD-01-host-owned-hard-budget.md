@@ -1,6 +1,6 @@
 # SC-BUD-01 — Host-owned hard budget for sandbox agent execution
 
-**Status:** target; architecture change #200. Agent execution remains disabled for anonymous sandbox requests until the hard-budget and isolated-Runner gates pass. Related ingress scenario: [SC-SBX-01](SC-SBX-01-anonymous-test-ingress.md). Implementation issues: [ai-agent-runner#182](https://github.com/trained-assist/ai-agent-runner/issues/182), [trained-assist-control-plane#125](https://github.com/trained-assist/trained-assist-control-plane/issues/125), [trained-assist-tg-bot#402](https://github.com/trained-assist/trained-assist-tg-bot/issues/402).
+**Status:** target; architecture change #200. Agent execution remains disabled for anonymous sandbox requests until the hard-budget and isolated-Runner gates pass. Related ingress scenario: [SC-SBX-01](SC-SBX-01-anonymous-test-ingress.md). Implementation issues: [ai-agent-runner#182](https://github.com/trained-assist/ai-agent-runner/issues/182), [trained-assist-control-plane#125](https://github.com/trained-assist/trained-assist-control-plane/issues/125), [trained-assist-communication-skills#37](https://github.com/trained-assist/trained-assist-communication-skills/issues/37), [trained-assist-llm-ladder#152](https://github.com/trained-assist/trained-assist-llm-ladder/issues/152), [trained-assist-tg-bot#402](https://github.com/trained-assist/trained-assist-tg-bot/issues/402).
 
 ## Actors and goal
 
