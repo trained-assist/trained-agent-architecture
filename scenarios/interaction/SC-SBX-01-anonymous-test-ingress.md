@@ -2,7 +2,7 @@
 
 **Статус:** implemented slice; architecture change #197. Scope is limited to bounded accept-only admission and ticket-scoped cursor polling. Full sandbox lanes, idempotency, SSE, and agent execution are not part of this scenario revision. Связанная история: [API-16](../../stories/API.md#api-16-проверить-приём-запроса-в-песочнице-без-учётных-данных). Implementation issue: [trained-assist-tg-bot#402](https://github.com/trained-assist/trained-assist-tg-bot/issues/402).
 
-**Implementation evidence:** trained-assist-tg-bot PR [#412](https://github.com/trained-assist/trained-assist-tg-bot/pull/412), implementation commit `2cc2901c0be4fc437180741e6881a4778cfd0bf9` (PR head `d5c39838e8b4f00424e4333ac5422ac22e344c8c` also merges the subsequent #411 UX fix); deployed Shturman sandbox Worker version `24fac577-46ad-4270-bb37-e85f7c48fdfc`.
+**Implementation evidence:** trained-assist-tg-bot PR [#412](https://github.com/trained-assist/trained-assist-tg-bot/pull/412), security fix commit `c8552ceaa64c6c61d42d14382dbcf595fe362db3`; deployed Shturman sandbox Worker version `7e447da8-a859-4c23-a38f-d56a41dfb3f2`.
 
 ## Актор и цель
 
@@ -38,8 +38,8 @@ PASS этого сценария доказывает только sandbox API i
 - Semantic review для суженного accept-only/polling контракта: **PASS** — capability случайна, хранится только её SHA-256, связана с одной записью, cross-ticket replay даёт 404; полномочия principal/profile заданы платформой. Независимая проверка: архитектурный PR #198, комментарий от 2026-10-07.
 - Component probes проверяют request/body/rate limits, expired/malformed/cross-run capability, production fail-closed, отсутствие classifier/Runner вызовов и нулевой token usage.
 - Component probes: PR #412 CI passed; six focused tests include size/rate limits, expiry, cross-ticket isolation, fail-closed production configuration and proof that CP/Runner are not called.
-- Generated E2E against isolated sandbox: **PASS for API acceptance/replay only** — deployed Worker version above; POST without chat ID returned 202, ticket replay returned `accepted_only` with 200, cross-ticket replay returned 404, receipt reported `executionStarted=false` and `tokenUsage=0`. This is deployed sandbox evidence, not full executor/Runner E2E.
-- Platform observability body-capture review: **UNCLEAR / blocking before scenario acceptance**. Application code does not log input, but platform-level request-body capture has not been independently verified.
+- Generated E2E against isolated sandbox: **PASS for API acceptance/replay only** — deployed Worker version above; POST without chat ID returned 202, ticket-in-body replay returned `accepted_only` with 200, wrong-ticket replay returned 404, receipt reported `executionStarted=false` and `tokenUsage=0`. This is deployed sandbox evidence, not full executor/Runner E2E.
+- Privacy evidence: ticket is carried only in a bounded POST body, not URL/headers (including the internal DO request); only Shturman sandbox disables invocation logs while retaining custom logs. Deployed probe after this configuration confirmed the accept/replay contract. This limits the contents of available invocation logs; it does not claim anything about platform-internal processing/retention outside Workers invocation logs.
 - В evidence отдельно указано, что SSE, idempotency POST, lane leases/status, Runner execution и Telegram delivery не покрыты.
 
 ## Отдельные follow-up границы
