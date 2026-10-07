@@ -7,7 +7,7 @@
 
 ## Observable flow
 
-1. The recruiter starts a report from an accepted candidate source for an owned vacancy and selects the intended client/audience.
+1. The recruiter starts a report from a current accepted HH response or a candidate accepted from the cold-search feed, under an owned vacancy, and selects the intended client/audience. The source kind and revision stay attached to the report.
 2. Recruiting Web drafts the report from the exact resume facts and current accepted evaluation, applying that client's reviewed policy and format.
 3. The recruiter reviews the source facts, edits allowed sections and previews the report.
 4. The recruiter approves and exports/downloads the final report for use in client work. Sending it to the client is outside this scenario.
