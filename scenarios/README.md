@@ -19,6 +19,7 @@
 Новые истории пишутся в [stories/](../stories/README.md). Детальные сценарии поведения, которые не помещаются в историю (как RC ниже), остаются здесь и ссылаются на ID истории.
 
 - [interaction/run-conflict-explicit-choice.md](interaction/run-conflict-explicit-choice.md) — RC-01…RC-08: явный выбор при новой задаче во время работающего рана (TG/Web/API), решения владельца 30.09.2026; закрывает/уточняет US-QUEUE-01, US-MISC-01, US-BUF-02, CH-01, SS-06/07.
+- [connected-apps/CA-01-agent-profile-session.md](connected-apps/CA-01-agent-profile-session.md) — Agent-owned profile context and Connected App browser/API authorization, profile lifecycle, app capability relay and scheduled-work boundaries; target only until linked runtime acceptance passes.
 
 ## Каталог
 
