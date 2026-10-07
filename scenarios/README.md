@@ -19,6 +19,7 @@
 Новые истории пишутся в [stories/](../stories/README.md). Детальные сценарии поведения, которые не помещаются в историю (как RC ниже), остаются здесь и ссылаются на ID истории.
 
 - [interaction/run-conflict-explicit-choice.md](interaction/run-conflict-explicit-choice.md) — RC-01…RC-08: явный выбор при новой задаче во время работающего рана (TG/Web/API), решения владельца 30.09.2026; закрывает/уточняет US-QUEUE-01, US-MISC-01, US-BUF-02, CH-01, SS-06/07.
+- [agent-runtime/SC-PROFILE-01-workspace-saveback.md](agent-runtime/SC-PROFILE-01-workspace-saveback.md) — API-owned профильная публикация между Agent Runs на France VM/GHA с ограниченной capability и явными компонентными/E2E gates; architecture issue #194.
 
 ## Каталог
 
