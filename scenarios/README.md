@@ -21,6 +21,20 @@
 - [interaction/SC-SBX-01-anonymous-test-ingress.md](interaction/SC-SBX-01-anonymous-test-ingress.md) — детерминированная sandbox-проверка приёма и событий без Telegram, учётных данных или расходов на модель (API-16).
 - [interaction/run-conflict-explicit-choice.md](interaction/run-conflict-explicit-choice.md) — RC-01…RC-08: явный выбор при новой задаче во время работающего рана (TG/Web/API), решения владельца 30.09.2026; закрывает/уточняет US-QUEUE-01, US-MISC-01, US-BUF-02, CH-01, SS-06/07.
 
+### CRM и Recruiting — доменные потоки
+
+Эти сценарии активированы владельцем 07.10.2026 через [scenario-change issue #206](https://github.com/trained-assist/trained-agent-architecture/issues/206). Это target behavior; сценарии и локальные проверки не утверждают, что runtime или внешняя среда уже приняты.
+
+| ID | Сценарий | Владелец домена |
+|---|---|---|
+| EXPO-01 | [Выставка → проверенный каталог участников](crm/EXPO-01-catalog-from-exhibition.md) | CRM Web |
+| EXPO-02 | [Проверка участника → сделка с безопасным повтором](crm/EXPO-02-participant-to-deal.md) | CRM Web |
+| REC-01 | [Критерии одной вакансии](recruiting/REC-01-vacancy-criteria.md) | Recruiting Web |
+| REC-02 | [Отклики HH и оценка кандидатов](recruiting/REC-02-review-hh-responses.md) | Recruiting Web |
+| REC-03 | [Холодный поиск по расписанию → свежий утренний список](recruiting/REC-03-scheduled-cold-search.md) | Recruiting Web |
+| REC-04 | [Сообщение кандидату после одобрения](recruiting/REC-04-approved-candidate-message.md) | Recruiting Web |
+| REC-05 | [Профиль кандидата для клиента](recruiting/REC-05-client-candidate-report.md) | Recruiting Web |
+
 ## Каталог
 
 Связи с Cxx ниже — предварительная классификация для навигации, не результат детального ревью каждого сценария.
