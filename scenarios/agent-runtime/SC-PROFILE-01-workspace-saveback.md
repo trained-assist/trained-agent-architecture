@@ -14,6 +14,10 @@
 ## Предусловия
 
 - API key доверенно связан с `tenantId` и `profileId`; клиент и модель не выбирают repository, branch, revision, worker URL или credentials.
+- GitHub owner выбирается по доверенной серверной политике tenant, а не по display name, полю запроса или тексту задачи. Для синтетических acceptance-профилей policy направляет repository в `profile-artifacts-sandbox`; обычные профили остаются в своём настроенном owner. Неизвестный tenant и конфликтующая привязка завершаются отказом до создания/изменения репозитория.
+- Repository identity уникален по стабильному `tenantId/profileId`, не по имени пользователя. Два тестовых пользователя с одинаковым display name получают разные repositories; повторное совпадение repository с чужой binding не присваивается автоматически.
+- Provisioning credential ограничен тестовой организацией и доступен только API/admin path. Agent/Runner получает только разрешённую workspace capability; пользовательский процесс не получает credential, позволяющий создавать или удалять repositories.
+- Synthetic test principal — отдельная запись API key registry с уникальными `principalId`, `tenantId` и `profileId`; создание GitHub user account не требуется. Создание двух principals с одинаковым `displayName` не объединяет их profile data.
 - Центральный router настроен France → GHA. Russia и прежняя GCP VM не участвуют в этом сценарии.
 - Профиль доступен через pinned base revision. Export policy исключает PII/секреты и runtime credentials; большие объекты передаются ссылками/checksum, а не Git-байтами.
 - France можно поставить первым только когда его установленный release подтверждает API saveback capability и `/readyz`; до этого профильный run безопасно переходит на GHA после pre-admission отказа.
@@ -27,6 +31,7 @@
 5. Runner фильтрует изменения общей export policy. Каждый разрешённый файл загружается в API по run-scoped capability с checksum; manifest перечисляет все завершённые загрузки и удаления. Исключённые пути остаются недоступны и не публикуются.
 6. API проверяет профиль/run binding, capability, expiry, пути, policy, sizes и checksum; применяет manifest к закреплённой base revision и публикует canonical merge с существующей обработкой конфликтов.
 7. Клиент видит terminal result и честный persistence status. Следующий запуск начинает с новой опубликованной revision и может прочитать маркер предыдущего запуска.
+8. Для синтетического tenant API создаёт profile repository только в `profile-artifacts-sandbox`; повторный запуск того же profile продолжает его revision. Другой `profileId` с тем же отображаемым именем получает отдельный repository. Cleanup удаляет только repository, чья tenant/profile binding принадлежит этому acceptance run, после остановки активных задач.
 
 ## Отказы и восстановление
 
@@ -35,6 +40,7 @@
 - Неправильная/истёкшая capability, чужой `runId`, небезопасный или исключённый путь, неверный digest/size и неполный manifest не публикуются.
 - При сбое загрузки или финализации API/Runner честно сообщает persistence failure и сохраняет единственную локальную копию workspace для recovery. Пустой manifest не подставляется; успешное сохранение не заявляется.
 - Конфликт базовой revision остаётся явным и не затирает пользователя или соседний run.
+- Подмена tenant, неизвестный tenant, попытка передать owner в запросе и коллизия repository binding не приводят к созданию, чтению, публикации или удалению repository.
 
 ## Acceptance
 
@@ -42,15 +48,18 @@
 
 | Gate | Проверка | Текущий статус |
 |---|---|---|
-| 1. Semantic conformity | Сопоставить сценарий, implementation PRs и pinned revisions с каждым outcome/failure path | `PASS` — проверена связка ниже; candidate GHA revision зафиксирована, секреты не выдаются владельцу GHA workflow |
-| 2. Component verification | Capability scope/expiry; path/policy/checksum; upload partial/restart; publication; route refusal before admission и no reroute after acceptance; GHA parity | `UNCLEAR` — Французский worker обновлён и readiness подтверждён, SSE наблюдался на изолированном API, но canary остановился на `unauthorized`; test profile API отстаёт по версии и saveback не поддерживает |
-| 3. Generated E2E | На объявленном test/staging target выполнить два последовательных реальных agent runs: первый записывает уникальный маркер; второй читает и дописывает его; проверить streaming, receipts, state, commits и logs | `UNCLEAR` — live E2E не выполнялся |
+| 1. Semantic conformity | Сопоставить сценарий, implementation PRs и pinned revisions с каждым outcome/failure path, включая trusted tenant → GitHub owner mapping | `PASS` — проверен Runner candidate [#199](https://github.com/trained-assist/ai-agent-runner/pull/199) at `601c8f4`: tenant route берётся только из host config и trusted API principal, строгий test lane запрещает default fallback, workspace state изолирован по tenant, route drift и неизвестный tenant закрываются отказом |
+| 2. Component verification | Capability scope/expiry; path/policy/checksum; upload partial/restart; publication; route refusal before admission и no reroute after acceptance; GHA parity | `UNCLEAR` — sandbox-3 API на Runner `601c8f4` поднят отдельной службой, `/healthz` локально и через nginx отвечает. France worker принял тестовый repository только после явного allowlist. GHA write-run завершился `succeeded` и API опубликовал точные marker bytes; GHA read/append выявил `EACCES` при открытии read-only snapshot файла и честно вернул `persistence: failed`, без пустой публикации. GHA компоненты нуждаются в исправлении permissions и повторной проверке |
+| 3. Generated E2E | На объявленном test/staging target создать два synthetic principals с одинаковым display name, но разными trusted IDs; проверить разные private repositories в `profile-artifacts-sandbox`, на каждом выполнить два последовательных реальных agent runs (write → read+append), проверить receipts/state/commits/logs и точные bytes; затем удалить только эти API principals, profile workspace roots, object prefixes и repositories и повторить setup | `UNCLEAR` — live sandbox-3 rollout и первый реальный run/write прошли: commit `6dd7bfebc8639e5f5cb5f9ff25815635fdc82105` содержит `sandbox3-profile-proof-0.txt` с точными ожидаемыми байтами. Второй read/append завершился `WORKER_INTERNAL` / `EACCES` в GHA worker; второе одноимённое identity и exact cleanup ещё не завершены |
 
 Проверка semantic conformity 2026-10-07 сопоставила этот сценарий с API implementation `trained-assist/ai-agent-runner@767a2f14f910b6a98632ef653b36d41fbfe0b9c9` и GHA candidate `vovalikessmoothy-png/opencode-gha-runner@8d0c7ed` (включая feature commit `bbb41eb`). API выдаёт run-scoped capability; durable journal очищает snapshot URL и token; VM/GHA отправляют файлы и манифест, а API публикует только после полного манифеста. Ошибка saveback остаётся ошибкой persistence, не превращается в пустую публикацию. GHA не получает owner GitHub token для profile run. GHA issue [#29](https://github.com/vovalikessmoothy-png/opencode-gha-runner/issues/29) отслеживает upstream PR, Environment Contract и оставшиеся component edge cases.
 
 CI component tests на API/VM PR [#184](https://github.com/trained-assist/ai-agent-runner/pull/184) и GHA candidate прошли; повторный локальный `npm test` на GHA candidate дал 204/204. Они покрывают snapshot pinning, изменения/новые файлы, удаления, checksums, отсутствие capability в durable Runner state и неполный upload. Это component evidence, не France staging E2E.
 
 **Live France evidence, 2026-10-07:** доступ к VM2 подтверждён через сохранённый локальный SSH alias `vm2`; материал ключа хранится в GCP Secret Manager под именем `SANDBOX_VM2_SSH`. Хост общий, поэтому изменялся только выделенный worker unit. `eu-vm-1` обновлён штатным подписанным updater до `vm-worker-v0.3.2`, source `767a2f14f910b6a98632ef653b36d41fbfe0b9c9`; `/version`, `/readyz`, health и capacity подтвердили состояние. На выделенном тестовом API `:8789` запуск по `eu-vm-agent-run` передавал SSE до terminal event, после чего завершился `ENGINE_NONZERO_EXIT` с `unauthorized` от LLM provider; текущий Ladder credential там не принят. Предпринятое обновление токена не прошло health validation, сервис автоматически восстановил прежний env. Отдельный profile-canary API на `:8790` остаётся на package `0.1.0` и не содержит нового API saveback-контракта; его не обновляли. Поэтому транспортный стрим проверен, но профильный saveback не запускался. Это не acceptance и не доказательство длительной стабильности.
+
+
+**Live sandbox-3 evidence, 2026-10-08:** поднят отдельный API на France VM `127.0.0.1:8791` с внешним префиксом `/sandbox3/`; существующие API `:8787`, `:8789`, profile-canary `:8790` не изменялись. Strict tenant route направляет два synthetic principals с одинаковым `displayName` в `profile-artifacts-sandbox`, отдельные trusted `profileId`; API key registry и workspace state выделены для lane. Для `sandbox3-profile-a-20261008` GHA worker выполнил write run `run_1c13de5b-fa3d-4ce4-9cab-22ebae036541` с `succeeded`, API publication `6dd7bfebc8639e5f5cb5f9ff25815635fdc82105`; проверка GitHub API подтвердила точные bytes `SANDBOX3_PROFILE_0_PERSISTED_20261008`. Следующий run прочитал pinned snapshot, но его saveback завершился `WORKER_INTERNAL`: GHA worker получил `EACCES: permission denied, open '/home/runner/work/_temp/run_41404ad6-ad79-4128-94eb-42342840636d/sandbox3-profile-proof-0.txt'`; API правильно пометил persistence как failed, не публиковал пустой manifest, canonical revision осталась предыдущей. Поэтому read-after-write behavior и cleanup остаются блокирующими gates; production не затрагивался.
 
 ## Реализация и ограничения
 
