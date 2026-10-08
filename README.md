@@ -48,6 +48,12 @@ Fast-path research: [алгоритм до запуска агента и про
 
 ## Основные документы и источники правил
 
+### CRM Telegram bot ownership
+
+The exhibition CRM deal bot `@cmr_management_bot` is implemented and deployed from [`kobzevvv/flexi-exhibition-deal-bot`](https://github.com/kobzevvv/flexi-exhibition-deal-bot). Its Cloudflare Worker is `flexi-telegram-deal-bot`; exhibition catalogs call it through Telegram deep links, and operators use its CRM commands in Telegram. The companion [`flexi-crm-automation`](https://github.com/flexi-consulting/flexi-crm-automation/tree/main/workers/telegram-deal-bot) Worker is `flexi-site-notes`, not the bot. Both currently share prelead D1 rows, so schema compatibility remains an integration requirement.
+
+The architecture repository is declarative and owns scenario/contract documentation only; it does not contain or deploy this bot's runtime. CRM Telegram command behavior through the Agent MCP is tracked as scenario-change issue [#214](https://github.com/trained-assist/trained-agent-architecture/issues/214). Sandbox testing must use an isolated Worker, D1, KV, bot identity, and CRM credentials. Never point the production bot token, webhook, or data bindings at a test Worker.
+
 | Документ | За что отвечает |
 |---|---|
 | [ARCHITECTURE](ARCHITECTURE.md) | Целевая модель, принятые границы, IDs и инварианты |
