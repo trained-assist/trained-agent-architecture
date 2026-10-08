@@ -16,6 +16,8 @@
 
 ## Новые общие сценарии (не копии)
 
+- [SC-OPS-SANDBOX-BOOTSTRAP — Reproducible sandbox bootstrap and reachability](operations/SC-OPS-SANDBOX-BOOTSTRAP.md) — безопасная подготовка test identity/credentials, сверка старого состояния и проверки связности каждого sandbox boundary; issue [#231](https://github.com/trained-assist/trained-agent-architecture/issues/231).
+
 Новые истории пишутся в [stories/](../stories/README.md). Детальные сценарии поведения, которые не помещаются в историю (как RC ниже), остаются здесь и ссылаются на ID истории.
 
 - [interaction/SC-SBX-01-anonymous-test-ingress.md](interaction/SC-SBX-01-anonymous-test-ingress.md) — детерминированная sandbox-проверка приёма и событий без Telegram, учётных данных или расходов на модель (API-16).
