@@ -67,6 +67,16 @@ These are source-level observations from checked local revisions, not live provi
 | `trained-assist-documents-skill` — `83687fb` on clean local `main` | Package is mounted by legacy core as a sibling; its README says core `deploy.sh` installs runtime dependencies when lockfile changes, and CI runs core conformance. No independent deployment workflow in this repo. | Google service accounts, profile credentials/data and Drive watchers are owned by core/host integration. Eight open PRs (#18, #20, #22–#28) exceed the red queue threshold, including Google runtime and retiring-VM changes; no new PR should be opened until cleanup/reconciliation. |
 | Domain skill servers / legacy agent and other provider services | Remaining repositories and consumers are not yet audited to pinned revisions in this snapshot. | In-scope production inventory is incomplete until traffic/deployment ownership is reconciled with live repository and provider inventories. Do not infer that every org repository deploys to production. |
 
+### Repositories not yet proven to be production runtimes
+
+These repositories are present in the organization or referenced by other code, but source/provider evidence does not establish a live production deployment. Keep them out of the production release denominator until their consumer and runtime owner are confirmed.
+
+| Repository / revision | Observed deploy/testing path | Production classification |
+|---|---|---|
+| `trained-assist-error-watcher` — `4454eb8` on `main` | CI runs syntax, tests, and a local isolated sandbox scenario. No deploy workflow or provider config appears in the repo tree. Its README explicitly says the production sink is not connected; HTTP transport is loopback. | Not proven live. Web includes an error publisher, but its live endpoint/bindings and whether a production watcher exists were not verified. Reconcile the consumer and endpoint before treating this repo as a production service. |
+| `trained-assist-integration-gate` — `0485914` on `main` | CI runs local loopback sandbox/evidence scenarios. README states the live service is not changed; no deploy workflow/provider config is present. | Implementation package, not proven as a deployed runtime. |
+| `context-chunks-mcp` — `0c727d9` on `main` | Node proxy/MCP package has `start` and local test commands; no CI deployment workflow or provider config was found. GitHub code search returned no in-org source references. | Production use is unknown. Confirm an active consumer and runtime owner before adding it to production scope. |
+
 The snapshot supports a useful first finding: production Worker pipelines can deploy source and some declared bindings/migrations, but the cross-repository release set is not yet explicit. Separate operator state (VMs, webhooks, secrets, external routes/DNS, database imports) must be enumerated and verified per owning Environment Contract. This inventory is not a production readiness assertion.
 
 ## Work order and session conflict check (2026-10-08)
