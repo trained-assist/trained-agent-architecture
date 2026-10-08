@@ -20,6 +20,7 @@
 
 - [interaction/SC-SBX-01-anonymous-test-ingress.md](interaction/SC-SBX-01-anonymous-test-ingress.md) — детерминированная sandbox-проверка приёма и событий без Telegram, учётных данных или расходов на модель (API-16).
 - [interaction/run-conflict-explicit-choice.md](interaction/run-conflict-explicit-choice.md) — RC-01…RC-08: явный выбор при новой задаче во время работающего рана (TG/Web/API), решения владельца 30.09.2026; закрывает/уточняет US-QUEUE-01, US-MISC-01, US-BUF-02, CH-01, SS-06/07.
+- [identity/SC-REG-01-self-service-registration.md](identity/SC-REG-01-self-service-registration.md) — регистрация, создание профиля и предлагаемая одноразовая квота 100 млн platform tokens; scenario-change issue #212.
 
 ## Каталог
 

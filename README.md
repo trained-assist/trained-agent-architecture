@@ -81,6 +81,7 @@ Fast-path research: [алгоритм до запуска агента и про
 | Connected Applications: автономность и offline tests | [Mock MCP без Agent Run](CONNECTED-APPS-OFFLINE-MCP-TESTING.md); модель слоёв — [PR #149](https://github.com/trained-assist/trained-agent-architecture/pull/149) |
 | Provider-интеграции | [External Integration Gate](EXTERNAL-INTEGRATION-GATE.md) |
 | Ошибки и диагностика | [System Error Watcher](SYSTEM-ERROR-WATCHER.md), общий Observability contract |
+| Регистрация и стартовая квота | [SC-REG-01](scenarios/identity/SC-REG-01-self-service-registration.md), scenario-change [#212](https://github.com/trained-assist/trained-agent-architecture/issues/212) |
 | Модели, бюджет и учёт | [Model Gateway and Costs](MODEL-GATEWAY-AND-COSTS.md) |
 | Термины | [Terminology / OpenLineage](TERMINOLOGY.md) |
 

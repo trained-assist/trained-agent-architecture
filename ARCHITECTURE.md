@@ -19,6 +19,8 @@
 
 Управляющий слой выбран: Cloudflare Workflows + D1; live cloud smoke завершён 01.10.2026 (пилот P-DB, PR #93). Что открыто: защита терминальных состояний (#90), latency/version contract при деплое (#91/#92), регион хранения данных RU/EU и режим бюджета при недоступном учёте (раздел 13). Выбор платформы не означает готовность implementation control plane.
 
+Самостоятельная регистрация и стартовая квота описаны как отдельное целевое поведение в [SC-REG-01](scenarios/identity/SC-REG-01-self-service-registration.md), scenario-change issue [#212](https://github.com/trained-assist/trained-agent-architecture/issues/212). Запрос на 100 млн токенов пока является предложением entitlement: до реализации нужно утвердить единицу platform token, срок/повторяемость гранта, monetary caps, identity/recovery и владельцев budget authority.
+
 **Уточнение владельца — 06.10.2026:** для целевого запуска Agent Run из Telegram не требуется отдельная постоянно работающая VM, покупка/подъём машины или администрирование собственного execution host. Control plane остаётся на Cloudflare Workflows + D1 и вызывает Runner API; Runner предоставляет управляемую внешнюю execution capacity, при необходимости временную/эфемерную. Это решение о владении инфраструктурой, а не утверждение, что вычисления происходят без хоста. Конкретный Native Worker/GitHub Actions путь пока sandbox candidate и должен пройти launch/stop/result/persist acceptance прежде, чем считаться production-ready. VM-пилоты и переезд HH/GCP — отдельные потоки, не prerequisites Telegram запуска.
 
 ## 1. Цель и границы
