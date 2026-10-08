@@ -1,6 +1,6 @@
 # SC-REG-01 — Самостоятельная регистрация и стартовый лимит использования
 
-**Статус:** scenario-change proposal; целевое поведение и размер/семантика стартового лимита требуют утверждения до runtime implementation.
+**Статус:** accepted target contract; implementation и sandbox acceptance выполняются по архитектурному эпику #212. Production promotion не входит в эпик.
 **Scenario-change:** [architecture #212](https://github.com/trained-assist/trained-agent-architecture/issues/212).
 **Связанные решения:** [Model Gateway, Ladder и стоимость](../../MODEL-GATEWAY-AND-COSTS.md), [U-01](../../stories/USER.md), [API usage and reporting](../../stories/API.md).
 **Граница:** self-service регистрация проходит в Telegram-боте. Telegram `user_id` — первичная подтверждённая identity. В регистрации бот задаёт два обязательных вопроса: чем занимается пользователь (ответ в паре предложений) и ссылку на любую соцсеть с непустым профилем, который, по словам пользователя, существует более месяца. Также бот предлагает необязательное поле `profile name` с кнопкой «Пропустить». Возраст и содержимое аккаунта система не проверяет. После ответов создаются профиль и стартовая квота. Если имя пропущено, `profile name` получает значение Telegram `chat.id` этого личного диалога.
@@ -15,10 +15,9 @@
 
 - **Аккаунт** — Telegram `user_id`, подтверждённый самим Telegram update и используемый как стабильный ключ аккаунта; ему принадлежат профиль, сессии, задачи, квота и история использования.
 - **Профиль** — пользовательские настройки и долговременные данные; не является способом получить новую квоту. `profile name` — изменяемое отображаемое имя, не identity key, не `profileId` и не основание для слияния данных. Регистрация принимается только в личном чате с ботом; если имя пропущено, его начальное значение — строковое значение `chat.id`.
-- **Стартовый лимит** — предлагаемая одноразовая promotional allowance `100,000,000` platform tokens на один Telegram account. Значение задано запросом владельца; правило одноразовой выдачи и все ограничения ниже являются предложением для согласования.
-- **Platform token** — целая accounting unit, записанная в Ledger. До запуска нужно выбрать точную формулу преобразования provider usage в platform tokens, включая input/output, cache read/write, скрытые reasoning tokens, audio/image/video и провайдеров, которые не возвращают точные usage. Provider tokens нельзя суммировать как эквивалентные без зафиксированной политики.
-- **Квота и денежная стоимость — разные ограничения.** 100 млн platform tokens не означают фиксированную сумму денег или одинаковый объём вычислений на всех моделях. Hard cost, rate, concurrency и abuse limits действуют дополнительно и могут остановить использование раньше.
-- **Рекомендация для первого релиза:** одна стартовая квота на аккаунт, не пополняется новой регистрацией или сменой профиля/канала; не переводится между аккаунтами, не выводится в деньги, действует 12 месяцев с первой выдачи. Изменение суммы, срока или пополняемости требует продуктового решения до реализации.
+- **Стартовый лимит** — одноразовая promotional allowance `100,000,000` platform tokens на один Telegram account. Она не пополняется повторной регистрацией/сменой профиля, не переводится и действует 12 месяцев с момента выдачи.
+- **Platform token** — целая accounting unit в Ledger. Для поддерживаемых текстовых model calls: `input_tokens + output_tokens`; provider-reported reasoning tokens уже входят в output и второй раз не прибавляются. Cached input считается как input ровно один раз; cache read/write сохраняются как метаданные и не прибавляются поверх input. Вызовы классификации, коммуникации, retry/fallback, validation и agent/OpenCode суммируются в тот же task/account budget. Image/audio/video и calls без точного usage в v1 не допускаются к quota-backed execution. Неизвестный usage сохраняет резерв и блокирует дополнительные paid calls до reconcile.
+- **Квота и денежная стоимость — разные ограничения.** Все paid calls также должны иметь отдельный host-owned USD hard cap и rate/concurrency policy. Если для пути нет проверенной границы token и USD enforcement, задача закрывается до платного вызова. Открытые provider/model цены не считаются частью токенной формулы и задаются в runtime policy с источником/датой.
 
 ## Основной поток
 
@@ -79,13 +78,6 @@
 
 Минимальные assertions: повторная регистрация не дублирует аккаунт/grant; две конкурентные задачи не тратят одну и ту же квоту; сумма `available + reserved + consumed + expired/adjusted` согласуется с immutable grant и ledger entries; для каждого завершённого call известны provider/model, usage status и accounting formula; отсутствующая usage не превращается в бесплатную.
 
-## Решения, обязательные до implementation
+## Реализационные решения и ограничения запуска
 
-1. Утвердить: 100,000,000 — точный размер гранта, разовая акция или повторяемый месячный лимит; срок действия и поведение истечения.
-2. Утвердить platform-token formula и включённые категории usage/provider. Без этого отображаемая цифра не является честным измерением.
-3. Утвердить доступные модели/tools, monetary ceiling, rate/concurrency limits и abuse policy. Количество токенов само по себе не ограничивает стоимость.
-4. Утвердить Telegram как единственный identity для первой версии и отдельно определить recovery при утрате Telegram account; не обещать детектирование нескольких Telegram identities одного человека.
-5. Определить privacy notice и retention для onboarding-полей (деятельность, соцссылка, optional profile name); подтвердить приватность, просмотр/изменение/удаление и запрет автоматической передачи социальной ссылки модели; определить audit records для grant/usage.
-6. Выбрать owning repositories/owners для identity, profile provisioning, Ledger/Budget Authority, Telegram onboarding UX; добавить implementation issues с Environment Contracts.
-
-До закрытия этих решений документ задаёт целевое поведение и proposal, но не разрешает выпускать entitlement или менять runtime budget policy.
+Размер/срок allowance, единица учёта и Telegram-first identity зафиксированы выше для sandbox implementation. По каждому включаемому provider/model implementation обязана зафиксировать актуальные цены, enforceable USD cap, supported usage mapping и rate/concurrency defaults в versioned runtime policy. До прохождения Ladder/Runner/CP component gates конкретный provider/model остаётся выключенным для платных задач; наличие grant не обходит этот запрет. Retention, consent notice и deletion реализуются до sandbox acceptance. Lost Telegram identity требует ручного support процесса; автоматический merge запрещён. Production promotion требует отдельной проверки публичных условий, privacy/legal, abuse controls и owning-repository promotion path.
