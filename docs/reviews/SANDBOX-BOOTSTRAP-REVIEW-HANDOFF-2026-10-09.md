@@ -25,6 +25,8 @@ Related active tracking: [architecture #190](https://github.com/trained-assist/t
 - A prior read-only/operator record in architecture #190 reports, on 2026-10-08, a deployed native Worker sandbox version `dca42ffe-1fa5-42a2-92f6-8639cb098f07`; authenticated Worker status returned 200 for an unknown ID, and Runner → MCP Host discovery returned 200 for pinned `registry.fixture_read`. These probes establish auth/reachability for those specific requests only; the Worker status request did not execute a task, and Host discovery did not invoke a tool.
 - Cloudflare identity was checked in this review session: `typeformowner@gmail.com`, account `d740a05e9442c1d0feacae2dfc673e93`. A names-only `wrangler secret list --config wrangler.telegram-ux-v1.jsonc` attempt failed on network connectivity. No secret values were read.
 
+Architecture acceptance gates are not all met: semantic conformity has not yet been recorded as `PASS`; component CI passes but CP→Runner mock-test and some live credential inventory are still unknown; generated Telegram → CP → Runner E2E has not run because the shared lane is blocked. Local tests are not staging E2E.
+
 ## Credential and API boundary inventory
 
 | Boundary | Credential/config names found | Evidence and current confidence |
