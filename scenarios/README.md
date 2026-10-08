@@ -66,6 +66,10 @@
 | trained-assist-web | [docs/ACCEPTANCE-TESTS.md](sources/trained-assist-web/docs/ACCEPTANCE-TESTS.md) | C01, C02, C03 |
 | trained-assist-web | [test/ui-reconnect-integrity.md](sources/trained-assist-web/test/ui-reconnect-integrity.md) | C01, C02, C03 |
 
+## Новые общие сценарии
+
+- [OPS-DEPLOY-01 — Deployment coverage and sandbox promotion](operations/deployment-coverage-and-sandbox.md) — аудит покрытия production deploy, изолированных sandbox и изменений состояния вне обычного deploy; issue [#220](https://github.com/trained-assist/trained-agent-architecture/issues/220).
+
 ## Минимальный формат нового общего сценария
 
 - Scenario ID, цель пользователя, контекст и prerequisites.
