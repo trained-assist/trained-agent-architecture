@@ -49,6 +49,7 @@ Fast-path research: [алгоритм до запуска агента и про
 | [Agent launch and data persistence](AGENT-RUNNER-DATA-PERSISTENCE-IMPLEMENTATION.md) | Запуск агента с сохранением данных: протокол materialize/persist/sweep, целостность, блокировки, маппинг legacy → целевая модель |
 | [Task Store v1 schema](TASK-STORE-SCHEMA-V1.md) | Инвентарь прод `durable-tasks/state.db` (read-only) и целевая схема Task Store: userTaskId, журнал событий, сигналы с дедуп, awaiting input, delivery, conversation |
 | [Engineering Approach](ENGINEERING-APPROACH.md) | Концепция Sandbox Driven Development и общие правила разработки |
+| [Engineer FAQ](ENGINEER-FAQ.md) | Где искать credentials, Environment Contract, команды sandbox и границы production |
 | [Acceptance](ACCEPTANCE-CHECKLIST.md) | Типы доказательств, общий гейт Done карточки, сквозные проверки инвариантов и контрактов; где теперь лежат чек-листы. Не план и не трекер |
 | [Sandbox](SANDBOX.md) | Песочница каждого этапа R00, I00–I10: что запускаем, сбои, ожидаемый результат, классы bindings/credentials, logs checks; правила и механизмы хранения credentials (без значений) |
 | [Tooling Research / R00](TOOLING-RESEARCH-AND-VM-PILOTS.md) | Вопросы по всем карточкам, shortlist инструментов и измеряемые VM-пилоты; кандидаты не равны принятому stack |
