@@ -1,6 +1,6 @@
 # SC-OPS-DEPLOY-01 — Protected main automatically deploys the tested revision
 
-Status: **target scenario; production acceptance pending**. This describes normal code deployment for the existing Telegram gateway and the new, isolated Control Plane production target. It does not authorize a Telegram route or webhook cutover.
+Status: **accepted — 2026-10-08**. This describes normal code deployment for the existing Telegram gateway and the new, isolated Control Plane production target. It does not authorize a Telegram route or webhook cutover.
 
 Related trackers: [automatic deploy change #213](https://github.com/trained-assist/trained-agent-architecture/issues/213), [Telegram production cutover #208](https://github.com/trained-assist/trained-agent-architecture/issues/208), [gateway deployment #392](https://github.com/trained-assist/trained-assist-tg-bot/issues/392), [Control Plane production target #127](https://github.com/trained-assist/trained-assist-control-plane/issues/127).
 
@@ -37,4 +37,11 @@ Related trackers: [automatic deploy change #213](https://github.com/trained-assi
 
 ## Acceptance evidence
 
-For each owning repository, link the workflow revision, branch-protection requirements, exact merged SHA, staging deploy/smoke result, production Worker version, post-deploy smoke, and tested rollback procedure. Record production Worker identity only; do not expose credentials or user payloads. Full Telegram → Control Plane → Runner E2E remains a separate prerequisite for route cutover and is not implied by deployment success.
+Both owning repositories completed the protected-main exact-SHA path:
+
+- Telegram gateway: [automatic deployment PR #468](https://github.com/trained-assist/trained-assist-tg-bot/pull/468) merged; current production revision `de02f5ba70ed69315643696b939f46f4d8cc4acd` passed CI, mandatory scenarios, staging deploy/smoke/gate, production deploy, and production smoke in [run 37789760827](https://github.com/trained-assist/trained-assist-tg-bot/actions/runs/37789760827). Independent probes confirmed exact SHA, expected bot identity, and unsigned webhook rejection for main, recruiter, and freelance. Rollback was exercised on a disposable staging Worker, restored version `b65671ff-243e-44e7-a4c3-3da69b90cfe3`, and the probe Worker was deleted. Operational details: [gateway issue #392](https://github.com/trained-assist/trained-assist-tg-bot/issues/392).
+- Control Plane: [isolated deployment PR #139](https://github.com/trained-assist/trained-assist-control-plane/pull/139) merged; production revision `96b6094bc4e35954e50c63f4a2e1a85bd5f11813` passed checks, staging migration/deploy/smoke, and production migration/deploy/smoke in [run 37790615776](https://github.com/trained-assist/trained-assist-control-plane/actions/runs/37790615776). Production Worker version: `7424649e-ac87-483c-aec6-7263eb5a5efb`; the production D1 count is zero tasks in WEUR. Anonymous private diagnostics read returned 401. Rollback was exercised on staging and restored the recorded prior version. Operational details: [CP issue #127](https://github.com/trained-assist/trained-assist-control-plane/issues/127).
+
+Gate 1 semantic review: `PASS`. Gate 2 component verification: `PASS`. Gate 3 deployment E2E: `PASS` for both owning repository release paths. Full Telegram → Control Plane → Runner E2E remains a separate prerequisite for route cutover and is not implied by deployment success.
+
+Record production Worker identity only; do not expose credentials or user payloads.
