@@ -102,6 +102,10 @@ Fast-path research: [алгоритм до запуска агента и про
 
 [План взаимодействия TG/Web](TG-AND-WEB-INTERACTION-REFACTORING-PLAN.md) относится к текущему продукту. Он не является очередной стадией greenfield-плана и не разрешает скрыто переключать production на новую систему.
 
+### CRM Telegram sandbox
+
+Для `@cmr_management_bot` уже развёрнут отдельный `trained-assist-tg-bot-sales-sandbox` и выделен тестовый бот `@flexi_leads_bot`. У тестового бота нет Telegram webhook; проверки отправляют подписанные синтетические updates прямо в sandbox Worker. Сейчас Worker принимает эти updates и показывает общий Agent command menu, но CRM-команды и Agent-owned CRM MCP binding ещё не подключены. Gateway не должен обращаться к CRM Web `/mcp` напрямую: профиль и MCP-возможности должны разрешаться через Agent. Приёмка и следующий срез реализации ведутся в [архитектурном issue #214](https://github.com/trained-assist/trained-agent-architecture/issues/214) и [tg-bot #465](https://github.com/trained-assist/trained-assist-tg-bot/issues/465). Активный `@cmr_management_bot`, его webhook и CRM/provider data остаются вне sandbox-проверок.
+
 ## Как привязывать работу
 
 В issue указывать карточку плана, ID историй (U-/API-/OPS-…), architecture_blocks (Axx), contracts (Cxx), invariants (INV-xx), нужные сценарии и evidence. Код, runnable recipes и локальные тесты живут в implementation repo; здесь — межкомпонентная модель и навигация. Статусы выполнения и чек-листы ведутся в issues и [Project](https://github.com/orgs/trained-assist/projects/1); документы не содержат чек-листов с галочками.
