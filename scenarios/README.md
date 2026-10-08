@@ -19,6 +19,7 @@
 Новые истории пишутся в [stories/](../stories/README.md). Детальные сценарии поведения, которые не помещаются в историю (как RC ниже), остаются здесь и ссылаются на ID истории.
 
 - [interaction/SC-SBX-01-anonymous-test-ingress.md](interaction/SC-SBX-01-anonymous-test-ingress.md) — детерминированная sandbox-проверка приёма и событий без Telegram, учётных данных или расходов на модель (API-16).
+- [interaction/SC-TG-TEST-01-agent-ingress-and-controls.md](interaction/SC-TG-TEST-01-agent-ingress-and-controls.md) — QA-клиент подаёт сообщение в Telegram sandbox, получает ответ и вызывает только выданный в этом прогоне callback (#219, TG #402).
 - [interaction/run-conflict-explicit-choice.md](interaction/run-conflict-explicit-choice.md) — RC-01…RC-08: явный выбор при новой задаче во время работающего рана (TG/Web/API), решения владельца 30.09.2026; закрывает/уточняет US-QUEUE-01, US-MISC-01, US-BUF-02, CH-01, SS-06/07.
 - [operations/SC-OPS-DEPLOY-01-protected-main-production.md](operations/SC-OPS-DEPLOY-01-protected-main-production.md) — автоматическая production-выкладка проверенного SHA после защищённого merge и staging gates; не переключает пользовательский маршрут.
 - [crm/SC-CRM-TG-01-agent-mcp-command-workflow.md](crm/SC-CRM-TG-01-agent-mcp-command-workflow.md) — CRM Telegram gateway передаёт команду Agent, Agent применяет выбранный профиль и объявленные CRM MCP-возможности.
