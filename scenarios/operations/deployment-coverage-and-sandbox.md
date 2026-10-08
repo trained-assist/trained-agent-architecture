@@ -77,6 +77,20 @@ These repositories are present in the organization or referenced by other code, 
 | `trained-assist-integration-gate` — `0485914` on `main` | CI runs local loopback sandbox/evidence scenarios. README states the live service is not changed; no deploy workflow/provider config is present. | Implementation package, not proven as a deployed runtime. |
 | `context-chunks-mcp` — `0c727d9` on `main` | Node proxy/MCP package has `start` and local test commands; no CI deployment workflow or provider config was found. GitHub code search returned no in-org source references. | Production use is unknown. Confirm an active consumer and runtime owner before adding it to production scope. |
 
+### GitHub promotion controls checked read-only (2026-10-08)
+
+| Repository | Main branch / environment controls observed | Deployment consequence |
+|---|---|---|
+| `trained-assist-agent` | Public `main` has no classic branch protection and no repository rulesets. | A direct main push can reach its enabled RU deploy workflow; review is not required by GitHub settings. |
+| `trained-assist-tg-bot` | Public `main` requires strict `ci` and `staging-gate` checks, but no required PR reviews; no repository rulesets or GitHub deployment environments were listed. | CI/staging checks gate main deployment, but GitHub does not require PR review before a push can promote. |
+| `trained-assist-control-plane` | Public `main` requires strict `check`, but no required PR reviews or rulesets. `staging` and `production` environments allow protected branches only and have no reviewer rules. | Tests gate staging → production, but branch policy does not require review; a valid direct main push can deploy. |
+| `trained-assist-llm-ladder` | Public `main` has no classic branch protection or rulesets. | Any main push runs tests and can trigger production deploy; no review gate is configured. |
+| `ai-agent-runner` | Public `main` has no classic branch protection or rulesets. | Signed release workflow checks that a tag points to a commit reachable from main; GitHub does not require PR review before that commit becomes reachable. Release publication still does not roll out VMs. |
+| `trained-assist-web` | Public `main` has no classic branch protection or rulesets; `production` environment has no protection rules. | Every up-to-date non-draft PR auto-merges after CI/local UI checks and deploys production in the same run; no review or remote staging gate is required. |
+| `trained-assist-checklist` | Private repo branch-protection API returned HTTP 403 because the account plan does not expose this feature; protection status is unknown. | Do not infer protection state. Its current `main` has no CI; PR #5 adds CI/sandbox, while production deploy remains manual. |
+
+These are GitHub-side controls only; they do not establish provider reachability or prove source SHA is live. No branch protection, environment, or production setting was changed during this audit.
+
 The snapshot supports a useful first finding: production Worker pipelines can deploy source and some declared bindings/migrations, but the cross-repository release set is not yet explicit. Separate operator state (VMs, webhooks, secrets, external routes/DNS, database imports) must be enumerated and verified per owning Environment Contract. This inventory is not a production readiness assertion.
 
 ## Work order and session conflict check (2026-10-08)
