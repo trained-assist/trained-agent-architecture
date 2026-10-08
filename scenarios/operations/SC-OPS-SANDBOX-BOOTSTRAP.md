@@ -7,6 +7,7 @@
 - **Actors:** test operator, sandbox bootstrap workflow, Control Plane, Runner API, execution Worker, MCP Host, acceptance agent
 - **Boundary:** a declared non-production lane goes from unprepared to ready for a specific acceptance scenario, with paired test identity, verified bindings, reconciled state, and traceable evidence.
 - **Scope:** test-only identities, credentials, state, routes and resources. Production targets and credentials are rejected.
+- **Review handoff:** [current implementation map, evidence, credentials and blockers](../../docs/reviews/SANDBOX-BOOTSTRAP-REVIEW-HANDOFF-2026-10-09.md)
 
 ## Preconditions
 

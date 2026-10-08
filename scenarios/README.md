@@ -16,7 +16,7 @@
 
 ## Новые общие сценарии (не копии)
 
-- [SC-OPS-SANDBOX-BOOTSTRAP — Reproducible sandbox bootstrap and reachability](operations/SC-OPS-SANDBOX-BOOTSTRAP.md) — безопасная подготовка test identity/credentials, сверка старого состояния и проверки связности каждого sandbox boundary; issue [#231](https://github.com/trained-assist/trained-agent-architecture/issues/231).
+- [SC-OPS-SANDBOX-BOOTSTRAP — Reproducible sandbox bootstrap and reachability](operations/SC-OPS-SANDBOX-BOOTSTRAP.md) — безопасная подготовка test identity/credentials, сверка старого состояния и проверки связности каждого sandbox boundary; issue [#231](https://github.com/trained-assist/trained-agent-architecture/issues/231). Текущая карта issue/PR, credential hops, evidence и блокеров: [review handoff](../docs/reviews/SANDBOX-BOOTSTRAP-REVIEW-HANDOFF-2026-10-09.md).
 
 Новые истории пишутся в [stories/](../stories/README.md). Детальные сценарии поведения, которые не помещаются в историю (как RC ниже), остаются здесь и ссылаются на ID истории.
 
