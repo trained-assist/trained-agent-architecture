@@ -1,6 +1,6 @@
 # Sandbox — как строится и проверяется песочница каждого этапа
 
-**Актуальное ограничение 05.10.2026:** `alesa-personal-assistent/us-central1-a/alesa-vm` выводится из эксплуатации и больше не используется для новых sandbox, процессов или agent runs. Нижеописанные прежние VM-прогоны — историческое evidence. Новые проверки размещаются serverless либо, при обоснованной потребности в постоянном локальном процессе, на существующей VM во Франции в изоляции от интегратора. [Статус #145](https://github.com/trained-assist/trained-agent-architecture/issues/145).
+`alesa-personal-assistent/us-central1-a/alesa-vm` выводится из эксплуатации и не используется для новых sandbox, процессов или agent runs. Для Agent Run API слой размещается в Cloudflare Worker; французская VM может исполнять задачи как worker. CP sandbox подключает только Cloudflare Runner API, а Runner API маршрутизирует исполнение на французский worker по умолчанию. Предыдущие VM-прогоны не являются текущей схемой API. [Статус вывода GCP VM #145](https://github.com/trained-assist/trained-agent-architecture/issues/145).
 
 v1.0 · 01.10.2026. Единый документ вместо прежних SANDBOX-PLAN, SANDBOX-BINDINGS-AND-CREDENTIALS и SANDBOX-CREDENTIALS-AND-ACCESS. Здесь только долговечная логика: как устроена песочница этапа, какие классы bindings/credentials ей нужны, как вызываются сбои и что проверяется в логах. Статус, пробелы, блокеры и чек-листы ведутся в issues и [Project «Trained Assist — Migration»](https://github.com/orgs/trained-assist/projects/1). Порядок работ — [план реализации](IMPLEMENTATION-AND-INTEGRATION-PLAN.md), общие правила — [Engineering Approach](ENGINEERING-APPROACH.md), схема логов — [Observability](OBSERVABILITY-AND-ERROR-CONTRACT.md).
 
@@ -46,7 +46,7 @@ Contract/fixture checks дешёвые и воспроизводимые. Real e
 
 ### Live Telegram test lanes
 
-Three Telegram ingress lanes exist. A bot that responds to `/health` is only an ingress check: full E2E readiness requires a working CP route, Runner admission and execution, persistence, and Telegram delivery. Current deployment and blockers are recorded in [architecture #236](https://github.com/trained-assist/trained-agent-architecture/issues/236) and [sandbox3 #193](https://github.com/trained-assist/trained-agent-architecture/issues/193); check them before starting. For a normal Telegram test, use the allowlisted account and bot without supplying a principal/profile in chat.
+Three Telegram ingress lanes exist. A bot that responds to `/health` is only an ingress check: full E2E readiness requires a working CP route, Cloudflare Runner API admission, selected France worker execution, persistence, and Telegram delivery. CP binds only the Cloudflare Runner API; never put a VM, GHA gateway, or launcher URL/credential in CP config. Current deployment and blockers are recorded in [architecture #236](https://github.com/trained-assist/trained-agent-architecture/issues/236) and [sandbox3 #193](https://github.com/trained-assist/trained-agent-architecture/issues/193); check them before starting. For a normal Telegram test, use the allowlisted account and bot without supplying a principal/profile in chat.
 
 | Lane | Test bot / gateway Worker | Config | Control Plane | Downstream isolation |
 |---|---|---|---|---|

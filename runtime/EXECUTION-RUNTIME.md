@@ -1,6 +1,6 @@
 # Agent Runner: граница для выделения из core
 
-Статус: граница Agent Runner; сверка выделенной реализации · 03.10.2026.
+Статус: нормативная граница Agent Runner. Реализационные evidence и deployment readiness фиксируются в owning issues/Environment Contracts и не выводятся из этой спецификации.
 
 ## Названия
 
@@ -8,23 +8,17 @@
 
 Это разные сущности. Отдельного уникального инфраструктурного термина «агент внутри среды» не требуется: это agent process в agent clean room. Clean room может быть реализован без контейнера; свойства границы должны быть проверены для каждого движка и tool.
 
-## Legacy baseline — состояние на 30.09.2026
+## Runtime ownership and deployment boundary
 
-В core: src/agent-isolation.js (slot leases, ACL gates, env allowlist), src/runner/engine-isolation.js (spawn glue), run tokens/MCP bridge, локальные task queue и runners. Изоляция T0 опциональна; Codex и cwd вне профиля оставляют только allowlist/bridge, без run-as. Профиль/.agent-home постоянный. MCP servers работают как service user. Это не полный ephemeral clean room lifecycle и не самостоятельный межмашинный runtime API.
+Runner API — serverless Cloudflare Worker: он авторизует admission, сохраняет durable receipt/status и выбирает execution worker по trusted policy. API Worker не размещается на execution VM и не запускает длительный agent process.
 
-Git worktree из software-engineering-playbooks — изоляция изменений кода. Его lifecycle не заменяет OS boundary агента. Текущие исходники и ограничения закреплены ссылками в [Code baseline](../audits/CODE-BASELINE.md).
+Для обычного Telegram Agent Run default execution worker — существующий worker во Франции. Он создаёт clean room, запускает engine, наблюдает процесс, сохраняет разрешённые результаты и очищает ephemeral ресурсы. Runner API обращается к нему через worker adapter; CP обращается только к Runner API и не получает физические адреса/секреты worker или launcher. GHA не является автоматическим fallback.
 
-## Выделенная реализация — сверка 03.10.2026
-
-В [ai-agent-runner](https://github.com/trained-assist/ai-agent-runner) уже есть lifecycle/recovery, HTTP API, export/upload/snapshot и per-run MCP. В [control plane](https://github.com/trained-assist/trained-assist-control-plane) — admission/status/reporting/awaiting/Web и настоящий Runner adapter. Это greenfield-код, а не автоматически перенесённая legacy OS boundary.
-
-Проверено Runner main `4f4a0d1f540a26337e8a096d18f74b30f173ca62`: уникальный cwd создаётся API, OpenCode spawn остаётся service UID. Capabilities прямо объявляет `not_proven_service_uid_only`. Materialize пока mkdir/clone; export prune удаляет только перечисленные сохранённые outputs. Полный snapshot restore и sweep cwd/HOME/tmp не подтверждены. План работ: [#51 — OS isolation](https://github.com/trained-assist/ai-agent-runner/issues/51), [#52 — materialize/persist/sweep](https://github.com/trained-assist/ai-agent-runner/issues/52).
-
-Постоянные API daemon и VM остаются; завершение Run освобождает его процессы и ephemeral ресурсы после сохранения. Следующий прогон получает разрешённые durable refs в новой среде. При потере связи процесс не дублируется, sole copy не удаляется. [Актуальный путь own-API dogfood](../IMPLEMENTATION-AND-INTEGRATION-PLAN.md#новый-критический-путь-собственный-api--clean-room--результат--очистка).
+Состав deployment, endpoint и live readiness фиксируются в Environment Contract owning repository и issue evidence. Этот документ задаёт target boundary, а не утверждает, что конкретная версия API/worker развёрнута или принята.
 
 ## Рекомендация по репозиторию
 
-**Да, выделение runner оправдано**, но сначала фиксируем [C04/C05](../contracts/README.md), затем извлекаем компонент постепенно. Выбранный репозиторий: [trained-assist/ai-agent-runner](https://github.com/trained-assist/ai-agent-runner). Выделенная реализация Runner/API/storage/MCP уже существует; готовность отдельных частей и полной изоляции различаются (срез ниже). Прежнее предложение имени trained-assist-execution-runtime заменено. Контроль задач теперь распределён между Input/Output, Task Router и GTD по [общей архитектуре](../ARCHITECTURE.md).
+Runner lifecycle/worker implementation belongs to [trained-assist/ai-agent-runner](https://github.com/trained-assist/ai-agent-runner); the serverless Cloudflare admission/placement API is its public boundary. Component code and live readiness are separate facts: consult the owning issues and Environment Contract. The retired `trained-assist-execution-runtime` name is not an additional service. Task ownership remains distributed across Input/Output, Task Router and GTD according to the [system architecture](../ARCHITECTURE.md).
 
 | Остаётся в core/control plane | Выходит в execution runtime | Живёт отдельно |
 |---|---|---|

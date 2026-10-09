@@ -6,7 +6,7 @@
 
 ## 0. Коротко
 
-**Решение 05.10.2026:** GCP VM `alesa-personal-assistent/us-central1-a/alesa-vm` выводится из эксплуатации; новые нагрузки и sandbox на ней запрещены. Для новых компонентов serverless — выбор по умолчанию, существующая VM во Франции допустима только при подтверждённой необходимости постоянного процесса/локального ресурса. Другие сервисы Google разрешены. Выключение после сохранения всех пользовательских данных, проверки восстановления и согласованной приёмки; удаление дисков и backup отдельно. [Координация #145](https://github.com/trained-assist/trained-agent-architecture/issues/145).
+**Решение 05.10.2026:** GCP VM `alesa-personal-assistent/us-central1-a/alesa-vm` выводится из эксплуатации; новые нагрузки и sandbox на ней запрещены. Для новых компонентов serverless — выбор по умолчанию. Для Agent Run API это Cloudflare Worker; существующая VM во Франции является execution worker по целевому Telegram default, не API host. Иные задачи на Французской VM требуют подтверждённой необходимости постоянного процесса/локального ресурса. Другие сервисы Google разрешены. Выключение старой GCP VM — после сохранения пользовательских данных, проверки восстановления и согласованной приёмки; удаление дисков и backup отдельно. [Координация #145](https://github.com/trained-assist/trained-agent-architecture/issues/145).
 
 Что строим. Одну систему, которая принимает задачи из Web, Telegram, API, расписания и от других агентов, надёжно доводит каждую до результата и показывает её состояние по одному сквозному номеру задачи (userTaskId).
 
@@ -19,7 +19,7 @@
 
 Управляющий слой выбран: Cloudflare Workflows + D1; live cloud smoke завершён 01.10.2026 (пилот P-DB, PR #93). Что открыто: защита терминальных состояний (#90), latency/version contract при деплое (#91/#92), регион хранения данных RU/EU и режим бюджета при недоступном учёте (раздел 13). Выбор платформы не означает готовность implementation control plane.
 
-**Уточнение владельца — 06.10.2026:** для целевого запуска Agent Run из Telegram не требуется отдельная постоянно работающая VM, покупка/подъём машины или администрирование собственного execution host. Control plane остаётся на Cloudflare Workflows + D1 и вызывает Runner API; Runner предоставляет управляемую внешнюю execution capacity, при необходимости временную/эфемерную. Это решение о владении инфраструктурой, а не утверждение, что вычисления происходят без хоста. Конкретный Native Worker/GitHub Actions путь пока sandbox candidate и должен пройти launch/stop/result/persist acceptance прежде, чем считаться production-ready. VM-пилоты и переезд HH/GCP — отдельные потоки, не prerequisites Telegram запуска.
+**Целевая граница Agent Run — уточнена владельцем 09.10.2026:** Control Plane работает на Cloudflare Workflows + D1 и вызывает только Serverless Runner API, реализованный как Cloudflare Worker. Runner API выполняет admission, применяет engine/placement policy и обращается к execution worker через свой worker adapter. Для обычного Agent Run из Telegram worker по умолчанию — существующий worker во Франции. CP не хранит адреса/ключи execution workers и не вызывает напрямую VM, GHA gateway/workflow или другой launcher. Runner API Worker не запускает agent process: он принимает и авторизует запрос, записывает durable receipt/state в Cloudflare storage и координирует асинхронное исполнение. Недоступность выбранного worker не разрешает скрытый GHA fallback; API возвращает/reconciles наблюдаемое состояние согласно Runner contract.
 
 ## 1. Цель и границы
 
@@ -41,10 +41,12 @@ flowchart TD
   T <--> WF["Движок надёжного исполнения (через Workflow Port)"]
   E["External Integration Gate"] <--> T
   E <--> X["HH / CRM / другие сервисы"]
-  T --> EU["Executors: Europe"]
-  T --> RU["Executors: Russia"]
-  EU --> T
-  RU --> T
+  T --> RA["Serverless Runner API: Cloudflare Worker"]
+  RA --> EU["Execution workers: Europe (default France worker for Telegram Agent Runs)"]
+  RA --> RU["Execution workers: Russia, when policy permits"]
+  EU --> RA
+  RU --> RA
+  RA --> T
   T --> G
   G --> C
   C -->|"Reporting API"| T
@@ -57,9 +59,9 @@ flowchart TD
 
 Это логические блоки; блок не обязательно отдельный процесс или репозиторий. Input, Router, Output, GTD и Journal — модули одного управляющего слоя (control plane) над одной базой (раздел 4, раздел 9). Пользователь видит состояние задачи через авторизованный Reporting API, а не прямым доступом к базе.
 
-География исполнения выбирается политикой движка, провайдера и данных: Claude Code/Codex — вне российской зоны; OpenCode — в допустимой зоне с учётом провайдера модели. География хранения — открытый вопрос (раздел 13).
+Control Plane задаёт допустимые требования к географии и данным; Serverless Runner API выбирает конкретный engine/worker из разрешённых и готовых вариантов по policy, provider и residency. Claude Code/Codex — вне российской зоны; OpenCode — только в допустимой зоне с учётом провайдера модели. География хранения — открытый вопрос (раздел 13). CP не выбирает физический worker или endpoint.
 
-Gateways адаптируют каналы и не выбирают исполнителя. Router решает тип работы и допустимую эскалацию; долговременной истории он не хранит, а получает нужную проекцию во входе.
+Gateways адаптируют каналы и не выбирают исполнителя. Router решает тип работы и допустимую эскалацию; долговременной истории он не хранит, а получает нужную проекцию во входе. Для Agent Run Control Plane обращается только к Serverless Runner API. Runner API выбирает worker по доверенной policy и capability; CP не знает worker host, endpoint или launcher.
 
 ## 3. Одна задача: вход, исполнение, результат
 
@@ -73,10 +75,12 @@ flowchart TD
   I --> R["Router"]
   R --> D["Deterministic Executor"]
   R --> L["LLM Recipe Executor"]
-  R --> A["Agent Runner / clean room"]
+  R --> RA["Serverless Runner API (Cloudflare Worker)"]
+  RA --> A["Selected execution worker / Agent clean room"]
   D --> O["Output"]
   L --> O
-  A --> O
+  A --> RA
+  RA --> O
   O --> P["Report to User"]
   P --> GO["Gateway: delivery"]
   GO --> V["Web task view / чат / API callback"]
@@ -146,7 +150,7 @@ D1 использует тот же диалект SQLite, что и прод, �
 Правила гибкости:
 - Методика, playbook и решения GTD зависят только от Port, а не от API конкретного движка.
 - Всё, что должно пережить движок, записывается в Task Store внутри шагов. История экземпляров Cloudflare Workflows хранится 30 дней — это журнал оркестрации, не архив задач.
-- **Текущий механизм планов из прода** **В проде ✅** (раздел 6, строка «Планы») сохраняется как совместимый Workflow Port на время миграции: он уже делает шаги, ожидание, пробуждение и восстановление после рестарта. Это временная совместимость управляющего слоя, а не требование запускать новый Telegram/Agent Run на отдельной VM; целевой Runner вызывается через внешний API (уточнение 06.10 выше).
+- **Текущий механизм планов из прода** **В проде ✅** (раздел 6, строка «Планы») сохраняется как совместимый Workflow Port на время миграции: он уже делает шаги, ожидание, пробуждение и восстановление после рестарта. Это временная совместимость управляющего слоя, а не требование размещать Runner API на VM; целевой Agent Run идёт через Serverless Runner API Worker (уточнение 09.10 выше).
 - Если управляющий слой останется на VM: Restate, DBOS (поверх Postgres) или Temporal. Замена — новый адаптер Port.
 
 Ограничения Cloudflare Workflows, которые учитываем: результат шага до 1 МиБ (больше — в R2), состояние экземпляра до 1 ГБ, до 10 000 шагов (настраивается до 25 000), CPU шага до 5 минут. Сам агентский Run не выполняется в CPU-bound шаге Workflow: Workflow вызывает Runner API и ждёт durable-событие/результат через `waitFor`. Runner размещает процесс на управляемой execution capacity; выделенная VM не является требованием продукта.
@@ -183,7 +187,7 @@ D1 использует тот же диалект SQLite, что и прод, �
 
 Статус: **Принято**, уточнение владельца 30.09.2026.
 
-Execution host — заменяемый исполнитель; в целевом Telegram пути это управляемая внешняя capacity, а не обязательная выделенная VM под управлением Trained Assist. Управляющее состояние задачи и решение о продолжении находятся в control plane/Task Store; Runner исполняет попытку, сохраняет результат и завершает работу. Потеря связи, завершение процесса и потеря временного диска — три разных события. Конкретный execution provider принимается отдельно по изоляции, stop, persistence и recovery.
+Execution worker — заменяемый исполнитель за Serverless Runner API. В целевом Telegram пути Cloudflare Runner API выбирает существующий французский worker по умолчанию. API — Cloudflare Worker; он не размещается на execution VM и не запускает agent process. Control Plane/Task Store владеет пользовательской задачей, бюджетом и решением о продолжении; Runner API владеет admission/receipt и placement исполнения; execution worker владеет clean room, process tree и локальными ресурсами. CP не вызывает execution worker напрямую и не знает адресов/секретов VM или launcher. Потеря связи, завершение процесса и потеря временного диска — три разных события. Потеря worker отражается через Runner API и не переключается молча на GHA.
 
 - **Потеря связи не означает смерть процесса.** Отсутствие heartbeat даёт `connection_lost` (исход исполнения неизвестен), уведомление в Reporting и ожидание восстановления связи либо явного сигнала на перезапуск. Ни timeout, ни истечение lease сами по себе не запускают агента повторно. Workflow ждёт без удержания вычислительного процесса.
 - **Перезапуск — отдельное решение.** Сигнал содержит источник/полномочия и дополнительные инструкции; например «разбей на шаги и сохраняй результат каждого шага». Перед запуском проверяем предыдущий процесс, сохранённые данные и неизвестные внешние действия. Если прежний процесс может работать, нужен подтверждённый stop или действенный отзыв его прав на запись/внешние действия; смена generation лишь для результатов этого не обеспечивает.
@@ -198,9 +202,9 @@ Execution host — заменяемый исполнитель; в целево�
 Приёмка: сетевой разрыв при живом агенте не создаёт новый Run; после выхода процесса диск остаётся доступным; повтор finalization не повторяет исполнение; разрешённый следующий Run видит прежние файлы и дополнительные инструкции; очистка до подтверждённого сохранения блокируется. Конкретные проверки — P03/P06/P07/P09/P30 в [плане реализации](IMPLEMENTATION-AND-INTEGRATION-PLAN.md).
 
 
-Уточнение границы «serverless» / clean room — 03.10.2026: заказчик и наши собственные клиенты используют одинаковый API-контракт. Канальные adapters обращаются к Task API control plane; control plane — к Serverless Agent API Runner. Прямой spawn движка из gateway, ручная запись в workspace и отдельный внутренний обход admission не являются целевым путём.
+Уточнение границы «serverless» / clean room — 09.10.2026: заказчик и наши собственные клиенты используют одинаковый API-контракт. Канальные adapters обращаются к Task API Control Plane; Control Plane обращается только к Serverless Runner API на Cloudflare Worker; этот API маршрутизирует попытку на выбранный execution worker. Прямой CP→VM/launcher вызов, прямой spawn из gateway, ручная запись в workspace и обход Runner API не являются целевым путём.
 
-Постоянный VM host, API daemon и supervisor не уничтожаются после каждого Run. Ephemeral ресурсы — engine и его process tree, per-run MCP, изоляционная identity/lease, cwd/HOME/tmp/config. После выхода engine финализация может продолжаться; полный sweep разрешён после verified persist обязательных outputs/checkpoints и согласованного retention. При ошибке storage sole copy сохраняется, cleanup остаётся pending. Отдельные статусы процесса, сохранения, очистки и доставки не подменяют друг друга.
+Runner API Worker исполняет короткие serverless handlers и использует durable Cloudflare storage/bindings для admission и статусов. Долгоживущие agent process, filesystem и clean room находятся на execution worker; для целевого Telegram Agent Run по умолчанию это существующий worker во Франции. Ephemeral ресурсы — engine и его process tree, per-run MCP, изоляционная identity/lease, cwd/HOME/tmp/config. После выхода engine финализация может продолжаться; полный sweep разрешён после verified persist обязательных outputs/checkpoints и согласованного retention. При ошибке storage sole copy сохраняется, cleanup остаётся pending. Отдельные статусы процесса, сохранения, очистки и доставки не подменяют друг друга.
 
 Факт реализации не выводится из термина: отдельный cwd не доказывает OS isolation; удаление объявленных export files не доказывает очистку всей среды. Приёмка полной границы — concurrent cross-run probes и crash/recover persist/sweep. Выявленные остатки: [Runner #51](https://github.com/trained-assist/ai-agent-runner/issues/51), [#52](https://github.com/trained-assist/ai-agent-runner/issues/52); единый own-API dogfood — [control-plane #23](https://github.com/trained-assist/trained-assist-control-plane/issues/23).
 

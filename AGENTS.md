@@ -2,7 +2,9 @@
 
 ## GCP VM exit
 
-Google Cloud VM `alesa-personal-assistent/us-central1-a/alesa-vm` (instance ID `7077705867419574607`) выводится из эксплуатации. Новые процессы, cron, agent runs, sandbox и зависимости на ней запрещены. Доступ допустим только для инвентаризации, экспорта, сверки, завершения прежних операций и отключения. По умолчанию используйте serverless и собственный Agent Run API; существующую VM во Франции — только при подтверждённой необходимости постоянного процесса или локального ресурса. Остальные сервисы Google разрешены. Координация и статус: https://github.com/trained-assist/trained-agent-architecture/issues/145.
+Google Cloud VM `alesa-personal-assistent/us-central1-a/alesa-vm` (instance ID `7077705867419574607`) выводится из эксплуатации. Новые процессы, cron, agent runs, sandbox и зависимости на ней запрещены. Доступ допустим только для инвентаризации, экспорта, сверки, завершения прежних операций и отключения. Для Agent Run используйте serverless Cloudflare Runner API; существующая VM во Франции — целевой execution worker, не API host. Другие задачи на французской VM требуют подтверждённой необходимости постоянного процесса/локального ресурса. Остальные сервисы Google разрешены. Координация и статус: https://github.com/trained-assist/trained-agent-architecture/issues/145.
+
+Для Agent Run Serverless Runner API — Cloudflare Worker; Control Plane вызывает только этот API. Execution worker (по умолчанию для обычных Telegram Agent Runs — существующий worker во Франции) вызывается Runner API. CP не подключается напрямую к VM, GHA или другому launcher; GHA не является скрытым fallback. См. `ARCHITECTURE.md` §0/§4.6 и `SERVERLESS-AGENT-API.md`.
 
 Start with README.md and the generated [REPO-MAP.md](https://github.com/trained-assist/trained-agent-architecture/blob/repo-context/REPO-MAP.md).
 Check manifest.json sourceSha against the revision you are studying; for an unmerged PR, use its Repository context Actions artifact.
