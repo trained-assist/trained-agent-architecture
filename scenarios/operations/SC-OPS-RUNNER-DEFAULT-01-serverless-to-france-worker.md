@@ -2,7 +2,6 @@
 
 - **Scenario ID:** OPS-RUNNER-DEFAULT-01
 - **Status:** target; implementation and sandbox acceptance pending
-- **Issue:** [#236](https://github.com/trained-assist/trained-agent-architecture/issues/236)
 - **Implementation:** [Runner API PR #227](https://github.com/trained-assist/ai-agent-runner/pull/227); [Control Plane PR #181](https://github.com/trained-assist/trained-assist-control-plane/pull/181)
 - **Actors:** Telegram gateway, Control Plane, Serverless Runner API, France execution worker, sandbox operator/acceptance agent
 - **Boundary:** the Control Plane submits an authenticated run to the Cloudflare Runner API. The API admits and places the run, then dispatches it to the France worker. The Control Plane never calls a physical worker or launcher.

@@ -46,7 +46,7 @@ Contract/fixture checks дешёвые и воспроизводимые. Real e
 
 ### Live Telegram test lanes
 
-Three Telegram ingress lanes exist. A bot that responds to `/health` is only an ingress check: full E2E readiness requires a working CP route, Cloudflare Runner API admission, selected France worker execution, persistence, and Telegram delivery. CP binds only the Cloudflare Runner API; never put a VM, GHA gateway, or launcher URL/credential in CP config. Current deployment and blockers are recorded in [architecture #236](https://github.com/trained-assist/trained-agent-architecture/issues/236) and [sandbox3 #193](https://github.com/trained-assist/trained-agent-architecture/issues/193); check them before starting. For a normal Telegram test, use the allowlisted account and bot without supplying a principal/profile in chat.
+Three Telegram ingress lanes exist. A bot that responds to `/health` is only an ingress check: full E2E readiness requires a working CP route, Cloudflare Runner API admission, selected France worker execution, persistence, and Telegram delivery. CP binds only the Cloudflare Runner API; never put a VM, GHA gateway, or launcher URL/credential in CP config. Current sandbox lane setup is tracked in [sandbox3 #193](https://github.com/trained-assist/trained-agent-architecture/issues/193). Use the acceptance criteria in [OPS-RUNNER-DEFAULT-01](scenarios/operations/SC-OPS-RUNNER-DEFAULT-01-serverless-to-france-worker.md) for the execution path. For a normal Telegram test, use the allowlisted account and bot without supplying a principal/profile in chat.
 
 | Lane | Test bot / gateway Worker | Config | Control Plane | Downstream isolation |
 |---|---|---|---|---|
