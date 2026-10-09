@@ -44,4 +44,6 @@ Both owning repositories completed the protected-main exact-SHA path:
 
 Gate 1 semantic review: `PASS`. Gate 2 component verification: `PASS`. Gate 3 deployment E2E: `PASS` for both owning repository release paths. Full Telegram → Control Plane → Runner E2E remains a separate prerequisite for route cutover and is not implied by deployment success.
 
+Live production recheck on 2026-10-10: main, recruiter, and freelance Workers each returned health `200` at build `4e3d5edefa0dc98269fba23e2d905aedca054652`; `/debug/whoami` confirmed a bot identity for each; an unsigned webhook POST returned `401` for all three. These read/negative-security probes do not exercise task execution or change any Telegram route.
+
 Record production Worker identity only; do not expose credentials or user payloads.
