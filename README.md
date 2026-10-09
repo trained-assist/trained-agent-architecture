@@ -4,7 +4,7 @@
 
 **Статус и чек-листы — в [Project «Trained Assist — Migration»](https://github.com/orgs/trained-assist/projects/1) и issues; документы — долговечная архитектура.** Перед работой над карточкой сначала открыть её issue: там актуальный статус, чек-лист приёмки и evidence.
 
-**Вывод старой GCP VM:** новые работы и зависимости на `alesa-personal-assistent/us-central1-a/alesa-vm` запрещены. Serverless — выбор по умолчанию; существующая VM во Франции — для подтверждённой потребности в постоянном сервере. Данные сохраняются и восстанавливаются до согласованного выключения; stop и удаление дисков/backup — разные решения. Другие сервисы Google разрешены. Актуальный статус и границы работы — [issue #145](https://github.com/trained-assist/trained-agent-architecture/issues/145).
+**Вывод старой GCP VM:** новые работы и зависимости на `alesa-personal-assistent/us-central1-a/alesa-vm` запрещены. Для Agent Run Serverless Runner API размещается в Cloudflare Worker; Control Plane обращается только к нему. Французская VM — execution worker, не API endpoint; обычный Telegram Agent Run по умолчанию направляется на неё через Runner API. Данные старой VM сохраняются и восстанавливаются до согласованного выключения; stop и удаление дисков/backup — разные решения. Другие сервисы Google разрешены. Актуальный статус вывода GCP VM — [issue #145](https://github.com/trained-assist/trained-agent-architecture/issues/145).
 
 Порядок приёмки, cutoff и контроля расходов — [runbook вывода GCP VM](GCP-VM-EXIT-RUNBOOK.md).
 
@@ -25,7 +25,7 @@ python3 tools/repo-context/map.py
 
 Карта — ограниченный индекс, pack — структурное сжатие кода; Markdown не имеет AST-сжатия. Ограничения и исключённые пути отражаются в manifest. Перед изменением поведения откройте исходник. Если CI/публикация ещё не прошли, используйте README и локальную генерацию.
 
-Актуальный датированный [срез реализации и критический путь](IMPLEMENTATION-AND-INTEGRATION-PLAN.md#актуальная-приёмка-и-критический-путь--04102026) — в плане. На 04.10 опубликована финальная приёмка deployed Cloudflare → VM → настоящий OpenCode → ответ/файлы → очистка → restart без дублей. Materialize/snapshot добавлен Runner #69. Обновление 04.10 14:28 МСК: concurrent OpenCode принят (#70/#71), snapshot Task API добавлен CP #32. Workspace модуль подготовлен в открытом Runner #72; остаток — ревью, подключение H1–H5 и live Git/saveback, затем единый deployed release, канал и импорт/cohort. Локальные тесты модуля не означают завершённый пользовательский workspace. Доказательства и их ограничения — в актуальном срезе; исторический список 03.10 не является очередью невыполненных работ.
+Проверяемая целевая схема Runner и границы ownership — в [ARCHITECTURE](ARCHITECTURE.md), [Serverless Runner API](SERVERLESS-AGENT-API.md), [C04](contracts/README.md#c04--placement-и-execution-runner) и [сценарии](scenarios/operations/SC-OPS-RUNNER-DEFAULT-01-serverless-to-france-worker.md). Актуальные реализации, deployment evidence и блокеры фиксируются в owning issues и Environment Contracts; старые датированные срезы реализации из плана удалены, чтобы не путать их с целевой схемой.
 
 Fast-path research: [алгоритм до запуска агента и протокол исследования](TASK-ROUTER-AND-MCP.md#11-fast-path-v1-алгоритм-до-запуска-агента) и [compact catalog / explicit naming](CAPABILITY-CATALOG-AND-FAST-REPLIES.md#explicit-names-и-compact-catalog-v1--01102026). Pilot изолирован от живых компонентов и текущей приёмки PR.
 

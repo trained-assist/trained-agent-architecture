@@ -1,27 +1,28 @@
 # Serverless Agent API
 
-Статус: актуальная спецификация Serverless Agent API · 30.09.2026. Продуктовый режим **agent execution as a service**. Пользователь вызывает API и не управляет VM; сервер может быть постоянным. Это не решение о покупке новых VM или конкретном cloud framework.
+Статус: нормативная спецификация Serverless Runner API · уточнена владельцем 09.10.2026. API размещается как Cloudflare Worker и предоставляет продуктовый режим **agent execution as a service**. Постоянный execution worker может использоваться за API; он не является API endpoint и не вызывается Control Plane напрямую.
 
 ## Граница и минимальный путь
 
-Клиент с ключом/scopes заказывает один ai-agent-job: API admission → durable Run request → Agent Runner → Agent clean room → result/status/artifacts → polling либо callback. В продуктной установке admission может подключиться через общий Input/typed Router/Output; наружу детали не выдаются.
+Клиент с ключом/scopes заказывает один ai-agent-job: Control Plane → authenticated Cloudflare Runner API Worker → durable admission receipt → trusted placement → execution worker → Agent clean room → result/status/artifacts → polling либо callback. API Worker выполняет admission, auth, idempotency, policy/placement и durable status; он не запускает длительный процесс агента. Worker adapter вызывает выбранный execution worker и принимает status/result callbacks. В продуктной установке admission может подключиться через общий Input/typed Router/Output; наружу детали не выдаются.
 
 Отдельная поставка Runner должна работать без Telegram, Web UI, GTD, playbook registry и error watcher. Небольшое состояние запросов и результат/receipt нужны даже в standalone; этот admission/result adapter не превращается в платформенный GTD. Runner остаётся владельцем process/clean room lifecycle, не истории всех пользовательских задач.
 
 ```mermaid
 flowchart TD
-  C["API client"] --> API["Admission / auth / quotas"]
-  API --> Q["Durable execution requests"]
-  Q --> R["Agent Runner"]
-  R --> CR["Agent clean room"]
+  CP["Control Plane: Cloudflare Workflows + D1"] --> API["Serverless Runner API: Cloudflare Worker"]
+  API --> Q["Durable admission receipt / execution handle"]
+  API -->|trusted placement + worker adapter| W["Execution worker (default: existing France worker for Telegram Agent Runs)"]
+  W --> CR["Agent clean room / engine process"]
   CR --> O["Result / artifact refs"]
-  O --> API
-  API --> C
-  R --> J["Run status / heartbeat"]
-  J --> API
+  O --> W
+  W -->|status / heartbeat / result| API
+  API -->|receipt / status / result| CP
 ```
 
-Выбор режима поставки: core platform adapter или standalone runner adapter. Контракт один; две независимые очереди не отправляют одну и ту же работу одновременно. Бизнес-эскалация до OpenCode относится к Task Router платформы; typed запуск клиента использует разрешённый явно выбранный engine/default.
+Runner API имеет один versioned contract для platform и standalone callers. Control Plane обращается к API, а не к физическому worker, VM, GitHub Actions workflow или внутреннему launcher. Worker/engine selection и placement принадлежат Runner API и его trusted policy. Для штатного Telegram Agent Run default worker — существующий worker во Франции; GHA не является неявным fallback. CP передаёт только разрешённые logical constraints/RunSpec поля и не получает worker URL или credential. Бизнес-эскалация до OpenCode относится к Task Router платформы; фактический engine admission проверяется Runner API по его policy.
+
+API Worker остаётся stateless между вызовами исполнения; receipt, admission/idempotency keys, worker handle и terminal status сохраняются в durable Cloudflare binding. Долгоживущий engine и clean room работают вне Worker на выбранном executor. События от worker возвращаются через аутентифицированный callback/status adapter. При сбое API или worker повторная доставка сверяется по тому же operationId/runId; timeout не создаёт новую попытку автоматически.
 
 ## Логический API
 

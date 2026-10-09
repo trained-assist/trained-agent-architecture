@@ -5,13 +5,14 @@
 - **Issue:** [#229](https://github.com/trained-assist/trained-agent-architecture/issues/229)
 - **Actors:** Control Plane, Runner API, sandbox operator or acceptance agent
 - **Boundary:** an authenticated API caller submits a normal run request and receives a deterministic contract response without starting an Agent.
+- **Architecture boundary:** Runner API is a Cloudflare Worker; Control Plane calls only that API. Worker placement and execution are covered separately by [OPS-RUNNER-DEFAULT-01](SC-OPS-RUNNER-DEFAULT-01-serverless-to-france-worker.md).
 - **Related work:** Telegram E2E [#190](https://github.com/trained-assist/trained-agent-architecture/issues/190); CP engine delegation [PR #143](https://github.com/trained-assist/trained-assist-control-plane/pull/143); CP RunSpec alignment [PR #144](https://github.com/trained-assist/trained-assist-control-plane/pull/144); Runner API [#202](https://github.com/trained-assist/ai-agent-runner/pull/202).
 
 ## Preconditions
 
-1. Runner API exposes the standard authenticated run contract and declares engine selection in its capabilities.
+1. Runner API exposes the standard authenticated run contract from Cloudflare and declares engine selection in its capabilities.
 2. The sandbox API explicitly enables the `mock-test` engine. It is disabled by default and cannot be enabled in production configuration.
-3. The CP selects the engine only from trusted sandbox configuration. User text cannot select an engine.
+3. For this isolated scenario CP may request only the trusted `mock-test` fixture. Ordinary Agent Runs omit physical engine/worker selection; Runner API applies its trusted engine and placement policy. User text cannot select an engine or worker.
 
 ## Main flow
 

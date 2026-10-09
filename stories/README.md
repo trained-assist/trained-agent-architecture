@@ -21,7 +21,7 @@
 | Этап | Кто впервые получает ценность | Истории, которые рождаются |
 |---|---|---|
 | [I00](../IMPLEMENTATION-AND-INTEGRATION-PLAN.md#i00--autofix-сжатие-контекста-и-observability-baseline-для-всех-репозиториев) · Z01–Z03 | разработчик | DEV-01, DEV-02 |
-| [I01](../IMPLEMENTATION-AND-INTEGRATION-PLAN.md#i01--agent-runner-на-существующей-sandbox-vm) · P01–P03 | оператор | OPS-01, OPS-02, OPS-03; начало OPS-04 и API-04 (события, ошибки) |
+| [I01](../IMPLEMENTATION-AND-INTEGRATION-PLAN.md#актуальный-порядок-старта) · P01–P03 | оператор | OPS-01, OPS-02, OPS-03; начало OPS-04 и API-04 (события, ошибки) |
 | [I02A](../IMPLEMENTATION-AND-INTEGRATION-PLAN.md#i02a--внешний-serverless-agent-api) · P04–P06 | **API-клиент** — первый внешний пользователь | API-01, API-02, API-03, API-04, API-05; U-16 для API |
 | [I02B](../IMPLEMENTATION-AND-INTEGRATION-PLAN.md#i02b--артефакты-и-пользовательский-workspace-через-api) · P07–P09 | API-клиент | API-06, API-07 |
 | [I03](../IMPLEMENTATION-AND-INTEGRATION-PLAN.md#i03--web-и-telegram-на-том-же-api) · P12, P10 | **человек в Web** | U-01, **U-02 (первый интеграционный сценарий)**, U-03, U-04, U-05, U-06, U-30 (частично); OPS-04 |
