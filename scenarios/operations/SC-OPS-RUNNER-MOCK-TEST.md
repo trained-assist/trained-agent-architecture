@@ -37,3 +37,9 @@
 - Generated E2E proves sandbox Telegram → CP → Runner API `mock-test` → terminal `pong` delivery against deployed revisions.
 - A separate free-only real-agent scenario proves automatic selection; a `mock-test` pass is not evidence that a real Agent can execute.
 - Production deployment and webhook changes are outside this scenario.
+
+### Sandbox evidence — 2026-10-10
+
+The isolated CP sandbox3 lane was first found on an older CP build. Its mock probe failed closed on the deployed-source mismatch and created no replacement run. After deploying the protected `main` revision `91f34d866904d837b03a4f6d73ff40bd6748538d` through the sandbox3 deployment workflow, the dedicated `sandbox3-cp-mock-probe` workflow passed ([run 38005617050](https://github.com/trained-assist/trained-assist-control-plane/actions/runs/38005617050)). The probe returned the deterministic terminal `pong` result through the CP-to-Runner API adapter; its contract reports no CP task, model call, or France worker execution. The workflow's scoped cleanup also passed.
+
+The same CP revision is live in staging and the isolated production Worker. Their exact-SHA deployment smoke checks passed for liveness and anonymous private-read rejection. This records deployment health only; the mock probe is sandbox-only and neither test establishes real Agent execution or authorizes a Telegram route cutover. The full Telegram-to-CP-to-Runner sandbox E2E and free-only real-Agent scenario remain unverified.
