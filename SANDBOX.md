@@ -76,7 +76,7 @@ Cloudflare's Tail API is an administrative API and requires a Cloudflare API tok
 
 | Средство | Метод | Construction/проверка |
 |---|---|---|
-| VM/Runner | Existing sandbox VM + separate experiment namespace | Reproducible setup/teardown, OS/process/resource boundary, two synthetic profiles |
+| Runner API / execution worker | Cloudflare Worker API + existing France execution worker, with isolated sandbox principals and worker namespace | Reproducible API/worker setup, authenticated dispatch, OS/process/resource boundary, two synthetic profiles; CP binds only the Worker API |
 | Free LLM | Собственный локальный stub (fixed response/fault provider) + actual free profile smoke | Allowlist/quota, no paid fallback, rate limit/auth/errors. Бесплатность не значит unlimited |
 | Cloudflare | Separate Workers/routes и distinct KV/D1/R2 bindings | Setup/recreate/cleanup test resources; не наследовать production bindings |
 | Object storage | S3-compatible local test backend и separate cloud bucket smoke | CORS, signed URLs expiry, multipart/resume/abort, checksums/TTL |
@@ -197,21 +197,21 @@ Host-manifest хранит различающиеся параметры маш�
 - **Logs:** AutoFix — check/fix before-after, rule ID, tool/version, attempt count, patch/PR refs и residual failure. Context compression — source commit/catalog version, included/omitted paths, byte/token budget и build errors; secrets excluded. Проверить no-change повтор и synthetic failed check.
 - **Статус:** [эпик E0 #16](https://github.com/trained-assist/trained-agent-architecture/issues/16).
 
-### I01 — Runner на sandbox VM
+### I01 — Agent Runner execution worker
 
-- **Запускаем:** настоящий OpenCode/Runner на existing sandbox VM в новом experiment namespace; fake engine adapter для lifecycle; два synthetic principals.
+- **Запускаем:** execution worker в изолированном namespace на существующей VM во Франции; Serverless Runner API размещён отдельно как Cloudflare Worker и направляет на него попытки по trusted policy. Локальный fake engine adapter покрывает lifecycle; два synthetic principals проверяют изоляцию.
 - **Сбои:** fake engine start failure, child hanging, provider timeout, rate limit, invalid output, stop/restart, log sink outage; missing runtime/dependency/required secret, недоступный secret backend, ошибочная identity/role — до старта; firewall снаружи и reachability изнутри.
 - **Результат:** observed Run lifecycle, correct scoped logs, no cross-profile access, cleanup; readiness отделена от liveness; timestamps UTC.
-- **Bindings:** SSH к sandbox-VM; собственный `AGENT_SECRET`; env-файл хоста (`SECRETS_SOURCE=env`); llm-ladder токен для live smoke и локальный LLM stub для детерминированных тестов; opencode в scope namespace. Bot token не требуется: standalone Runner работает без него.
+- **Bindings:** CP получает только service binding к Cloudflare Runner API; API и France worker используют отдельные dispatch credentials через их secret stores. Административный SSH к VM — только для управления worker host, не для установки/запуска Runner API. LLM Ladder credential выдаётся только worker runtime для разрешённого live smoke; локальные тесты используют stub. Bot token не требуется: standalone Runner API работает без Telegram.
 - **Logs:** Run start/exit/cancel/process-tree/heartbeat/recovery, profile/task/run/engine/provider refs, structured errors и cleanup. Intentional failed startup/timeout обязаны оставлять диагностируемую запись.
 - **Статус:** [эпик E1 #17](https://github.com/trained-assist/trained-agent-architecture/issues/17).
 
-### I02A — Serverless Agent API
+### I02A — Serverless Agent API и worker dispatch
 
-- **Запускаем:** новый API + внешний test client (SDK/CLI fixture); управляющий слой через Workflow Port и Task Store (выбор движка — [P-DB](pilots/p-db/COMPARISON.md), cloud smoke на настоящем аккаунте отдельно от локального эмулятора).
+- **Запускаем:** Serverless Runner API как Cloudflare Worker, durable admission/state binding и внешний test client (SDK/CLI fixture); API dispatch-ит на France execution worker. Control Plane обращается только к API service binding и не хранит worker URL/credential. Выбор движка и worker — trusted policy API.
 - **Сбои:** duplicate submit/conflict, reconnect, crash API/worker, late event, invalid keys, concurrency caps, restart с принятым request.
 - **Результат:** durable receipt/result и replay по sequence, один dispatch owner; всё проходит без Telegram/Web.
-- **Bindings:** sandbox API keys и scopes для test principals (C13); отдельные Cloudflare Workers/D1 для Workflow Port/Task Store на своих именах; deploy-доступ Cloudflare класса `CF_API_TOKEN`/wrangler.
+- **Bindings:** sandbox API keys/scopes для test principals (C13), hash-only registry/policy и worker-dispatch credentials на стороне API/worker; отдельные Cloudflare Worker/Durable Object bindings и deploy-доступ Cloudflare класса `CF_API_TOKEN`/wrangler. GHA workflow/endpoint не используется как неявный execution fallback.
 - **Logs:** request receipt/idempotency/auth scope, dispatch/run state, event sequence/replay, reconnect/cancel и client-visible outcome. Profile/principal сохраняется и без folder; secret/API key не логируется.
 - **Статус:** [эпик E2 #18](https://github.com/trained-assist/trained-agent-architecture/issues/18), [P-DB #32](https://github.com/trained-assist/trained-agent-architecture/issues/32).
 
