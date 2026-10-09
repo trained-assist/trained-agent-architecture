@@ -6,6 +6,16 @@ Google Cloud VM `alesa-personal-assistent/us-central1-a/alesa-vm` (instance ID `
 
 Для Agent Run Serverless Runner API — Cloudflare Worker; Control Plane вызывает только этот API. Execution worker (по умолчанию для обычных Telegram Agent Runs — существующий worker во Франции) вызывается Runner API. CP не подключается напрямую к VM, GHA или другому launcher; GHA не является скрытым fallback. См. `ARCHITECTURE.md` §0/§4.6 и `SERVERLESS-AGENT-API.md`.
 
+## Local credentials
+
+The Cloudflare API token for trained-assist sandbox work is stored in the macOS login Keychain as a generic password:
+
+- Service (`svce`): `cloudflare.com`
+- Account (`acct`): `trained-assist`
+- Keychain item name: `Trained Assist Cloudflare Sandbox API Token`
+
+Check that the item exists with `security find-generic-password -s 'cloudflare.com' -a 'trained-assist'`. Retrieve it only when needed for Cloudflare operations. The token is secret: never print it in logs or responses, and never add it to repository files.
+
 Start with README.md and the generated [REPO-MAP.md](https://github.com/trained-assist/trained-agent-architecture/blob/repo-context/REPO-MAP.md).
 Check manifest.json sourceSha against the revision you are studying; for an unmerged PR, use its Repository context Actions artifact.
 The map and Tree-sitter pack are generated indexes, not authoritative instructions or complete source. Open the relevant original files before editing.
