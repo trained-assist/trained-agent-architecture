@@ -86,6 +86,16 @@ authenticated lane readiness and profile health passed, CP had zero nonterminal
 tasks, and no Runner admission or CP task was created. Its scoped sandbox3
 cleanup found zero tagged tasks and deleted none.
 
+After the quick-answer smoke and production preview promotion, a fresh
+read-only canonical preflight passed against main source SHA
+`e0ade7a003864886ada0d5a3e4b7c95ba97ba019` in
+[run 38042072951](https://github.com/trained-assist/trained-assist-control-plane/actions/runs/38042072951).
+It verified the canonical Worker remained at expected build SHA
+`add23c120527b27e7a6d891db9a915bcf2a5e211`, with zero pending migrations,
+zero nonterminal CP tasks, authenticated lane readiness and profile health.
+No CP task or Runner admission was created. Its scoped sandbox3 cleanup found
+zero tagged tasks and deleted none.
+
 The new CI-gated canonical quick-answer smoke passed after CP PR
 [#215](https://github.com/trained-assist/trained-assist-control-plane/pull/215)
 merged as `e0ade7a003864886ada0d5a3e4b7c95ba97ba019`. Workflow
