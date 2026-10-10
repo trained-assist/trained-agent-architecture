@@ -96,6 +96,27 @@ zero nonterminal CP tasks, authenticated lane readiness and profile health.
 No CP task or Runner admission was created. Its scoped sandbox3 cleanup found
 zero tagged tasks and deleted none.
 
+The canonical sandbox was then deployed through its reviewed protected-main
+workflow and its built-in accept-only intake smoke passed in
+[run 38042405874](https://github.com/trained-assist/trained-assist-control-plane/actions/runs/38042405874).
+Before admission, profile health was reachable and the lane had zero
+nonterminal tasks. The synthetic accept-only receipt and event read succeeded;
+the workflow's exact-marker cleanup verified there were no executions,
+deliveries, artifacts, or dependent records, deleted only that smoke task, and
+reported `isolated_accept_only_smoke`. It did not route or invoke Runner/model.
+
+The SHA-pinned quick-answer smoke was repeated after that deployment in
+[run 38042473455](https://github.com/trained-assist/trained-assist-control-plane/actions/runs/38042473455)
+against exact sandbox build SHA
+`e0ade7a003864886ada0d5a3e4b7c95ba97ba019`. Both `system_health` and
+`catalog.brief` again reached terminal `done`, persisted the answer, replayed
+the same intake task and route decision, and recorded successful communication
+writer rendering. Neither started an engine run or delivered to Telegram.
+The earlier single writer fallback did not reproduce. CP PR
+[#216](https://github.com/trained-assist/trained-assist-control-plane/pull/216)
+also made the smoke artifact preserve only allowlisted writer failure codes
+while redacting arbitrary error text.
+
 The new CI-gated canonical quick-answer smoke passed after CP PR
 [#215](https://github.com/trained-assist/trained-assist-control-plane/pull/215)
 merged as `e0ade7a003864886ada0d5a3e4b7c95ba97ba019`. Workflow
