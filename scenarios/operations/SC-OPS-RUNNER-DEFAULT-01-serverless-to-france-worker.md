@@ -9,7 +9,16 @@
 
 ## Current implementation baseline
 
-The live Cloudflare Runner sandbox currently pins execution to France and has no GHA fallback. Its Telegram UX profile is also coupled to a private placeholder repository that is mounted as a task workspace; this coupling is not part of the target contract and must be removed. The placeholder is to be renamed `vovalikessmoothy-png/gha-env-config` and used only by the GHA runner for non-secret environment/config files, never by CP, Runner API, or France VM. Current `gha-compute-cluster` main contains a generic inference queue/worker, not an Agent Run dispatch adapter or a checkout of that private config repo. Therefore this target is architectural direction, not an implemented or accepted failover path.
+The existing OpenCode GHA execution path has a successful direct Runner API execution recorded in [workflow run 37859213470](https://github.com/vovalikessmoothy-png/opencode-gha-runner/actions/runs/37859213470). That proves one bounded Agent Run reached a terminal answer through the worker gateway and GHA job. It does not prove a raw GHA invocation independent of the gateway, the current Cloudflare Runner integration, or the Telegram/CP queue path. The live Cloudflare Runner sandbox currently pins execution to France and has no GHA fallback. The private `gha-env-config` repository is outside the accepted task-workspace contract; only the GHA execution context may read it, and only as non-secret runtime configuration. Neither CP, Runner API, nor France VM may know or read it. Do not implement a second OpenCode GHA worker: use the existing worker path and verify it in stages below.
+
+## Ordered execution gates
+
+Run and record these gates in order. A passing later gate cannot replace evidence for an earlier boundary:
+
+1. **Direct GHA execution:** run a bounded synthetic task directly on the intended GHA execution path, without Control Plane, Runner API, or task queue. Verify the task workspace is separate from the runner/config checkout, the configured model responds, and the run reaches a terminal result with cleanup.
+2. **GHA worker API:** submit the same class of synthetic task directly to the existing authenticated GHA worker API, bypassing the Control Plane queue. Verify idempotent receipt, status/result retrieval, cancellation/reconciliation behavior, and that only the GHA worker reads `gha-env-config`.
+3. **Control Plane queue:** submit a user-shaped task through Telegram → CP task/queue → Cloudflare Runner API. Verify task/run/attempt correlation, result delivery, and queue cleanup.
+4. **Placement/failover:** with the previous gates passing, verify France success is primary; one GHA dispatch follows a typed pre-admission France refusal; France acceptance, timeout, lost response, and unknown outcome never launch a second worker.
 
 ## Preconditions
 
@@ -41,8 +50,9 @@ The live Cloudflare Runner sandbox currently pins execution to France and has no
 
 - Source/config audit of the deployed CP proves its only Agent Run destination is the Cloudflare Runner API; CP bindings/secrets contain no worker or launcher endpoint/credential.
 - Runner API deployment evidence proves Cloudflare Worker runtime and durable admission/status bindings.
-- A bounded authenticated component probe proves API admission, policy selection of the France worker, worker identity/region, and callback/result reconciliation for one stable attempt ID.
-- A deployed Telegram E2E proves one free-only request reaches the France worker and returns the terminal answer; correlated CP/Runner/worker revisions and task/run/attempt IDs are recorded.
-- Evidence proves France-first selection, one GHA dispatch only after an explicit pre-admission refusal, and no GHA dispatch after accepted/unknown France outcomes. Duplicate-submit and lost-response probes prove no duplicate execution. GHA worker evidence shows it alone reads the private GHA config repository; France, Runner API and CP have no config-repository binding.
+- Gate 1 records the exact GHA repository/workflow/revision, synthetic task ID, model, terminal answer, artifact/workspace boundary, and cleanup.
+- Gate 2 records the API endpoint/revision, idempotency key, accepted receipt, terminal result, cancellation/reconciliation probes, and isolated config-repository read evidence.
+- Gate 3 records the CP/Runner revisions and correlated task/run/attempt IDs, terminal Telegram delivery, and queue cleanup.
+- Gate 4 proves France-first selection, one GHA dispatch only after an explicit pre-admission refusal, and no GHA dispatch after accepted/unknown France outcomes. Duplicate-submit and lost-response probes prove no duplicate execution. France, Runner API and CP have no config-repository binding.
 - `mock-test` success is reported separately and is not evidence of worker selection or real agent execution.
 
