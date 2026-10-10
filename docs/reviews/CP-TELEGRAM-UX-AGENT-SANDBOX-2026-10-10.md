@@ -74,13 +74,18 @@ repository:
 The evidence means the launch had no usable credential to clone the private
 repository. A read-only GitHub API probe with the existing local trained-assist
 token also returned 404 for this personal-account repository. Runner API PR
-[#263](https://github.com/trained-assist/ai-agent-runner/pull/263) now adds a
-dedicated `TELEGRAM_UX_REPOSITORY_READ_TOKEN` Cloudflare secret and includes it
-only for this exact principal, profile, and repository in the encrypted launch
-payload. It is not persisted in plaintext Durable Object state or installed as a
-long-lived France VM environment variable. The deploy secret is optional so
-existing sandbox deployment remains possible while the credential is being
-created; live cloning remains blocked until the secret is configured.
+[#263](https://github.com/trained-assist/ai-agent-runner/pull/263) has merged as
+`05bf86988de5e5919c63d83114c38046375fe91e`. It adds a dedicated
+`TELEGRAM_UX_REPOSITORY_READ_TOKEN` Cloudflare secret and includes it only for
+this exact principal, profile, and repository in the encrypted launch payload.
+It is not persisted in plaintext Durable Object state or installed as a
+long-lived France VM environment variable. The secret is optional during
+deployment so the Worker can be upgraded while the credential is being created;
+live cloning remains blocked until the secret is configured. Sandbox deployment
+workflow [run 38039530858](https://github.com/trained-assist/ai-agent-runner/actions/runs/38039530858)
+succeeded. Public `/healthz` and `/version` probes returned HTTP 200; the Worker
+reports `placement=cloudflare-worker`, `executionWorker=eu-vm-agent-run`, and
+build SHA `05bf86988de5e5919c63d83114c38046375fe91e`.
 
 The required input is a fine-grained GitHub credential with Contents: read access
 to `vovalikessmoothy-png/cp-telegram-ux-runner-sandbox`, stored as
@@ -101,9 +106,9 @@ The reconciled values are:
 ## Remaining boundary
 
 The two quick answers, CP → mock Runner contract, France worker allowlist
-reconciliation, and CP/Runner readiness checks pass. Real agent execution remains
-blocked on the profile-scoped private-repository read credential and the Runner
-API PR #263 CI/deployment. The Telegram
+reconciliation, CP/Runner readiness checks, and Cloudflare Worker deployment
+pass. Real agent execution remains blocked on the profile-scoped
+private-repository read credential. The Telegram
 ingress and delivery harness remains paused pending the separate delivery-owner
 review of the earlier duplicate provider-message-ID evidence. The CP production
 target remains preview-only and is not connected to the Telegram bot.
