@@ -80,7 +80,7 @@ Org Project: **[Trained Assist — Migration](https://github.com/orgs/trained-as
 
 ## Agent Run API и execution worker
 
-Целевая цепочка: Cloudflare Control Plane → Serverless Runner API (Cloudflare Worker) → execution worker. Runner API владеет admission/placement и вызывает worker через свой adapter. Для обычного Telegram Agent Run worker по умолчанию — существующий worker во Франции. CP не хранит физические worker/launcher адреса и credentials, не вызывает VM/GHA напрямую; GHA не является скрытым fallback. Полная граница и проверяемые acceptance criteria заданы в [OPS-RUNNER-DEFAULT-01](scenarios/operations/SC-OPS-RUNNER-DEFAULT-01-serverless-to-france-worker.md).
+Целевая цепочка: Cloudflare Control Plane → Serverless Runner API (Cloudflare Worker) → France worker, затем GHA worker только при явном отказе France до admission. Runner API владеет admission/placement и вызывает worker через свой adapter. После receipt, timeout или unknown outcome повторный запуск на другом worker запрещён до reconcile. CP не хранит физические worker/launcher адреса и credentials и не вызывает VM/GHA напрямую. Private GHA config repository подключается только GHA worker; он не является workspace задачи. Полная граница и проверяемые acceptance criteria заданы в [OPS-RUNNER-DEFAULT-01](scenarios/operations/SC-OPS-RUNNER-DEFAULT-01-serverless-to-france-worker.md).
 
 Реализационный статус, live endpoints, source/deployed revisions и блокеры ведутся в Environment Contracts owning repositories и их implementation PRs. Наличие целевого контракта здесь не означает, что Serverless Runner API или France worker уже развёрнуты и приняли E2E. Датированные статические срезы 03–06.10 удалены: их evidence остаётся в связанных issues/PR и Git history.
 

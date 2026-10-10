@@ -46,7 +46,7 @@ Contract/fixture checks дешёвые и воспроизводимые. Real e
 
 ### Live Telegram test lanes
 
-Three Telegram ingress lanes exist. A bot that responds to `/health` is only an ingress check: full E2E readiness requires a working CP route, Cloudflare Runner API admission, selected France worker execution, persistence, and Telegram delivery. CP binds only the Cloudflare Runner API; never put a VM, GHA gateway, or launcher URL/credential in CP config. Current sandbox lane setup is tracked in [sandbox3 #193](https://github.com/trained-assist/trained-agent-architecture/issues/193). Use the acceptance criteria in [OPS-RUNNER-DEFAULT-01](scenarios/operations/SC-OPS-RUNNER-DEFAULT-01-serverless-to-france-worker.md) for the execution path. For a normal Telegram test, use the allowlisted account and bot without supplying a principal/profile in chat.
+Three Telegram ingress lanes exist. A bot that responds to `/health` is only an ingress check: full E2E readiness requires a working CP route, Cloudflare Runner API admission, France-first execution or a justified GHA fallback, persistence, and Telegram delivery. CP binds only the Cloudflare Runner API; never put a VM, GHA gateway, or launcher URL/credential in CP config. Current sandbox lane setup is tracked in [sandbox3 #193](https://github.com/trained-assist/trained-agent-architecture/issues/193). Use the acceptance criteria in [OPS-RUNNER-DEFAULT-01](scenarios/operations/SC-OPS-RUNNER-DEFAULT-01-serverless-to-france-worker.md) for the execution path. For a normal Telegram test, use the allowlisted account and bot without supplying a principal/profile in chat.
 
 | Lane | Test bot / gateway Worker | Config | Control Plane | Downstream isolation |
 |---|---|---|---|---|
@@ -76,7 +76,7 @@ Cloudflare's Tail API is an administrative API and requires a Cloudflare API tok
 
 | Средство | Метод | Construction/проверка |
 |---|---|---|
-| Runner API / execution worker | Cloudflare Worker API + existing France execution worker, with isolated sandbox principals and worker namespace | Reproducible API/worker setup, authenticated dispatch, OS/process/resource boundary, two synthetic profiles; CP binds only the Worker API |
+| Runner API / execution workers | Cloudflare Worker API + France primary and GHA backup, with isolated sandbox principals and worker namespace | Reproducible API/worker setup, authenticated dispatch, explicit pre-admission-only failover, OS/process/resource boundary, two synthetic profiles; CP binds only the Worker API; GHA config repo is private to the GHA worker |
 | Free LLM | Собственный локальный stub (fixed response/fault provider) + actual free profile smoke | Allowlist/quota, no paid fallback, rate limit/auth/errors. Бесплатность не значит unlimited |
 | Cloudflare | Separate Workers/routes и distinct KV/D1/R2 bindings | Setup/recreate/cleanup test resources; не наследовать production bindings |
 | Object storage | S3-compatible local test backend и separate cloud bucket smoke | CORS, signed URLs expiry, multipart/resume/abort, checksums/TTL |
@@ -211,7 +211,7 @@ Host-manifest хранит различающиеся параметры маш�
 - **Запускаем:** Serverless Runner API как Cloudflare Worker, durable admission/state binding и внешний test client (SDK/CLI fixture); API dispatch-ит на France execution worker. Control Plane обращается только к API service binding и не хранит worker URL/credential. Выбор движка и worker — trusted policy API.
 - **Сбои:** duplicate submit/conflict, reconnect, crash API/worker, late event, invalid keys, concurrency caps, restart с принятым request.
 - **Результат:** durable receipt/result и replay по sequence, один dispatch owner; всё проходит без Telegram/Web.
-- **Bindings:** sandbox API keys/scopes для test principals (C13), hash-only registry/policy и worker-dispatch credentials на стороне API/worker; отдельные Cloudflare Worker/Durable Object bindings и deploy-доступ Cloudflare класса `CF_API_TOKEN`/wrangler. GHA workflow/endpoint не используется как неявный execution fallback.
+- **Bindings:** sandbox API keys/scopes для test principals (C13), hash-only registry/policy и worker-dispatch credentials на стороне API/worker; отдельные Cloudflare Worker/Durable Object bindings и deploy-доступ Cloudflare класса `CF_API_TOKEN`/wrangler. GHA backup управляется только Runner API placement policy при доказанном отказе France до admission; private GHA config repository/read credential доступны только GHA worker.
 - **Logs:** request receipt/idempotency/auth scope, dispatch/run state, event sequence/replay, reconnect/cancel и client-visible outcome. Profile/principal сохраняется и без folder; secret/API key не логируется.
 - **Статус:** [эпик E2 #18](https://github.com/trained-assist/trained-agent-architecture/issues/18), [P-DB #32](https://github.com/trained-assist/trained-agent-architecture/issues/32).
 

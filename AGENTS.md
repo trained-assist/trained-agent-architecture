@@ -4,7 +4,7 @@
 
 Google Cloud VM `alesa-personal-assistent/us-central1-a/alesa-vm` (instance ID `7077705867419574607`) выводится из эксплуатации. Новые процессы, cron, agent runs, sandbox и зависимости на ней запрещены. Доступ допустим только для инвентаризации, экспорта, сверки, завершения прежних операций и отключения. Для Agent Run используйте serverless Cloudflare Runner API; существующая VM во Франции — целевой execution worker, не API host. Другие задачи на французской VM требуют подтверждённой необходимости постоянного процесса/локального ресурса. Остальные сервисы Google разрешены. Координация и статус: https://github.com/trained-assist/trained-agent-architecture/issues/145.
 
-Для Agent Run Serverless Runner API — Cloudflare Worker; Control Plane вызывает только этот API. Execution worker (по умолчанию для обычных Telegram Agent Runs — существующий worker во Франции) вызывается Runner API. CP не подключается напрямую к VM, GHA или другому launcher; GHA не является скрытым fallback. См. `ARCHITECTURE.md` §0/§4.6 и `SERVERLESS-AGENT-API.md`.
+Для Agent Run Serverless Runner API — Cloudflare Worker; Control Plane вызывает только этот API. Runner API выбирает France worker первым, затем может выбрать GHA worker только при доказанном отказе до admission; после принятия или неизвестного исхода попытки второй запуск запрещён. CP не подключается напрямую к VM, GHA или другому launcher. Изолированный GHA config repo доступен только GHA worker и не является task workspace для CP, Runner API или France VM. См. `ARCHITECTURE.md` §0/§4.6 и `SERVERLESS-AGENT-API.md`.
 
 ## Local credentials
 
