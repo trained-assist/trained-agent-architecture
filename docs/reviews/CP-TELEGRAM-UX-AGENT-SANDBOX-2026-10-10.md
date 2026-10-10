@@ -44,6 +44,20 @@ endpoint returned 401. The production config still has
 this verifies deployment/auth boundaries only and does not exercise a user task
 or connect the Telegram bot.
 
+## Separate sandbox3 mock lane — PASS after exact-SHA redeploy
+
+The isolated CP sandbox3 mock probe first failed closed before admission because
+the deployed Worker SHA (`b56d1b5`) differed from the protected-main source SHA
+(`d3b4148`); run [38041003753](https://github.com/trained-assist/trained-assist-control-plane/actions/runs/38041003753)
+created no task or Runner admission. The approved disabled-sandbox deploy then
+updated only `trained-assist-cp-sandbox3` from protected main and passed exact-SHA
+liveness in [run 38041064585](https://github.com/trained-assist/trained-assist-control-plane/actions/runs/38041064585).
+The retry passed in [run 38041113888](https://github.com/trained-assist/trained-assist-control-plane/actions/runs/38041113888):
+the mock contract returned HTTP 200 and `succeeded / pong`, created no CP task,
+called no France Worker/model, and the scoped cleanup found zero tagged tasks.
+This is an isolated mock-only contract pass; it does not prove real-agent or
+Telegram execution.
+
 ## Agent execution scenario — allowlists fixed; repository credential still missing
 
 The first single-attempt canary confirmed the France worker's preflight allowlists
