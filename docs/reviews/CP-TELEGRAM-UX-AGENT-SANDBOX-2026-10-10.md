@@ -66,6 +66,12 @@ to two; the VM remained `eu-vm2-sandbox` on source
 reservations. A subsequent CP preflight passed in
 [run 38038745344](https://github.com/trained-assist/trained-assist-control-plane/actions/runs/38038745344).
 
+The latest read-only sandbox preflight also passed in
+[run 38040491635](https://github.com/trained-assist/trained-assist-control-plane/actions/runs/38040491635):
+authenticated lane readiness and profile health passed, CP had zero nonterminal
+tasks, and no Runner admission or CP task was created. Its scoped sandbox3
+cleanup found zero tagged tasks and deleted none.
+
 The next agent canary then reached the France worker, which accepted exactly one
 run and failed before starting the model while cloning the bound private test
 repository:
