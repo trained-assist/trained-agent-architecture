@@ -20,6 +20,14 @@ Run and record these gates in order. A passing later gate cannot replace evidenc
 3. **Control Plane queue:** submit a user-shaped task through Telegram → CP task/queue → Cloudflare Runner API. Verify task/run/attempt correlation, result delivery, and queue cleanup.
 4. **Placement/failover:** with the previous gates passing, verify France success is primary; one GHA dispatch follows a typed pre-admission France refusal; France acceptance, timeout, lost response, and unknown outcome never launch a second worker.
 
+## Current sandbox evidence (2026-10-10)
+
+- CP sandbox3 is deployed at `a853df9d8a8a4b8d45d5098a7c5c3077fd357260`; its `RUNNER_API_SERVICE` binding and URL target the dedicated Cloudflare Runner API Worker `trained-assist-runner-api-sandbox3`.
+- The live Runner API health response reports Cloudflare Worker placement and `eu-vm-agent-run`. Its API admission and France execution are not yet verified for the sandbox3 profile.
+- `trained-assist-runner-api-cp-sandbox3` is a separate mock-only endpoint for the CP contract probe. That probe returned `pong` with no CP task and no model/worker call. It is not evidence for this scenario's main flow.
+- Read-only sandbox3 preflight confirms the CP D1/Workflow and Telegram route are isolated and empty. The three execution flags remain disabled. No real Telegram request was sent; bounded allowance, live Runner credentials/admission, France execution, persistence and terminal delivery remain acceptance gates.
+- Cross-repository checkpoint and workflow evidence: [architecture #185](https://github.com/trained-assist/trained-agent-architecture/issues/185), [CP #159](https://github.com/trained-assist/trained-assist-control-plane/issues/159), [CP PR #218](https://github.com/trained-assist/trained-assist-control-plane/pull/218), [CP PR #219](https://github.com/trained-assist/trained-assist-control-plane/pull/219).
+
 ## Preconditions
 
 1. The Runner API is deployed as a Cloudflare Worker with durable receipt/admission state and authenticated worker callbacks.
