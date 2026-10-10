@@ -86,6 +86,21 @@ authenticated lane readiness and profile health passed, CP had zero nonterminal
 tasks, and no Runner admission or CP task was created. Its scoped sandbox3
 cleanup found zero tagged tasks and deleted none.
 
+The new CI-gated canonical quick-answer smoke passed after CP PR
+[#215](https://github.com/trained-assist/trained-assist-control-plane/pull/215)
+merged as `e0ade7a003864886ada0d5a3e4b7c95ba97ba019`. Workflow
+[run 38041643090](https://github.com/trained-assist/trained-assist-control-plane/actions/runs/38041643090)
+verified the deployed canonical sandbox build SHA exactly as
+`add23c120527b27e7a6d891db9a915bcf2a5e211` before intake, then ran both
+synthetic quick answers. `system_health` and `catalog.brief` each reached
+terminal `done`, persisted their answer, and replayed the same intake task and
+route decision; neither started an engine run nor sent Telegram delivery. The
+health answer used its verified deterministic fallback because the optional
+communication writer failed (`writer_failed`); the capabilities answer used
+the communication writer successfully. The sanitized artifact contains no
+answer text or credentials. This confirms the CP quick-answer path only; it
+does not clear the private-repository credential blocker for real agent runs.
+
 The next agent canary then reached the France worker, which accepted exactly one
 run and failed before starting the model while cloning the bound private test
 repository:
