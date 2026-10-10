@@ -34,6 +34,16 @@ The first-useful-reply measurements come from the persisted routing decisions;
 the full smoke protocol took 21.4 s and 22.1 s respectively. These are bounded
 free-LLM quick-answer checks, not Runner execution or channel-delivery evidence.
 
+## Production preview smoke — PASS, user route remains disabled
+
+The deployed CP production Worker passed the same protected liveness smoke at
+SHA `d3b414880a0796abbe534d037feb44759d038ab3`: `/healthz` returned healthy with
+the expected build SHA, and an anonymous request to the private catalogue
+endpoint returned 401. The production config still has
+`PREVIEW_ONLY=true`, `PILOT_ENABLED=false`, and `ROUTER_AGENT_ALLOWED=false`;
+this verifies deployment/auth boundaries only and does not exercise a user task
+or connect the Telegram bot.
+
 ## Agent execution scenario — allowlists fixed; repository credential still missing
 
 The first single-attempt canary confirmed the France worker's preflight allowlists
@@ -93,7 +103,8 @@ to `vovalikessmoothy-png/cp-telegram-ux-runner-sandbox`, stored as
 `trained-assist/ai-agent-runner`. After the PR merges, the normal sandbox deploy
 will sync it to the Cloudflare Worker secret binding. The VM and agent currently
 share a Unix service identity, so a VM-wide Git token would cross the per-profile
-boundary.
+boundary. A names-only inventory on 2026-10-10 confirmed this environment secret
+is not present yet; no secret values were read.
 
 The reconciled values are:
 
