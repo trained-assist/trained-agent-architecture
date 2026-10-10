@@ -117,6 +117,13 @@ The earlier single writer fallback did not reproduce. CP PR
 also made the smoke artifact preserve only allowlisted writer failure codes
 while redacting arbitrary error text.
 
+A final read-only preflight after both acceptance runs passed in
+[run 38042665016](https://github.com/trained-assist/trained-assist-control-plane/actions/runs/38042665016):
+the Worker remained pinned to `e0ade7a003864886ada0d5a3e4b7c95ba97ba019`,
+pending migration count and nonterminal CP task count were both zero, and lane
+readiness/profile health passed. No Runner admission was made; sandbox3 cleanup
+again found and deleted no tagged task.
+
 The new CI-gated canonical quick-answer smoke passed after CP PR
 [#215](https://github.com/trained-assist/trained-assist-control-plane/pull/215)
 merged as `e0ade7a003864886ada0d5a3e4b7c95ba97ba019`. Workflow
