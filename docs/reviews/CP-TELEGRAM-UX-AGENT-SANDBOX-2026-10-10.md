@@ -34,30 +34,63 @@ The first-useful-reply measurements come from the persisted routing decisions;
 the full smoke protocol took 21.4 s and 22.1 s respectively. These are bounded
 free-LLM quick-answer checks, not Runner execution or channel-delivery evidence.
 
-## Agent execution scenario — BLOCKED by France worker preflight
+## Agent execution scenario — allowlists fixed; repository credential still missing
 
-A single synthetic request asked the agent to return `READY` without tools,
-external services or file changes. CP selected the agent route and issued one
-continuation. That single Runner attempt terminated before the France worker
-accepted it:
+The first single-attempt canary confirmed the France worker's preflight allowlists
+were missing the Telegram UX repository and callback origin. The `repository` and
+`resultUrl` validation paths mapped to the France worker's exact checks
+(`repository is not approved on this host` and
+`resultUrl is not an approved central API callback URL`). No run body or secret
+values were exposed.
 
-- CP task: `ut-c97ff9fb3e2458d240b2`.
-- Runner API response: terminal `WORKER_INVALID_REQUEST`,
-  `exitReason=preflight_refused`, HTTP 400.
-- Safe refusal evidence identifies rejected fields `repository` and
-  `resultUrl`; the worker did not accept the run. No artifacts or deliveries
-  were created, and no Telegram message was sent.
-- The route was called once. No retry or replacement task was submitted.
-- CP readiness was rechecked afterward: zero nonterminal tasks remained.
+Those two entries were reconciled additively on the existing France VM worker by
+CP PRs [#212](https://github.com/trained-assist/trained-assist-control-plane/pull/212)
+and [#214](https://github.com/trained-assist/trained-assist-control-plane/pull/214).
+The workflow first required zero active runs/reservations, retained the existing
+sandbox3 entries, atomically updated the mode-0600 VM environment file, restarted
+the same worker release with rollback on failed readiness, and emitted no secret
+values. Evidence: [workflow run 38038714434](https://github.com/trained-assist/trained-assist-control-plane/actions/runs/38038714434).
+It reported one prior repository entry and one callback origin, each increased
+to two; the VM remained `eu-vm2-sandbox` on source
+`dcca4e4b225ad2489748946b5afec6106b337b9d`, with zero active runs and
+reservations. A subsequent CP preflight passed in
+[run 38038745344](https://github.com/trained-assist/trained-assist-control-plane/actions/runs/38038745344).
 
-The refusal is confirmed by matching the sanitized rejected paths to the deployed
-France worker's validation contract: `repository` is refused when its full name is
-absent from `VM_WORKER_ALLOWED_REPOSITORIES`, and `resultUrl` is refused when its
-origin is absent from `VM_WORKER_ALLOWED_CALLBACK_ORIGINS`. The contract's exact
-validation messages are `repository is not approved on this host` and
-`resultUrl is not an approved central API callback URL`. No run body or secret
-values were exposed in CP evidence. Before another execution attempt, reconcile
-these exact sandbox values on the France worker while preserving sandbox3:
+The next agent canary then reached the France worker, which accepted exactly one
+run and failed before starting the model while cloning the bound private test
+repository:
+
+- CP task: `ut-f1fdecb858ccdc04b88c`.
+- CP selected `route=agent`, issued one continuation, and recorded one Runner run.
+- Terminal result: `REPOSITORY_UNAVAILABLE`,
+  `exitReason=preflight_refused`, failure class `preflight`.
+- The sanitized worker summary says Git could not read a username for
+  `https://github.com`; the run did not start the agent. No artifacts, deliveries,
+  or Telegram messages were created.
+- Exactly one `/route` admission was made; no retry or replacement task was
+  submitted. CP readiness afterward returned HTTP 200 with zero nonterminal tasks,
+  and Runner profile health remained `reachable`.
+
+The evidence means the launch had no usable credential to clone the private
+repository. A read-only GitHub API probe with the existing local trained-assist
+token also returned 404 for this personal-account repository. Runner API PR
+[#263](https://github.com/trained-assist/ai-agent-runner/pull/263) now adds a
+dedicated `TELEGRAM_UX_REPOSITORY_READ_TOKEN` Cloudflare secret and includes it
+only for this exact principal, profile, and repository in the encrypted launch
+payload. It is not persisted in plaintext Durable Object state or installed as a
+long-lived France VM environment variable. The deploy secret is optional so
+existing sandbox deployment remains possible while the credential is being
+created; live cloning remains blocked until the secret is configured.
+
+The required input is a fine-grained GitHub credential with Contents: read access
+to `vovalikessmoothy-png/cp-telegram-ux-runner-sandbox`, stored as
+`TELEGRAM_UX_REPOSITORY_READ_TOKEN` in the `sandbox` environment of
+`trained-assist/ai-agent-runner`. After the PR merges, the normal sandbox deploy
+will sync it to the Cloudflare Worker secret binding. The VM and agent currently
+share a Unix service identity, so a VM-wide Git token would cross the per-profile
+boundary.
+
+The reconciled values are:
 
 - Repository: `vovalikessmoothy-png/cp-telegram-ux-runner-sandbox`.
 - Callback origin:
@@ -65,18 +98,12 @@ these exact sandbox values on the France worker while preserving sandbox3:
 - Existing sandbox3 repository/origin entries must remain enabled; the France
   VM serves both isolated sandbox Runner API lanes.
 
-The local France SSH aliases/keys available for this session do not authenticate
-to the pinned VM2 host, so its live environment file has not been read or changed.
-Do not infer that the values are absent from the VM solely from this refusal;
-the failed fields prove they were rejected, while only authenticated host
-inspection can show its current allowlist values. The terminal task was
-reconciled and CP readiness returned zero nonterminal tasks.
-
 ## Remaining boundary
 
-The two quick answers and CP → mock Runner contract pass. Real France execution
-for the Telegram UX profile remains blocked on the preflight configuration
-above. The Telegram ingress and delivery harness remains paused pending the
-separate delivery-owner review of the earlier duplicate provider-message-ID
-evidence. The CP production target remains preview-only and is not connected to
-the Telegram bot.
+The two quick answers, CP → mock Runner contract, France worker allowlist
+reconciliation, and CP/Runner readiness checks pass. Real agent execution remains
+blocked on the profile-scoped private-repository read credential and the Runner
+API PR #263 CI/deployment. The Telegram
+ingress and delivery harness remains paused pending the separate delivery-owner
+review of the earlier duplicate provider-message-ID evidence. The CP production
+target remains preview-only and is not connected to the Telegram bot.
