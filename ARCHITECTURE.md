@@ -19,7 +19,7 @@
 
 Управляющий слой выбран: Cloudflare Workflows + D1; live cloud smoke завершён 01.10.2026 (пилот P-DB, PR #93). Что открыто: защита терминальных состояний (#90), latency/version contract при деплое (#91/#92), регион хранения данных RU/EU и режим бюджета при недоступном учёте (раздел 13). Выбор платформы не означает готовность implementation control plane.
 
-**Целевая граница Agent Run — уточнена владельцем 09.10.2026:** Control Plane работает на Cloudflare Workflows + D1 и вызывает только Serverless Runner API, реализованный как Cloudflare Worker. Runner API выполняет admission, применяет engine/placement policy и обращается к execution worker через свой worker adapter. Для обычного Agent Run из Telegram worker по умолчанию — существующий worker во Франции. CP не хранит адреса/ключи execution workers и не вызывает напрямую VM, GHA gateway/workflow или другой launcher. Runner API Worker не запускает agent process: он принимает и авторизует запрос, записывает durable receipt/state в Cloudflare storage и координирует асинхронное исполнение. Недоступность выбранного worker не разрешает скрытый GHA fallback; API возвращает/reconciles наблюдаемое состояние согласно Runner contract.
+**Целевая граница Agent Run — уточнена владельцем 10.10.2026:** Control Plane работает на Cloudflare Workflows + D1 и вызывает только Serverless Runner API, реализованный как Cloudflare Worker. Runner API выполняет admission и placement policy. Для обычного Agent Run из Telegram сначала используется существующий worker во Франции; GHA — явный резерв только после подтверждённого отказа до admission, когда worker не начал исполнение. После receipt, timeout или неизвестного исхода API не запускает дубликат на другом worker, а сверяет исходную попытку. CP не хранит адреса/ключи execution workers и не вызывает напрямую VM, GHA gateway/workflow или другой launcher. Runner API Worker не запускает agent process: он принимает и авторизует запрос, записывает durable receipt/state в Cloudflare storage и координирует исполнение. Изолированный private GHA config repo подключает только GHA worker; CP, Runner API и France VM не клонируют и не читают его, а config repo не подменяет пользовательский workspace.
 
 ## 1. Цель и границы
 
@@ -43,8 +43,10 @@ flowchart TD
   E <--> X["HH / CRM / другие сервисы"]
   T --> RA["Serverless Runner API: Cloudflare Worker"]
   RA --> EU["Execution workers: Europe (default France worker for Telegram Agent Runs)"]
+  RA -. "pre-admission refusal only" .-> GHA["GHA backup worker"]
   RA --> RU["Execution workers: Russia, when policy permits"]
   EU --> RA
+  GHA --> RA
   RU --> RA
   RA --> T
   T --> G
@@ -187,7 +189,7 @@ D1 использует тот же диалект SQLite, что и прод, �
 
 Статус: **Принято**, уточнение владельца 30.09.2026.
 
-Execution worker — заменяемый исполнитель за Serverless Runner API. В целевом Telegram пути Cloudflare Runner API выбирает существующий французский worker по умолчанию. API — Cloudflare Worker; он не размещается на execution VM и не запускает agent process. Control Plane/Task Store владеет пользовательской задачей, бюджетом и решением о продолжении; Runner API владеет admission/receipt и placement исполнения; execution worker владеет clean room, process tree и локальными ресурсами. CP не вызывает execution worker напрямую и не знает адресов/секретов VM или launcher. Потеря связи, завершение процесса и потеря временного диска — три разных события. Потеря worker отражается через Runner API и не переключается молча на GHA.
+Execution worker — заменяемый исполнитель за Serverless Runner API. В целевом Telegram пути Cloudflare Runner API сначала выбирает существующий французский worker; GHA worker допускается как резерв только после явного отказа France до admission. После принятия, timeout или неизвестного результата Runner API сверяет тот же attempt и не запускает второй worker. API — Cloudflare Worker; он не размещается на execution VM и не запускает agent process. Control Plane/Task Store владеет пользовательской задачей, бюджетом и решением о продолжении; Runner API владеет admission/receipt, attempt и placement исполнения; execution worker владеет clean room, process tree и локальными ресурсами. CP не вызывает execution worker напрямую и не знает адресов/секретов VM или launcher. Private GHA config repository читается только GHA worker из его собственного execution/deployment контекста; France VM и Runner API не получают его URL, credentials или contents. Потеря связи, завершение процесса и потеря временного диска — три разных события.
 
 - **Потеря связи не означает смерть процесса.** Отсутствие heartbeat даёт `connection_lost` (исход исполнения неизвестен), уведомление в Reporting и ожидание восстановления связи либо явного сигнала на перезапуск. Ни timeout, ни истечение lease сами по себе не запускают агента повторно. Workflow ждёт без удержания вычислительного процесса.
 - **Перезапуск — отдельное решение.** Сигнал содержит источник/полномочия и дополнительные инструкции; например «разбей на шаги и сохраняй результат каждого шага». Перед запуском проверяем предыдущий процесс, сохранённые данные и неизвестные внешние действия. Если прежний процесс может работать, нужен подтверждённый stop или действенный отзыв его прав на запись/внешние действия; смена generation лишь для результатов этого не обеспечивает.

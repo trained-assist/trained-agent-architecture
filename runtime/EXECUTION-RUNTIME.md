@@ -12,7 +12,7 @@
 
 Runner API — serverless Cloudflare Worker: он авторизует admission, сохраняет durable receipt/status и выбирает execution worker по trusted policy. API Worker не размещается на execution VM и не запускает длительный agent process.
 
-Для обычного Telegram Agent Run default execution worker — существующий worker во Франции. Он создаёт clean room, запускает engine, наблюдает процесс, сохраняет разрешённые результаты и очищает ephemeral ресурсы. Runner API обращается к нему через worker adapter; CP обращается только к Runner API и не получает физические адреса/секреты worker или launcher. GHA не является автоматическим fallback.
+Для обычного Telegram Agent Run первым execution worker является существующий worker во Франции. Он создаёт clean room, запускает engine, наблюдает процесс, сохраняет разрешённые результаты и очищает ephemeral ресурсы. Если France отказывает до admission, Runner API может передать ту же ещё не запущенную попытку GHA worker. После admission или при неизвестном исходе нужен reconcile, второй запуск запрещён. CP обращается только к Runner API и не получает физические адреса/секреты worker или launcher. Private GHA config repo используется только GHA worker; France VM, Runner API и CP не клонируют его.
 
 Состав deployment, endpoint и live readiness фиксируются в Environment Contract owning repository и issue evidence. Этот документ задаёт target boundary, а не утверждает, что конкретная версия API/worker развёрнута или принята.
 
