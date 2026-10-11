@@ -113,6 +113,8 @@ Live sandbox drill запускается только в отдельном dec
 
 Пример текущего раздельного назначения: `@probability_cat_bot` использует `trained-assist-tg-ux-sandbox → trained-assist-cp-telegram-ux-v1-sandbox → trained-assist-runner-api-telegram-ux-v1-sandbox`; текущий основной E2E закреплён за `@ptichka_status_bot`. Это пример inventory, а не универсальное правило о свободности bot username.
 
+Repository обязан публиковать versioned, machine-readable sandbox registry. Запись содержит `laneId`, external entrypoint, gateway Worker, CP Worker, Runner Worker, execution profile, shared-state groups, occupancy probe и reset procedure. Discovery сначала читает registry, затем сверяет перечисленные Workers с read-only provider list/settings; новый Worker без записи помечается `unclassified` и не выбирается автоматически. Так агент может получить полный список линий, а не угадывать его по именам Workers.
+
 ## Порядок внедрения
 
 1. Составить inventory по каждому сервису и отметить `implicit` значения с owning issue.
