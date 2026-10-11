@@ -1,0 +1,27 @@
+name: Sandbox registry drift
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '17 5 * * *'
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Validate registry shape
+        run: node tools/check-sandbox-lanes.mjs
+      - name: Compare registry with Cloudflare Workers
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
+        run: node tools/discover-sandbox-lanes.mjs > sandbox-lanes.json
+      - name: Reject missing declared Workers
+        run: |
+          node --input-type=module -e 'import x from "./sandbox-lanes.json" with { type: "json" }; if (x.lanes.some(l => l.status !== "known")) process.exit(1); console.log(JSON.stringify({unclassifiedWorkers:x.unclassifiedWorkers}));'

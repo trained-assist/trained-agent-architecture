@@ -2,7 +2,19 @@
 
 ## GCP VM exit
 
-Google Cloud VM `alesa-personal-assistent/us-central1-a/alesa-vm` (instance ID `7077705867419574607`) выводится из эксплуатации. Новые процессы, cron, agent runs, sandbox и зависимости на ней запрещены. Доступ допустим только для инвентаризации, экспорта, сверки, завершения прежних операций и отключения. По умолчанию используйте serverless и собственный Agent Run API; существующую VM во Франции — только при подтверждённой необходимости постоянного процесса или локального ресурса. Остальные сервисы Google разрешены. Координация и статус: https://github.com/trained-assist/trained-agent-architecture/issues/145.
+Google Cloud VM `alesa-personal-assistent/us-central1-a/alesa-vm` (instance ID `7077705867419574607`) выводится из эксплуатации. Новые процессы, cron, agent runs, sandbox и зависимости на ней запрещены. Доступ допустим только для инвентаризации, экспорта, сверки, завершения прежних операций и отключения. Для Agent Run используйте serverless Cloudflare Runner API; существующая VM во Франции — целевой execution worker, не API host. Другие задачи на французской VM требуют подтверждённой необходимости постоянного процесса/локального ресурса. Остальные сервисы Google разрешены. Координация и статус: https://github.com/trained-assist/trained-agent-architecture/issues/145.
+
+Для Agent Run Serverless Runner API — Cloudflare Worker; Control Plane вызывает только этот API. Runner API выбирает France worker первым, затем может выбрать GHA worker только при доказанном отказе до admission; после принятия или неизвестного исхода попытки второй запуск запрещён. CP не подключается напрямую к VM, GHA или другому launcher. Изолированный GHA config repo доступен только GHA worker и не является task workspace для CP, Runner API или France VM. См. `ARCHITECTURE.md` §0/§4.6 и `SERVERLESS-AGENT-API.md`.
+
+## Local credentials
+
+The Cloudflare API token for trained-assist sandbox work is stored in the macOS login Keychain as a generic password:
+
+- Service (`svce`): `cloudflare.com`
+- Account (`acct`): `trained-assist`
+- Keychain item name: `Trained Assist Cloudflare Sandbox API Token`
+
+Check that the item exists with `security find-generic-password -s 'cloudflare.com' -a 'trained-assist'`. Retrieve it only when needed for Cloudflare operations. The token is secret: never print it in logs or responses, and never add it to repository files.
 
 Start with README.md and the generated [REPO-MAP.md](https://github.com/trained-assist/trained-agent-architecture/blob/repo-context/REPO-MAP.md).
 Check manifest.json sourceSha against the revision you are studying; for an unmerged PR, use its Repository context Actions artifact.

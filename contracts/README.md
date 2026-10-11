@@ -2,6 +2,8 @@
 
 План безопасного переноса Recruiting и CRM вертикальными срезами, golden fixtures и слоями проверок: [C14 Migration Playbook](C14-MIGRATION-PLAYBOOK.md).
 Сценарии пользователя, сквозной профильный контекст и acceptance criteria: [Connected App User Scenarios](CONNECTED-APP-USER-SCENARIOS.md).
+Предлагаемый контракт явной конфигурации, secrets/bindings и пяти операций восстановления: [Configuration and Recovery Contract](CONFIGURATION-RECOVERY-CONTRACT.md).
+Реестр Telegram sandbox-линий для автоматического discovery: [Sandbox Lanes](SANDBOX-LANES.json).
 
 Статус: **C01/C02/C03 приняты 02.10.2026** как основной контракт взаимодействия каналов с задачами — логические границы, идентификаторы, смысл квитанции, адресация команд, приёмка. Остальные контракты — предложение для согласования · 30.09.2026. Это логические границы; пути API ниже иллюстративны и ещё не утверждены. Раздел не объявляет текущий wire protocol заменённым.
 
@@ -61,7 +63,7 @@ gtdId opt-in только при явном completion control/конкретн�
 | C01 | Gateway/API → Orchestrator | Надёжно принять нормализованный input один раз по requestId; выдать receipt | Orchestrator после durable ACK; gateway до него | A01/A02 |
 | C02 | Orchestrator → Gateway/Web/API | Доставлять progress/result/error с адресом и порядком; replay после переподключения | Result/event store и delivery outbox | A01/A05/A11 |
 | C03 | Gateway/Web/API → Orchestrator | Stop, supplement и status адресуют конкретную работу; не затрагивают соседние задачи | Orchestrator | A01/A02/A08 |
-| C04 | Scheduler/Router → Execution runner | Разместить и выполнить одну attempt под проверенным lease и clean room policy | Control plane владеет task/lease; runner локальным процессом | A02/A03/A06/A13 |
+| C04 | Control Plane → Serverless Runner API → Execution worker | Durable admission одной attempt, trusted placement и выполнение под проверенным lease/clean room policy | Control plane владеет task/budget/lease; Runner API — admission receipt/placement; worker — process/clean room | A02/A03/A06/A13 |
 | C05 | Runner ↔ Profile/Artifact store | Загрузить snapshot; безопасно commit/export результат; очистить после подтверждения | Storage владеет версиями; run владеет временными данными | A04/A05 |
 | C06 | Runner → Tool broker/domain service | Выполнить разрешённое действие с правильным principal; сохранить outcome мутации | Domain service владеет предметным состоянием | A03/A07/A12 |
 | C07 | Tool/Runner → Credential broker | Разрешить credential по consumer/scope/региону без скрытого выбора аккаунта | Broker владеет secrets/refresh/rotation | A12 |
@@ -163,11 +165,11 @@ Command: `commandId, principalId, targetUserTaskId/sessionId, conversationRef?, 
 
 Runner — исполнитель attempt, а не самостоятельный планировщик задач. Команды условно `startAttempt / cancelAttempt / getAttempt / reconcile`; events — claimed, materialized, started, heartbeat, exited, export_ready, cleanup_done.
 
-RunSpec: `userTaskId, runId, attemptId, ownerGeneration, lease, principalRef, inputSnapshotRef, engine, resolvedExecutionPolicy, regionConstraints, resourceLimits, artifactPolicy, credentialRefs, toolCapabilities, deadline, traceContext`. CLI binary/config/provider release и разрешённые tools фиксируются доверенным host resolution; агент не выбирает host roots и не подделывает binding.
+RunSpec: `userTaskId, runId, attemptId, ownerGeneration, lease, principalRef, inputSnapshotRef, engine, resolvedExecutionPolicy, regionConstraints, resourceLimits, artifactPolicy, credentialRefs, toolCapabilities, deadline, traceContext`. `engine` обозначает доверенное logical requirement/policy ref; CP не передаёт физический engine alias, worker ID/URL или launcher. Runner API разрешает конкретный engine и worker по trusted placement. CLI binary/config/provider release и разрешённые tools фиксируются доверенным host resolution; агент не выбирает host roots и не подделывает binding.
 
-Router сначала исключает недопустимые зоны, затем проверяет capability/health/capacity. Claude/Codex — вне RU; OpenCode проверяется ещё по модели и tool requirements. Каждый fallback повторно проходит policy. Требование RU-only tool + EU-only engine решается отдельным tool worker, только если data policy допускает такой обмен; иначе placement conflict.
+Control Plane Router определяет тип работы и передаёт разрешённые требования/ограничения, но не выбирает физический worker/launcher. Serverless Runner API проверяет trusted engine/worker policy, доступность и capacity и выбирает исполнителя. Claude/Codex — вне RU; OpenCode дополнительно проверяется по модели и tool requirements. Любой fallback исполняется только Runner API после повторной policy-проверки; France→GHA допустим только при доказанном отказе до admission, иначе требуется reconcile без второго запуска. Требование RU-only tool + EU-only engine решается отдельным tool worker, только если data policy допускает такой обмен; иначе placement conflict.
 
-Control plane владеет task, budget, lease и acceptance. Runner владеет clean room/process tree, heartbeat, локальной областью и cleanup. После lease expiry новый owner получает generation; старые callback/result commits отвергаются. Сам fencing не предотвращает уже выполняемый сторонний эффект: tools дополнительно используют idempotency/reconciliation.
+Control Plane владеет task, budget, lease и acceptance. Он вызывает только Serverless Runner API; у него нет worker URL, VM/launcher credentials или прямого spawn/dispatch пути. Runner API (Cloudflare Worker) владеет admission receipt, trusted engine/worker placement и worker adapter; execution worker владеет clean room/process tree, heartbeat, локальной областью и cleanup. Для обычного Telegram Agent Run первым worker является существующий worker во Франции; явный GHA fallback разрешён только после доказанного отказа до admission. После accepted/unknown outcome новый worker не стартует, пока Runner API не reconciles исходную попытку. GHA config repository читает только GHA worker, оно не входит в CP/Runner API/France VM bindings и не является task workspace. После lease expiry новый owner получает generation; старые callback/result commits отвергаются. Сам fencing не предотвращает уже выполняемый сторонний эффект: tools дополнительно используют idempotency/reconciliation.
 
 **Сейчас:** локальный runner, T0 slots, engine glue и process-owner lock есть. Межмашинный scheduler/lease contract и полная clean room граница не подтверждены. Подробнее: [Execution runtime](../runtime/EXECUTION-RUNTIME.md).
 

@@ -41,3 +41,6 @@ jobs:
           node-version: '22'
       - name: Чеклисты и TODO запрещены в репозитории архитектуры
         run: node --test scripts/inventory/no-checklists.test.mjs
+
+      - name: Validate sandbox lane registry
+        run: node tools/check-sandbox-lanes.mjs
