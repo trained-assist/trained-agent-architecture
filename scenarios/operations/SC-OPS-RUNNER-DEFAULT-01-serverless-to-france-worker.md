@@ -4,12 +4,12 @@
 - **Status:** target; implementation and sandbox acceptance pending
 - **Implementation:** existing CP→Runner foundation [Runner API PR #227](https://github.com/trained-assist/ai-agent-runner/pull/227) / [Control Plane PR #181](https://github.com/trained-assist/trained-assist-control-plane/pull/181); failover implementation [Runner #264](https://github.com/trained-assist/ai-agent-runner/issues/264), GHA Agent Run worker/config integration [gha-compute-cluster #1](https://github.com/vovalikessmoothy-png/gha-compute-cluster/issues/1)
 - **Actors:** Telegram gateway, Control Plane, Serverless Runner API, France execution worker, sandbox operator/acceptance agent
-- **Boundary:** the Control Plane submits an authenticated run to the Cloudflare Runner API. The API admits and places the run, trying France first and GHA only after a verified pre-admission refusal. The Control Plane never calls a physical worker or launcher.
+- **Boundary:** the Control Plane submits an authenticated run to the Cloudflare Runner API. The API admits and places the run, trying France first and GHA only after a verified pre-admission refusal. The Control Plane never calls a physical worker or launcher, and its profile/deployment config never pins a run to one.
 - **Related contracts:** [Architecture §0/§2/§4.6](../../ARCHITECTURE.md), [Serverless Runner API](../../SERVERLESS-AGENT-API.md), [C04](../../contracts/README.md#c04--placement-и-execution-runner), [Runner mock test](SC-OPS-RUNNER-MOCK-TEST.md)
 
 ## Current implementation baseline
 
-The existing OpenCode GHA execution path has a successful direct Runner API execution recorded in [workflow run 37859213470](https://github.com/vovalikessmoothy-png/opencode-gha-runner/actions/runs/37859213470). That proves one bounded Agent Run reached a terminal answer through the worker gateway and GHA job. It does not prove a raw GHA invocation independent of the gateway, the current Cloudflare Runner integration, or the Telegram/CP queue path. The live Cloudflare Runner sandbox currently pins execution to France and has no GHA fallback. The private `gha-env-config` repository is outside the accepted task-workspace contract; only the GHA execution context may read it, and only as non-secret runtime configuration. Neither CP, Runner API, nor France VM may know or read it. Do not implement a second OpenCode GHA worker: use the existing worker path and verify it in stages below.
+The existing OpenCode GHA execution path has a successful direct Runner API execution recorded in [workflow run 37859213470](https://github.com/vovalikessmoothy-png/opencode-gha-runner/actions/runs/37859213470). That proves one bounded Agent Run reached a terminal answer through the worker gateway and GHA job. It does not prove a raw GHA invocation independent of the gateway, the current Cloudflare Runner integration, or the Telegram/CP queue path. The live Cloudflare Runner sandbox currently has an API-owned France engine default and no GHA fallback. This service default is not a CP/profile binding. If an exceptional request needs a different execution capability, it must use a logical, API-policy-validated selector; this scenario does not define such a selector as implemented, nor permit physical engine/worker names, URLs or regions in CP config or API caller fields. The private `gha-env-config` repository is outside the accepted task-workspace contract; only the GHA execution context may read it, and only as non-secret runtime configuration. Neither CP, Runner API, nor France VM may know or read it. Do not implement a second OpenCode GHA worker: use the existing worker path and verify it in stages below.
 
 ## Ordered execution gates
 
@@ -41,7 +41,7 @@ Run and record these gates in order. A passing later gate cannot replace evidenc
 
 1. The allowlisted user sends a unique free-only text request to the sandbox Telegram bot.
 2. Telegram gateway submits it to the sandbox Control Plane. CP records the user task and starts one attempt through the Serverless Runner API contract.
-3. CP sends one authenticated Run request to the Cloudflare Runner API, with stable task/run/attempt IDs, trusted profile/policy references, limits and idempotency key. CP does not send a VM address or launcher name.
+3. CP sends one authenticated Run request to the Cloudflare Runner API, with stable task/run/attempt IDs, trusted profile/policy references, limits and idempotency key. If an explicit logical capability is supported and needed, it is passed here for API policy validation. CP does not send a physical engine, VM/worker address, region or launcher name.
 4. Runner API authenticates and authorizes CP, applies idempotent admission, selects the France worker under trusted policy, and dispatches the attempt through its worker adapter.
 5. France worker records the attempt identity, starts one Agent clean room/engine, and reports progress and terminal result to Runner API through authenticated callbacks/status updates. If it refuses before admission, Runner API may dispatch the same not-started attempt to GHA, which reports through the same contract.
 6. Runner API returns/replays status, result and artifact references to CP. CP commits the terminal task state and the Telegram gateway delivers the answer.
@@ -52,11 +52,11 @@ Run and record these gates in order. A passing later gate cannot replace evidenc
 - If France refuses before admission, Runner API records the refusal and may attempt GHA once. If France times out, accepts, or its state is unknown, Runner API reconciles that same attempt and does not start a second worker.
 - A timeout after dispatch remains unknown until the same worker attempt is reconciled; no new run is created automatically.
 - Duplicate CP submission with the same idempotency key returns the original receipt and does not start a second worker process.
-- Any direct CP request to a VM, GHA gateway/workflow, or worker-specific endpoint is an architecture violation and fails deployment/configuration review.
+- Any physical engine/worker/region selector in CP profile/deployment config, or direct CP request to a VM, GHA gateway/workflow, or worker-specific endpoint, is an architecture violation and fails deployment/configuration review. A per-request selector is allowed only as a logical capability explicitly supported by the API contract and authorized by API policy.
 
 ## Acceptance evidence
 
-- Source/config audit of the deployed CP proves its only Agent Run destination is the Cloudflare Runner API; CP bindings/secrets contain no worker or launcher endpoint/credential.
+- Source/config audit of the deployed CP proves its only Agent Run destination is the Cloudflare Runner API; CP bindings/secrets/profile config contain no worker/engine/launcher endpoint, physical selector or credential.
 - Runner API deployment evidence proves Cloudflare Worker runtime and durable admission/status bindings.
 - Gate 1 records the exact GHA repository/workflow/revision, synthetic task ID, model, terminal answer, artifact/workspace boundary, and cleanup.
 - Gate 2 records the API endpoint/revision, idempotency key, accepted receipt, terminal result, cancellation/reconciliation probes, and isolated config-repository read evidence.
