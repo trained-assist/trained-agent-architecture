@@ -1,7 +1,7 @@
 # Telegram Agent Run through Cloudflare Runner API with France primary and GHA backup
 
 - **Scenario ID:** OPS-RUNNER-DEFAULT-01
-- **Status:** target; implementation and sandbox acceptance pending
+- **Status:** partial sandbox acceptance; Worker-driven CP→Runner→delivery scenarios pass; real Telegram webhook ingress and placement/failover acceptance remain pending
 - **Implementation:** existing CP→Runner foundation [Runner API PR #227](https://github.com/trained-assist/ai-agent-runner/pull/227) / [Control Plane PR #181](https://github.com/trained-assist/trained-assist-control-plane/pull/181); failover implementation [Runner #264](https://github.com/trained-assist/ai-agent-runner/issues/264), GHA Agent Run worker/config integration [gha-compute-cluster #1](https://github.com/vovalikessmoothy-png/gha-compute-cluster/issues/1)
 - **Actors:** Telegram gateway, Control Plane, Serverless Runner API, France execution worker, sandbox operator/acceptance agent
 - **Boundary:** the Control Plane submits an authenticated run to the Cloudflare Runner API. The API admits and places the run, trying France first and GHA only after a verified pre-admission refusal. The Control Plane never calls a physical worker or launcher.
@@ -20,13 +20,40 @@ Run and record these gates in order. A passing later gate cannot replace evidenc
 3. **Control Plane queue:** submit a user-shaped task through Telegram → CP task/queue → Cloudflare Runner API. Verify task/run/attempt correlation, result delivery, and queue cleanup.
 4. **Placement/failover:** with the previous gates passing, verify France success is primary; one GHA dispatch follows a typed pre-admission France refusal; France acceptance, timeout, lost response, and unknown outcome never launch a second worker.
 
-## Current sandbox evidence (2026-10-10)
+## Historical sandbox evidence (2026-10-10)
+
+This snapshot predates the current sandbox3 evidence below. Its statements
+about absent live admission and execution are historical.
 
 - CP sandbox3 is deployed at `a853df9d8a8a4b8d45d5098a7c5c3077fd357260`; its `RUNNER_API_SERVICE` binding and URL target the dedicated Cloudflare Runner API Worker `trained-assist-runner-api-sandbox3`.
 - The live Runner API health response reports Cloudflare Worker placement and `eu-vm-agent-run`. Its API admission and France execution are not yet verified for the sandbox3 profile.
 - `trained-assist-runner-api-cp-sandbox3` is a separate mock-only endpoint for the CP contract probe. That probe returned `pong` with no CP task and no model/worker call. It is not evidence for this scenario's main flow.
 - Read-only sandbox3 preflight confirms the CP D1/Workflow and Telegram route are isolated and empty. The three execution flags remain disabled. No real Telegram request was sent; bounded allowance, live Runner credentials/admission, France execution, persistence and terminal delivery remain acceptance gates.
 - Cross-repository checkpoint and workflow evidence: [architecture #185](https://github.com/trained-assist/trained-agent-architecture/issues/185), [CP #159](https://github.com/trained-assist/trained-assist-control-plane/issues/159), [CP PR #218](https://github.com/trained-assist/trained-assist-control-plane/pull/218), [CP PR #219](https://github.com/trained-assist/trained-assist-control-plane/pull/219).
+
+## Latest sandbox evidence (2026-10-12)
+
+The isolated CP/Runner auth and delegated-profile preflight passed in [run
+38183877096](https://github.com/trained-assist/trained-assist-control-plane/actions/runs/38183877096).
+Worker-driven scenarios then passed through the deployed gateway handler → CP
+→ Cloudflare Runner API → execution → Telegram outbound delivery:
+
+- `history`: [run 38184012532](https://github.com/trained-assist/trained-assist-tg-bot/actions/runs/38184012532), two distinct successful runs, follow-up recalled prior-turn data, and both answers had Telegram provider receipts.
+- `retry-mid-run`: [run 38184339598](https://github.com/trained-assist/trained-assist-tg-bot/actions/runs/38184339598), duplicate update replayed during active execution produced exactly one task, one execution, and one delivery.
+- `file-intake`: [run 38184624993](https://github.com/trained-assist/trained-assist-tg-bot/actions/runs/38184624993), the controlled file fixture passed media intake, artifact/manifest persistence, Runner processing and one Telegram delivery. Telegram `getFile` bytes were mocked.
+
+All three runs began and ended with empty CP and Telegram Intake state and
+restored the normal sandbox delivery policy. The Worker harness does not
+exercise the real Telegram webhook; the file fixture also does not prove an
+actual Bot API `getFile` request. The CP execution record's `cloudflare-workflows`
+value identifies orchestration, not physical worker placement. Per-run France
+identity, France-first refusal semantics, and GHA failover remain unproven.
+See the [sanitized acceptance record](../../docs/reviews/SANDBOX3-E2E-ACCEPTANCE-2026-10-12.md).
+
+The signed candidate at [Runner workflow 37865618383](https://github.com/trained-assist/ai-agent-runner/actions/runs/37865618383)
+targets legacy `agent-runner-api-sandbox`; its VM installer workflow is disabled
+and retired. It is not a candidate for the Cloudflare Worker API in this
+scenario and must not be installed into a VM or substituted for that Worker.
 
 ## Preconditions
 
