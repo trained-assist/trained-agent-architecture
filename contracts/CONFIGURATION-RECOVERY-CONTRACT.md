@@ -99,6 +99,20 @@ CI проверяет schema и manifests статически до deploy: ун
 
 Live sandbox drill запускается только в отдельном declared sandbox и оставляет evidence: environmentId, operationId, pinned revisions, resource IDs/fingerprints, status transitions, backup/restore verification и reset result. Он не использует sandbox текущего сквозного E2E. Границы разрешений и безопасный путь проверки документируются по [Environment Contract Template](ENVIRONMENT-CONTRACT-TEMPLATE.md).
 
+### Как выбрать свободную sandbox-линию
+
+Наличие Worker, успешный `/health` или запущенный `wrangler tail` не доказывают, что линия свободна: tail может читать только historical/diagnostic traffic, а downstream может быть общим. Перед live drill владелец сценария записывает в manifest или runbook полную цепочку `entrypoint → control plane → runner → execution worker`, человека/сессию-владельца, разрешённую нагрузку, reset owner и статус occupancy.
+
+Выбор выполняется так:
+
+1. Сопоставить внешний entrypoint с declared Worker и его service bindings; bot username сам по себе не достаточен.
+2. Проверить health/readiness каждого звена и nonterminal runs/intake state в соответствующем owner store.
+3. Сверить с владельцем текущего E2E, какая линия занята. При конфликте его подтверждение имеет приоритет над косвенными сигналами.
+4. Записать в evidence выбранные `environmentId`, entrypoint, chain, время начала и reset owner.
+5. После terminal outcome выполнить только объявленный reset и сохранить результат сверки.
+
+Пример текущего раздельного назначения: `@probability_cat_bot` использует `trained-assist-tg-ux-sandbox → trained-assist-cp-telegram-ux-v1-sandbox → trained-assist-runner-api-telegram-ux-v1-sandbox`; текущий основной E2E закреплён за `@ptichka_status_bot`. Это пример inventory, а не универсальное правило о свободности bot username.
+
 ## Порядок внедрения
 
 1. Составить inventory по каждому сервису и отметить `implicit` значения с owning issue.
