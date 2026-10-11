@@ -1,0 +1,39 @@
+{
+  "schemaVersion": 1,
+  "provider": { "kind": "cloudflare-workers", "accountId": "d740a05e9442c1d0feacae2dfc673e93" },
+  "lanes": [
+    {
+      "laneId": "tg-probability",
+      "entrypoint": "@probability_cat_bot",
+      "gatewayWorker": "trained-assist-tg-ux-sandbox",
+      "controlPlaneWorker": "trained-assist-cp-telegram-ux-v1-sandbox",
+      "runnerWorker": "trained-assist-runner-api-telegram-ux-v1-sandbox",
+      "executionProfile": "eu-vm-agent-run",
+      "sharedStateGroups": ["telegram-ux-cp-runner"],
+      "occupancyProbe": "protected gateway collector-state plus CP/Runner nonterminal-state reconciliation",
+      "resetProcedure": "declared probability sandbox buffer cycle"
+    },
+    {
+      "laneId": "tg-shturman",
+      "entrypoint": "@Shturman_bot",
+      "gatewayWorker": "trained-assist-tg-shturman-sandbox",
+      "controlPlaneWorker": "trained-assist-cp-telegram-ux-v1-sandbox",
+      "runnerWorker": "trained-assist-runner-api-telegram-ux-v1-sandbox",
+      "executionProfile": "eu-vm-agent-run",
+      "sharedStateGroups": ["telegram-ux-cp-runner"],
+      "occupancyProbe": "protected gateway collector-state plus CP/Runner nonterminal-state reconciliation",
+      "resetProcedure": "declared Shturman sandbox reset procedure"
+    },
+    {
+      "laneId": "tg-sandbox3",
+      "entrypoint": "@ptichka_status_bot",
+      "gatewayWorker": "trained-assist-tg-sandbox3",
+      "controlPlaneWorker": "trained-assist-cp-sandbox3",
+      "runnerWorker": "trained-assist-runner-api-sandbox3",
+      "executionProfile": "eu-vm-agent-run",
+      "sharedStateGroups": ["sandbox3"],
+      "occupancyProbe": "sandbox3 gateway/CP/Runner nonterminal-state reconciliation",
+      "resetProcedure": "sandbox3 Worker-driven E2E cleanup"
+    }
+  ]
+}

@@ -118,9 +118,10 @@ Repository обязан публиковать versioned, machine-readable sandb
 ## Порядок внедрения
 
 1. Составить inventory по каждому сервису и отметить `implicit` значения с owning issue.
-2. Ввести schema, manifests и provisioning record в режиме read-only проверки.
-3. Добавить локальные synthetic recovery и fake-worker fault fixtures.
-4. После завершения текущего E2E выполнить disposable live drill в выделенном sandbox.
-5. Включать reconcile/restore automation только после доказательства сохранения state и повторяемости evidence.
+2. Ввести sandbox registry, read-only discovery и CI drift-check между registry и provider bindings.
+3. Ввести schema, manifests и provisioning record в режиме read-only проверки.
+4. Добавить локальные synthetic recovery и fake-worker fault fixtures.
+5. После завершения текущего E2E выполнить disposable live drill в выделенном sandbox.
+6. Включать reconcile/restore automation только после доказательства сохранения state и повторяемости evidence.
 
 Сценарий изменения поведения проходит через [Scenario Change Management](../SCENARIO-CHANGE-MANAGEMENT.md); bootstrap scenario остаётся в [#231](https://github.com/trained-assist/trained-agent-architecture/issues/231) и его draft PR [#232](https://github.com/trained-assist/trained-agent-architecture/pull/232).

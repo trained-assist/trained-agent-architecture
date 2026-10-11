@@ -3,6 +3,7 @@
 План безопасного переноса Recruiting и CRM вертикальными срезами, golden fixtures и слоями проверок: [C14 Migration Playbook](C14-MIGRATION-PLAYBOOK.md).
 Сценарии пользователя, сквозной профильный контекст и acceptance criteria: [Connected App User Scenarios](CONNECTED-APP-USER-SCENARIOS.md).
 Предлагаемый контракт явной конфигурации, secrets/bindings и пяти операций восстановления: [Configuration and Recovery Contract](CONFIGURATION-RECOVERY-CONTRACT.md).
+Реестр Telegram sandbox-линий для автоматического discovery: [Sandbox Lanes](SANDBOX-LANES.json).
 
 Статус: **C01/C02/C03 приняты 02.10.2026** как основной контракт взаимодействия каналов с задачами — логические границы, идентификаторы, смысл квитанции, адресация команд, приёмка. Остальные контракты — предложение для согласования · 30.09.2026. Это логические границы; пути API ниже иллюстративны и ещё не утверждены. Раздел не объявляет текущий wire protocol заменённым.
 
