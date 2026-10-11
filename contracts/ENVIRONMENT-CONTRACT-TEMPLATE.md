@@ -2,6 +2,8 @@
 
 Keep this concrete section in the repository root `AGENTS.md`. State only facts verified from source/config, CI/CD, operator docs, and available resources. Use `unknown` with an owning issue instead of guessing.
 
+For configuration, resource identity, secret references and recovery modes, use the proposed [Configuration and Recovery Contract](CONFIGURATION-RECOVERY-CONTRACT.md). This template records environment-specific facts and evidence; it does not contain secret values.
+
 ## Environment Contract
 
 ### Development / Test / Staging
