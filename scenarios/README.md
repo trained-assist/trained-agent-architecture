@@ -23,6 +23,7 @@
 - [operations/SC-OPS-DEPLOY-01-protected-main-production.md](operations/SC-OPS-DEPLOY-01-protected-main-production.md) — автоматическая production-выкладка проверенного SHA после защищённого merge и staging gates; не переключает пользовательский маршрут.
 - [operations/SC-OPS-RUNNER-MOCK-TEST.md](operations/SC-OPS-RUNNER-MOCK-TEST.md) — sandbox-only аутентифицированный `mock-test` через стандартный Runner API contract; отсутствие engine оставляет выбор Runner API автоматическим.
 - [operations/SC-OPS-RUNNER-DEFAULT-01-serverless-to-france-worker.md](operations/SC-OPS-RUNNER-DEFAULT-01-serverless-to-france-worker.md) — Control Plane вызывает только Cloudflare Runner API; API выбирает France worker по умолчанию; CP не вызывает напрямую VM/GHA/launcher.
+- [operations/SC-OPS-QA-01-sandbox-functional-verification.md](operations/SC-OPS-QA-01-sandbox-functional-verification.md) — QA выбирает declared свободную sandbox-линию и запускает автоматическую функциональную проверку с evidence и cleanup.
 - [crm/SC-CRM-TG-01-agent-mcp-command-workflow.md](crm/SC-CRM-TG-01-agent-mcp-command-workflow.md) — CRM Telegram gateway передаёт команду Agent, Agent применяет выбранный профиль и объявленные CRM MCP-возможности.
 
 ## Каталог
