@@ -8,6 +8,7 @@
 - **Boundary:** a declared non-production lane goes from unprepared to ready for a specific acceptance scenario, with paired test identity, verified bindings, reconciled state, and traceable evidence.
 - **Scope:** test-only identities, credentials, state, routes and resources. Production targets and credentials are rejected.
 - **Review handoff:** [implementation map, evidence, credentials and blockers](../../docs/reviews/SANDBOX-BOOTSTRAP-REVIEW-HANDOFF-2026-10-09.md); [2026-10-10 CP Telegram UX quick-answer and France-worker follow-up](../../docs/reviews/CP-TELEGRAM-UX-AGENT-SANDBOX-2026-10-10.md)
+- **Current sandbox3 acceptance:** [2026-10-12 E2E evidence and remaining gates](../../docs/reviews/SANDBOX3-E2E-ACCEPTANCE-2026-10-12.md)
 
 ## Preconditions
 
@@ -55,9 +56,27 @@
 - MCP/Worker owners declare their scoped test bindings and safe readiness operations.
 - Architecture issue #231 coordinates the cross-repository contract; owning implementation issues must link this scenario and update their Environment Contracts. Do not duplicate component commands or secret values here.
 
-## Current evidence and gaps (2026-10-08)
+## Historical evidence and gaps (2026-10-08)
+
+The following snapshot predates the current sandbox3 E2E acceptance record linked
+above. Its old-state and open-PR statements are historical and must not be used
+as current lane status.
 
 - Runner sandbox API is installed and its test principal is paired with the CP Worker. Runner issue #173 remains open. Current candidate deployment verifies that a pre-provisioned principal exists; it does not generate and synchronize a new test key.
 - Read-only MCP discovery and Worker auth probes have succeeded. They do not prove a full agent run.
 - Previous shared CP/Runner executions include unknown/nonterminal state; architecture issue #190 records that the Telegram lane must not be reused or reset until reconciled. No new run should be submitted merely to demonstrate bootstrap.
 - Runner `mock-test` implementation is under review in [PR #208](https://github.com/trained-assist/ai-agent-runner/pull/208); the related auth scenario is [architecture #230](https://github.com/trained-assist/trained-agent-architecture/pull/230). The cross-system bootstrap is not yet implemented or accepted.
+
+## Current status (2026-10-12)
+
+- The sandbox3 read-only preflight and bounded history, duplicate-update, and
+  file-intake scenarios passed; see the linked evidence record for exact scope.
+- The tested `file-intake` path uses an authenticated Worker test update and
+  controlled `getFile` fixture. It proves media intake, artifact persistence,
+  Runner consumption, Telegram outbound delivery, and cleanup; it does not
+  prove Telegram webhook ingress or a live Telegram `getFile` request.
+- The lane is reusable only after its CP/Intake empty-state checks pass. Do not
+  treat the older shared-lane unknown records below as current sandbox3 state.
+- The retained signed candidate is for the retired VM Node API target, not the
+  Cloudflare Runner API. The disabled VM deploy workflow must remain unused for
+  the current architecture.

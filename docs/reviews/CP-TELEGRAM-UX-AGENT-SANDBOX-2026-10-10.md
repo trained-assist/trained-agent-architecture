@@ -1,5 +1,10 @@
 # CP Telegram UX agent sandbox follow-up — 2026-10-10
 
+> Historical checkpoint. For later sandbox3 CP → Runner execution, Telegram
+> outbound delivery and cleanup evidence, see [sandbox3 E2E acceptance
+> 2026-10-12](SANDBOX3-E2E-ACCEPTANCE-2026-10-12.md). That newer harness still
+> does not claim actual Telegram webhook ingress or a live Bot API file fetch.
+
 This follow-up records the latest live sandbox checks after the canonical
 Control Plane → mock Runner API path was paired. It does not authorize Telegram
 delivery or production execution.

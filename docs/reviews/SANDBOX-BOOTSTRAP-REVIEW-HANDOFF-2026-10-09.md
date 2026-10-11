@@ -1,5 +1,10 @@
 # Sandbox bootstrap review handoff — 2026-10-09
 
+> Historical snapshot as of 2026-10-09. Its pending-E2E and VM2 candidate
+> statements are not current lane status. See [sandbox3 E2E acceptance
+> 2026-10-12](SANDBOX3-E2E-ACCEPTANCE-2026-10-12.md) for current evidence and
+> remaining boundaries.
+
 ## Executive status
 
 ### Latest ordinary profile route verification — 2026-10-09 00:56 UTC
