@@ -6,7 +6,7 @@
 
 ## Как читать
 
-Сценарий описывает наблюдаемое поведение продукта и может связывать несколько репозиториев. Каталог sources отражает происхождение, а не целевое владение функциональностью. Следующие согласованные cross-repository сценарии рекомендуется писать по области продукта в scenarios/<domain>/ с явными channels, services и contracts. Сначала сверяем и объединяем дубли; механически назначать core владельцем всех сценариев нельзя.
+Сценарий описывает пользовательский SLA: наблюдаемый результат, который продукт обязан сохранить при изменениях. Он может связывать несколько репозиториев. Проверки сценария доказывают этот результат и ловят регрессии; operational commands, ограничения доступа и устройство sandbox принадлежат Environment Contract/runbook. Каталог sources отражает происхождение, а не целевое владение функциональностью.
 
 Скопированные статусы «работает», «план», «не создано» относятся к исходному документу и его ревизии. Относительные ссылки разрешаются в контексте исходного репозитория; код и весь supporting docs tree не копируются. Для недостающего относительного target открывайте ссылку на источник. Это особенно важно для TG TARGET-STATE и других исторических планов: импорт не утверждает их как архитектурное решение.
 
@@ -23,6 +23,7 @@
 - [operations/SC-OPS-DEPLOY-01-protected-main-production.md](operations/SC-OPS-DEPLOY-01-protected-main-production.md) — автоматическая production-выкладка проверенного SHA после защищённого merge и staging gates; не переключает пользовательский маршрут.
 - [operations/SC-OPS-RUNNER-MOCK-TEST.md](operations/SC-OPS-RUNNER-MOCK-TEST.md) — sandbox-only аутентифицированный `mock-test` через стандартный Runner API contract; отсутствие engine оставляет выбор Runner API автоматическим.
 - [operations/SC-OPS-RUNNER-DEFAULT-01-serverless-to-france-worker.md](operations/SC-OPS-RUNNER-DEFAULT-01-serverless-to-france-worker.md) — Control Plane вызывает только Cloudflare Runner API; API выбирает France worker по умолчанию; CP не вызывает напрямую VM/GHA/launcher.
+- [operations/SC-OPS-QA-01-sandbox-functional-verification.md](operations/SC-OPS-QA-01-sandbox-functional-verification.md) — QA выбирает declared свободную sandbox-линию и запускает автоматическую функциональную проверку с evidence и cleanup.
 - [crm/SC-CRM-TG-01-agent-mcp-command-workflow.md](crm/SC-CRM-TG-01-agent-mcp-command-workflow.md) — CRM Telegram gateway передаёт команду Agent, Agent применяет выбранный профиль и объявленные CRM MCP-возможности.
 
 ## Каталог

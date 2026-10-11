@@ -6,7 +6,7 @@
 
 Обычный bugfix, который возвращает реализацию к уже описанному и принятому поведению, проходит через issue → implementation PR → обычные CI/tests; scenario-change PR не нужен. Если исправление меняет ожидаемое поведение, это уже scenario change и применяются все gates ниже.
 
-**Scenario** — проверяемое описание ожидаемого поведения системы при взаимодействии актора с системой или её публичной границей. Актор может быть человеком-пользователем, AI-агентом, внешним API-клиентом/интеграцией, администратором/оператором, QA-инженером или автоматизированным acceptance agent, либо другим системным компонентом относительно проверяемого межкомпонентного контракта. Не все сценарии являются пользовательскими.
+**Scenario** — проверяемое описание пользовательского SLA: какую ценность и наблюдаемый результат система обязана дать актору на публичной границе. Актор может быть человеком-пользователем, AI-агентом, внешним API-клиентом/интеграцией, администратором/оператором или другим системным компонентом. Сценарий задаёт результат и условия его сохранения при изменениях; он не является инструкцией, запретом или списком полномочий для QA/разработчика.
 
 Канонические истории новой системы находятся в [stories/](stories/README.md). Исторический read-only snapshot импортированных материалов — [scenarios/sources/](scenarios/README.md). Новые общие поведенческие сценарии размещаются в `scenarios/<domain>/`; не создавать синхронизируемые копии спецификации в сервисных репозиториях.
 
@@ -19,7 +19,7 @@
 | Implementation issue/PR | Код, локальные проверки, runnable probes, Environment Contract и rollout своей реализации | Owning implementation repo |
 | Environment Contract | Проверенные endpoints, test inputs, logs/state, reset, permissions и promotion path | Runtime component owner |
 
-Architecture описывает сценарий и protocol приёмки. Implementation repositories сообщают свои endpoint/test entrypoints, команды и environment contracts. Architecture CI/acceptance не копирует внутренние команды и topology каждого implementation repository.
+Architecture описывает сценарий и protocol приёмки. Проверки связывают implementation с SLA и ловят регрессии. Implementation repositories сообщают свои endpoint/test entrypoints, команды, topology и Environment Contracts; ограничения операций и порядок работы со средой принадлежат этим contracts/runbooks, а не сценарию.
 
 ## Change lifecycle
 
