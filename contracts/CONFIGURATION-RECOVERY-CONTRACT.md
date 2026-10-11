@@ -63,6 +63,8 @@ Logical name стабилен между окружениями; provider resour
 
 `fresh`, `reconcile`, `restart`, `restore` и `destroy/reset` должны быть отдельно доступны в automation и отдельными тест-кейсами. Timeout операции переходит в `unknown`, затем требует reconciliation; он сам по себе не разрешает повтор с созданием новых ресурсов.
 
+Это не пять последовательных шагов обычного запуска. Обычно среда проходит `fresh` один раз, затем `reconcile` перед изменениями и `restart` при обновлении runtime; `restore` и `destroy/reset` — отдельные исключительные операции. Один запуск automation объявляет ровно один lifecycle mode.
+
 ## Конфигурация, запуск и readiness
 
 Accepted run получает pinned `configRevision`, `manifestRevision`, capability profile и resource binding set. Последующий deploy конфигурации не переназначает уже принятый run. В каждом статусе run можно увидеть эти версии без раскрытия secrets.
@@ -84,6 +86,8 @@ Liveness (`process отвечает`) не равен готовности пр�
 Retry распространяется на три разные операции: повтор доставки клиентского запроса до durable admission receipt, повтор внутренней доставки между владельцами и повтор фактического execution attempt. Они используют разные idempotency keys и не сводятся к одному `retry`.
 
 После `unknown_run` нельзя ставить execution attempt в очередь повторно только из-за неизвестного исхода. Новый attempt возможен лишь после авторитетного pre-admission refusal либо подтверждённых stop/fencing и reconciliation, которые исключают параллельное выполнение первого attempt. Состояние очереди не является таким доказательством.
+
+`unknown` — не бесконечное ожидание: для него публикуются owner, deadline/SLO, последний проверенный receipt и следующая reconcile action. По истечении SLO владелец либо получает stop/fencing evidence и принимает решение о новом attempt, либо эскалирует incident с сохранённым состоянием.
 
 Receipt разделяет по меньшей мере следующие факты: `accepted`, `started`, `execution-completed`, `result-persisted`, `validators-accepted`, `delivery-accepted`, `delivered`. Существование artifact, cleanup workspace или смена owner не доказывает persistence или acceptance. Каждый переход записывает receipt владельца с correlation к run/attempt/operation.
 
