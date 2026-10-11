@@ -101,13 +101,13 @@ Live sandbox drill запускается только в отдельном dec
 
 ### Как выбрать свободную sandbox-линию
 
-Наличие Worker, успешный `/health` или запущенный `wrangler tail` не доказывают, что линия свободна: tail может читать только historical/diagnostic traffic, а downstream может быть общим. Перед live drill владелец сценария записывает в manifest или runbook полную цепочку `entrypoint → control plane → runner → execution worker`, человека/сессию-владельца, разрешённую нагрузку, reset owner и статус occupancy.
+Наличие Worker, успешный `/health` или запущенный `wrangler tail` не доказывают, что линия свободна: tail может читать только historical/diagnostic traffic, а downstream может быть общим. Перед live drill в manifest или runbook записываются полная цепочка `entrypoint → control plane → runner → execution worker`, разрешённая нагрузка, reset procedure и статус occupancy.
 
 Выбор выполняется так:
 
 1. Сопоставить внешний entrypoint с declared Worker и его service bindings; bot username сам по себе не достаточен.
 2. Проверить health/readiness каждого звена и nonterminal runs/intake state в соответствующем owner store.
-3. Сверить с владельцем текущего E2E, какая линия занята. При конфликте его подтверждение имеет приоритет над косвенными сигналами.
+3. Проверить явное назначение линии пользователем/оператором и текущую occupancy. Это источник истины; старый claim, health или tail без active state не создают запрет.
 4. Записать в evidence выбранные `environmentId`, entrypoint, chain, время начала и reset owner.
 5. После terminal outcome выполнить только объявленный reset и сохранить результат сверки.
 
