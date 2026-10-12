@@ -5,7 +5,8 @@ Target scenario для локального исполнителя [Epic #253](h
 подключаются при конкретной гипотезе или межрепозиторной проверке. Основание — опыт
 [playbooks #153](https://github.com/trained-assist/software-engineering-playbooks/issues/153)
 и [anti-spin #137](https://github.com/trained-assist/software-engineering-playbooks/issues/137).
-Acceptance record — [PR #258](https://github.com/trained-assist/trained-agent-architecture/pull/258).
+Acceptance record — scenario-change PR с этим файлом.
+[PR #258](https://github.com/trained-assist/trained-agent-architecture/pull/258) — исходный controller baseline.
 
 ## Trigger и результат
 
