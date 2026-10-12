@@ -1,8 +1,8 @@
 # Epic #253 — карта трёх sandbox сред (Z00.a)
 
-- Дата составления: 2026-10-11
+- Дата составления: 2026-10-11; обновлено 2026-10-12 (Среда 2 развёрнута, I05.b).
 - Владелец данных: Epic https://github.com/trained-assist/trained-agent-architecture/issues/253
-- Статус: baseline проверен вживую 2026-10-11; обновлять только изменившиеся данные.
+- Статус: baseline проверен вживую; обновлять только изменившиеся данные.
 - Правила: не угадывать URLs; не считать lanes независимыми по названию; production не используется как запасной стенд; общие shared downstream требуют claim/release по #185.
 
 ## Среда 1 — MCP fixture lane (существующий тестовый воркер)
@@ -22,15 +22,15 @@
 | Reset | не применялся; destructive reset не входит в обычный loop |
 | Ownership/claim | принадлежит registry-MCP тестовому потоку (issues #8/#11/#14/#16 trained-assist-mcp-host); для Epic #253 используется read-only probe, деплоить изменения — только своей новой ревизией в отдельном воркере/среде |
 
-## Среда 2 — MCP identity lane (создаётся в Epic #253)
+## Среда 2 — MCP identity lane (развёрнута в Epic #253)
 
 | Поле | Значение |
 |---|---|
 | Назначение | I05.c: реальный gateway + D1 + personal key; ручной пользователь → персональный ключ → tool по роли → native call → наблюдаемый результат |
-| Endpoint | ещё не создан; план: новый тестовый воркер `trained-assist-mcp-host-identity-*` в том же CF account (имя — после первого деплоя, не угадывать) |
-| Жив | нет — заводится шагами I01.a (выдача ключей), I01.b (ACL), I05.a (revoke/disable) |
+| Endpoint | `https://trained-assist-mcp-host-identity.skillset-apply.workers.dev/mcp` (worker `trained-assist-mcp-host-identity`, main `src/worker-unified.mjs`, mode `MCP_MODE=human`) |
+| Жив | да — `initialize` → HTTP 200 (проверено 2026-10-12); без ключа `tools/list` → `-32001 Unauthorized` |
 | Repo | `trained-assist/trained-assist-mcp-host` |
-| Планируемые bindings | D1 (users / personal_keys / acl / audit) + существующие JWK-ключи machine mode для backward compat |
+| Bindings | D1 `MCP_IDENTITY_DB` (trained-assist-mcp-identity) + vars `MCP_TEST_PRINCIPAL_ID`, `MCP_TEST_CATALOGUE_VERSION`, `MCP_MODE=human`; JWK machine-секреты те же refs, что в среде 1 |
 | Auth (целевой) | personal key на пользователя (static token фазы A), тот же токен — `apiKey` провайдера Ladder; OAuth — follow-up D |
 | Shared downstream | Ladder lane (среда 3) — один user/key на оба входа |
 | Reset | только additive test migrations и synthetic users; чужой state не чистить |
@@ -61,3 +61,4 @@
 2. Перед использованием Ladder lane — проверить claims в #185 и взять claim; после evidence — `RELEASE <lane>`.
 3. Среда 2 не разворачивается поверх среды 1: fixture lane остаётся регрессионной  baseline для machine mode.
 4. Любой новый секрет — только через secret store; в карту пишутся только refs.
+5. Передеплой среды 2: GitHub Action `Deploy Identity Lane Worker` (`workflow_dispatch` на `main`, environment `sandbox`, secret `CF_API_TOKEN`); она же идемпотентно создаёт/находит D1 и применяет additive migrations. Среда 1 деплоится отдельным `Deploy Registry MCP test Worker`.
