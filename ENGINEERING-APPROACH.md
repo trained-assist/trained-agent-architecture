@@ -74,6 +74,14 @@ README и AGENTS.md указывают краткую карту, способ �
 
 ## Где практика и план
 
+Для регулярных исполнителей merge и acceptance — отдельные факты. Готовность зависимого
+шага определяется проверками prerequisites на актуальных revisions, а не текстом прежнего
+отчёта. Cross-repository change требует общего contract probe: schema, identity/key issuance,
+lookup и policy проверяются вместе до перехода к зависимому runtime-коду. Независимые fixtures
+в двух repos не доказывают совместимость. Durable handoff использует ту же state machine,
+что issue; при crash/неизвестном исходе сначала reconcile effects, затем новый запуск.
+Runnable пример: [Epic #253 controller](tools/continuous-dev/README.md).
+
 - [Sandbox](SANDBOX.md) — методы, bindings/credentials, controlled failures, stage-specific logs checks и уроки VM2.
 - [Implementation and Integration Plan](IMPLEMENTATION-AND-INTEGRATION-PLAN.md) — зависимости и порядок работ; этот документ не содержит второй календарь реализации.
 - [ARCHITECTURE](ARCHITECTURE.md) — ownership, связь Workflow/Runner/диска и критерии перехода.
