@@ -5,7 +5,7 @@ Target scenario для локального исполнителя [Epic #253](h
 подключаются при конкретной гипотезе или межрепозиторной проверке. Основание — опыт
 [playbooks #153](https://github.com/trained-assist/software-engineering-playbooks/issues/153)
 и [anti-spin #137](https://github.com/trained-assist/software-engineering-playbooks/issues/137).
-Acceptance record — scenario-change PR с этим файлом.
+Acceptance record — [PR #263](https://github.com/trained-assist/trained-agent-architecture/pull/263).
 [PR #258](https://github.com/trained-assist/trained-agent-architecture/pull/258) — исходный controller baseline.
 
 ## Trigger и результат
@@ -54,3 +54,12 @@ fake CLI и synthetic artifacts: fresh roles, stale verdict/version mismatch, fa
 повтор отчёта, negative experiment, waiting condition, durable session budget, stop/restart
 и unknown outcome. Native OpenCode→gateway acceptance A и опубликованные consumer versions
 требуют отдельных live runs; local controller evidence их не закрывает.
+
+## Local evidence
+
+Controller replay suite покрывает две итерации с одинаковым evidence и одну bounded
+diagnostic; цикл остаётся STAGNATED и не запускает третью сессию. Проверены persistent
+stop, deadline→reconcile, восстановление бюджета после handoff import, checkpoint/status,
+новый code diff, negative experiment, frozen reviewer checkout и delivery gate с drift,
+невалидным harness и неизвестной model family. Это local/synthetic component + CLI replay,
+без live model/provider, без изменения работающего legacy executor.

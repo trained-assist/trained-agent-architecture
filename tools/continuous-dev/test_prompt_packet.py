@@ -11,6 +11,7 @@ import prompt_packet as p
 
 def fixture():
     return dict(step='I04.a', state='READY', iteration_id='previous', next_action='verify',
+                requirements_revision='epic253-v3',
                 repo='trained-assist/fixture', checkout='/tmp/fixture', branch='test',
                 head_sha='a' * 40, sandbox={'lane': 'local'},
                 opencode={'launch_state': 'NOT_APPLICABLE'},
