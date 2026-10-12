@@ -29,6 +29,8 @@ chat and confirmed by Telegram provider message IDs.
 | Conversation history | [run 38184012532](https://github.com/trained-assist/trained-assist-tg-bot/actions/runs/38184012532) | Two distinct tasks and successful Runner executions; the follow-up recalled the prior turn; both answers were delivered once and had Telegram provider receipts. Cleanup left CP and Intake empty. |
 | Duplicate update during execution | [run 38184339598](https://github.com/trained-assist/trained-assist-tg-bot/actions/runs/38184339598) | The same update was replayed while the Runner was active; the lane retained one task and one execution and sent one answer. Cleanup left CP and Intake empty. |
 | File intake and answer | [run 38184624993](https://github.com/trained-assist/trained-assist-tg-bot/actions/runs/38184624993) | The file fixture traversed Worker media intake → Ingress Buffer → CP input/manifest persistence → Runner. Manifest/hash assertions passed, the Telegram file ID was not persisted, the answer matched `LANTERN`, and one Telegram reply was confirmed. Cleanup left CP and Intake empty. The test mocked Telegram `getFile` bytes. |
+| Playwright artifact task and delivery | [capture run 38228110321](https://github.com/trained-assist/trained-assist-tg-bot/actions/runs/38228110321), [Telegram delivery run 38228860714](https://github.com/trained-assist/trained-assist-tg-bot/actions/runs/38228860714) | Both completed one successful Runner execution, matched the requested Example Domain title/marker, and persisted manifests for `browser-check.md` and `browser-proof.png`. The delivery run sent each artifact once to the pinned sandbox chat and recorded a provider message ID. The capture run had `communicationOutcome=selected`; the delivery run had `communicationProviderCode=timeout`, fell back to Agent execution, and still completed successfully. Neither run downloaded and inspected the artifact bytes, so screenshot validity is not proven. |
+| Playwright task and artifact manifests | [run 38228110321](https://github.com/trained-assist/trained-assist-tg-bot/actions/runs/38228110321) | The sandbox profile completed one Runner execution for the requested headless Playwright task, returned the expected Example Domain title/marker, and persisted manifests for `browser-check.md` and `browser-proof.png`. The run used capture delivery. The harness did not download either artifact's bytes, so this does not yet prove the screenshot contents or user delivery of the files. |
 
 The earlier capture-only file run [38183263775](https://github.com/trained-assist/trained-assist-tg-bot/actions/runs/38183263775)
 also passed the artifact persistence and duplicate-update assertions without
@@ -58,8 +60,10 @@ for each run and France/GHA failover behavior remain separate placement gates.
 - Prove physical France worker identity and typed pre-admission GHA fallback
   behavior with the Runner-owned placement probe. Do not infer those facts from
   `cloudflare-workflows` in the CP execution record or from API liveness alone.
-- Run the requested higher-level browser/Playwright and shared-document user
-  scenarios; the current E2E workflow does not include those scenarios.
+- Download and inspect Playwright artifact bytes in the sandbox before cleanup;
+  current runs prove manifest persistence and (for 38228860714) Telegram
+  document delivery, but not screenshot contents.
+- Run the shared-document/Drive user scenario.
 
 No production Telegram route, production data store, VM service, shared
 principal registry, or Runner bindings were changed for these tests.
