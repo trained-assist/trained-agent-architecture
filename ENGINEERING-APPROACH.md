@@ -81,6 +81,9 @@ lookup и policy проверяются вместе до перехода к з
 в двух repos не доказывают совместимость. Durable handoff использует ту же state machine,
 что issue; при crash/неизвестном исходе сначала reconcile effects, затем новый запуск.
 Runnable пример: [Epic #253 controller](tools/continuous-dev/README.md).
+Стартовый контекст содержит короткие постоянные правила, одну задачу с criteria и ссылки
+на подробные материалы. История и полный backlog не копируются в каждый запуск;
+status snapshot имеет timestamp/SHA и не заменяет acceptance evidence.
 
 - [Sandbox](SANDBOX.md) — методы, bindings/credentials, controlled failures, stage-specific logs checks и уроки VM2.
 - [Implementation and Integration Plan](IMPLEMENTATION-AND-INTEGRATION-PLAN.md) — зависимости и порядок работ; этот документ не содержит второй календарь реализации.

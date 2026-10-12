@@ -11,6 +11,7 @@ import unittest
 from unittest.mock import patch
 
 HERE = Path(__file__).resolve().parent
+sys.path.insert(0, str(HERE))
 spec = importlib.util.spec_from_file_location('controller', HERE / 'controller.py')
 c = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(c)
@@ -22,7 +23,9 @@ def handoff():
                 checkout='/tmp/synthetic', branch='fixture', head_sha='a' * 40,
                 tests=[dict(command='fixture', result='PASS', evidence='local fixture')],
                 sandbox=dict(lane='local'), opencode=dict(launch_state='NOT_APPLICABLE'),
-                next_action='reconcile contracts', waiting_for=None)
+                next_action='reconcile contracts', waiting_for=None,
+                next_task=dict(step='I04.a', goal='Verify the shared identity contract',
+                               acceptance=['Ladder-issued key passes Host lookup']))
 
 
 class ControllerTests(unittest.TestCase):
@@ -36,7 +39,8 @@ class ControllerTests(unittest.TestCase):
         self.fake.write_text('''#!/usr/bin/env python3
 import json, os, re, sys
 prompt = sys.stdin.read()
-iteration = re.search(r'Controller iteration_id=(\\w+)', prompt).group(1)
+packet = json.loads(prompt.split('## Карточка запуска\\n', 1)[1])
+iteration = packet['iteration_id']
 base = json.loads(os.environ['TEST_HANDOFF'])
 base['iteration_id'] = iteration
 mode = os.environ.get('TEST_MODE', 'ok')
@@ -52,7 +56,7 @@ sys.exit(9 if mode == 'nonzero' else 0)
         self.fake.chmod(0o700)
         c.atomic_json(self.state / 'handoff.json', handoff())
         self.args = argparse.Namespace(cwd=str(self.root), executable=str(self.fake),
-                                       prompt=str(HERE / 'system-prompt.md'))
+                                       prompt=str(HERE / 'system-prompt.md'), offline=True)
         self.addCleanup(patch.stopall)
         patch.object(c, 'legacy_active', return_value=False).start()
         patch.dict(os.environ, TEST_HANDOFF=json.dumps(handoff()), TEST_MODE='ok').start()
@@ -125,12 +129,24 @@ sys.exit(9 if mode == 'nonzero' else 0)
         self.assertNotIn('$(', active['finished_at'])
         self.assertEqual((self.state / 'handoff.json').stat().st_mode & 0o777, 0o600)
         self.assertEqual(len(list(self.state.glob('handoff-*.json'))), 1)
+        packet = json.loads(next(self.state.glob('launch-*.json')).read_text())
+        self.assertEqual(packet['task']['goal'], 'Verify the shared identity contract')
+        self.assertEqual(packet['github']['status'], 'NOT_FETCHED')
+        self.assertLess(active['prompt_characters'], 6000)
 
     def test_crash_intent_is_not_automatically_retried(self):
         for phase in ('STARTING', 'RUNNING', 'NEEDS_RECONCILE'):
             c.atomic_json(self.state / 'active.json', dict(phase=phase, iteration_id='crashed'))
             with self.assertRaisesRegex(ValueError, 'needs reconciliation'):
                 c.run_once(self.args, self.state)
+
+    def test_executor_cannot_report_previous_step_as_selected_task(self):
+        h = handoff()
+        h['next_task']['step'] = 'I05.a'
+        c.atomic_json(self.state / 'handoff.json', h)
+        with self.assertRaisesRegex(ValueError, 'selected task'):
+            c.run_once(self.args, self.state)
+        self.assertEqual(json.loads((self.state / 'handoff.json').read_text())['step'], 'I04.a')
 
     def test_legacy_launcher_blocks_adoption(self):
         with patch.object(c, 'legacy_active', return_value=True):

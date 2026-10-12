@@ -10,7 +10,7 @@
 
 Target — локальная macOS/Linux среда с Python 3.10+, Git и проверенной сборкой OpenCode.
 Implementation executor запускается локальным CLI; MCP acceptance probe по-прежнему
-запускается через Session Manager из system prompt. Эти два запуска имеют разные IDs.
+запускается через Session Manager по [probe contract](references/opencode-probe.md). Эти два запуска имеют разные IDs.
 CLI получает prompt через stdin: credentials и полный prompt не попадают в argv.
 Выбор provider/model/бюджета и isolated project config нужно проверить до запуска.
 Контроллер не переключает глобальные настройки OpenCode.
@@ -25,7 +25,7 @@ tool output и хранится приватно. Не публиковать е
 ## Первичная подготовка и запуск
 
 Сначала сверить Epic/comments и реальные PR merge/reviews/CI, проверить checkout и текущего
-writer. Составить JSON handoff по [system prompt](system-prompt.md), с полным head_sha и
+writer. Составить JSON handoff по [формату handoff](references/handoff-format.md), с полным head_sha и
 доказательствами выбранного шага. Неподтверждённый этап не объявлять DONE. Пустой state-dir
 сам по себе не разрешает начать план заново. Import не запускает модель.
 
@@ -40,7 +40,7 @@ python3 tools/continuous-dev/controller.py \
 ```
 
 `--loop` продолжает готовые шаги с интервалом `--interval` (по умолчанию 300 секунд).
-Каждый шаг получает свежий контекст, iteration_id и предыдущий JSON. Assistant должен
+Каждый шаг получает свежий контекст, iteration_id и компактную карточку запуска. Assistant должен
 закончить ответ `<HANDOFF>{JSON}</HANDOFF>`. CLI `type=text` и SDK
 `message.part.updated/properties.part` поддерживаются; tool output исключён из extraction.
 Старый YAML handoff отвергается. Ненулевой exit или отсутствие валидного JSON сохраняет
@@ -51,6 +51,36 @@ timer/webhook должен делать небольшой read-only GitHub chec
 handoff только после изменения фактов. В этом контроллере нет автоматического GitHub poller;
 он не тратит новую LLM сессию на неизменившуюся очередь. DONE завершает строку backlog,
 а `epic_complete=true` останавливает Epic только с A/B/C PASS evidence.
+
+## Формат контекста запуска
+
+[Постоянный prompt](system-prompt.md) содержит только общие правила. В handoff записывается
+`next_task`: один step, goal, непустые acceptance assertions, references и prerequisites.
+Target repo/checkout/branch/full SHA наследуются из handoff только для того же repository;
+для другого repo задаются явно. Для другой среды next_task содержит sandbox. После DONE
+next_task должен указывать новый step. Старый handoff можно импортировать, но до добавления
+явной задачи launcher отказывается от запуска: ссылка на весь Epic не заменяет выбор работы.
+
+Карточка содержит выбранную задачу, краткое предыдущее состояние, environment/probe state,
+execution cwd и абсолютные ссылки на полный handoff и подробные инструкции. История, test
+outputs и весь Epic не копируются. Полный handoff сохраняется без потерь вне Git. Подробности
+читаются по необходимости: [sandbox/integration](references/engineering.md),
+[OpenCode](references/opencode-probe.md), [GitHub](references/github-workflow.md),
+[output schema](references/handoff-format.md). Файлы instructions версионируются вместе с кодом.
+
+Перед spawn контроллер read-only получает метаданные selected issues/PRs, latest checks/statuses
+на их head SHA и review states. Все страницы checks/reviews/statuses обрабатываются; raw bodies,
+transcripts и API payloads в prompt не передаются. Snapshot содержит checked_at и links, не
+утверждает acceptance или branch-policy approval. Источник credentials: GH_TOKEN/GITHUB_TOKEN,
+затем default GitHub Keychain item из инструкций проекта; секрет используется только в памяти.
+При failed fetch указан PARTIAL/UNAVAILABLE и агент обязан проверить факты самостоятельно.
+`--offline` пропускает prefetch и явно маркирует snapshot NOT_FETCHED.
+
+Сгенерированная карточка сохраняется в private `launch-<iteration>.json` до spawn; active.json
+содержит prompt_characters и digest. Task ограничен 5000 символами, prompt — 12000: oversized
+контекст отвергается с просьбой вынести детали в references, без обрезания критериев. Это
+ограничения символов, а не tokenizer estimate. Перемещение текста в файл не экономит контекст,
+если агент всё равно читает его целиком; инструкции предписывают выборочное чтение.
 
 ## Авария и перенос со старого контроллера
 
@@ -84,4 +114,6 @@ python3 -m unittest discover -s tools/continuous-dev -p 'test_*.py' -v
 Изолированный fake OpenCode принимает реальный stdin и выдаёт CLI JSONL. Проверяются
 успешный цикл, ненулевой exit, потерянный/невалидный handoff, tool-output spoof, restart
 после crash intent, настоящий file lock, unresolved probe и adoption при живом executor.
+Packet tests проверяют сохранность task criteria, исключение history/logs из prompt,
+отказ от запуска без next_task, pagination GitHub metadata и явный unavailable status.
 Это local controller component/E2E evidence; оно не закрывает OpenCode→gateway milestone A.

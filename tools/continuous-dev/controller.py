@@ -14,6 +14,8 @@ import tempfile
 import time
 import uuid
 
+from prompt_packet import EPIC_URL, build_packet, github_snapshot, launch_task
+
 EPIC = 'trained-assist/trained-agent-architecture#253'
 STATES = {'READY', 'IN_PROGRESS', 'IN_REVIEW', 'WAITING_CI', 'WAITING_REVIEW',
           'BLOCKED', 'DONE'}
@@ -160,16 +162,18 @@ def run_once(args, root):
     if not args.cwd or not Path(args.cwd).is_dir():
         raise ValueError('--cwd must name the verified execution checkout')
     iteration = uuid.uuid4().hex
-    prompt = Path(args.prompt).read_text() + '\n\n## Durable previous handoff\n' + json.dumps(handoff)
-    prompt += ('\n\nController iteration_id=' + iteration +
-               '\nExecute or reconcile ONE atomic step. Your final assistant text must end '
-               'with <HANDOFF>{valid JSON matching the documented schema}</HANDOFF>. '
-               'Use this controller iteration_id. No YAML or Markdown fences inside the block. '
-               'DONE means this step completed; epic_complete only after accepted A/B/C.\n')
+    task = launch_task(handoff)
+    refs = [EPIC_URL] + task['references'] + task['prerequisites']
+    refs.extend(handoff[key] for key in ('pr', 'work_issue') if handoff.get(key))
+    snapshot = github_snapshot(refs, now(), enabled=not args.offline)
+    prompt, packet = build_packet(handoff, task, iteration, root, args.prompt, snapshot,
+                                 execution_cwd=str(Path(args.cwd).resolve()))
+    atomic_json(root / ('launch-' + iteration + '.json'), packet)
     log_path = root / ('session-' + iteration + '.jsonl')
     state = dict(iteration_id=iteration, phase='STARTING', started_at=now(),
                  cwd=str(Path(args.cwd).resolve()), log=str(log_path), child_pid=None,
                  session_id=None, heartbeat_at=now(),
+                 task_step=task['step'], prompt_characters=len(prompt),
                  prompt_sha256=hashlib.sha256(prompt.encode()).hexdigest())
     atomic_json(state_file, state)  # Intent persists before spawning.
     try:
@@ -205,6 +209,8 @@ def run_once(args, root):
         next_handoff = extract(log_path.read_text())
         if next_handoff['iteration_id'] != iteration:
             raise ValueError('handoff belongs to a different iteration')
+        if next_handoff['step'] != task['step'] or next_handoff['repo'] != task['repo']:
+            raise ValueError('handoff does not report the selected task/repository')
         atomic_json(root / ('handoff-' + iteration + '.json'), next_handoff)
         atomic_json(root / 'handoff.json', next_handoff)
         state['phase'] = 'COMPLETE'
@@ -227,6 +233,7 @@ def main():
     parser.add_argument('--interval', type=float, default=300)
     parser.add_argument('--import-handoff', type=Path)
     parser.add_argument('--reconcile-iteration')
+    parser.add_argument('--offline', action='store_true', help='skip GitHub prefetch; agent must verify status')
     args = parser.parse_args()
     os.umask(0o077)
     root = Path(args.state_dir).resolve()
