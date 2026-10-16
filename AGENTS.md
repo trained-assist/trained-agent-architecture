@@ -27,6 +27,10 @@ Do not edit generated context or add it to main. Regenerate it via Repository co
 
 Use macOS Keychain only. GitHub default PAT: `github.com` / `kobzevvv` (`Trained Agent GitHub Token`). Azure Cloud/GHA/zen-rings PAT: `github.com` / `gha-compute-cluster`. Cloudflare sandbox: `cloudflare.com` / `trained-assist` (`Trained Assist Cloudflare Sandbox API Token`; account `d740a05e9442c1d0feacae2dfc673e93`). Never print secrets or store in files.
 
+## Prohibitions and restrictions (evidence rule)
+
+Самые опасные требования — запреты и ограничения прав. Если агент принимает решение где-то что-то запретить, отключить, ограничить или дописывает правило запрещающее, он обязан предварительно собрать evidence: что именно защищается, какие наблюдения/тесты/инциденты показывают необходимость, какие альтернативы рассмотрены и какие последствия допустимы. Запрет, ограничение или policy-правило без указанного evidence не считается обоснованным и не вводится.
+
 ## Delivery rules
 
 Инженерные delivery-правила (worktree/branch, PR draft, merge, deploy) — [ACCEPTANCE-CHECKLIST.md](ACCEPTANCE-CHECKLIST.md), раздел "Delivery rules (agent workflow)". Не дублировать их в этом файле.
