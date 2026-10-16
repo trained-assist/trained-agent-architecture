@@ -2,7 +2,7 @@
 
 Статус: архитектурное предложение по запросу владельца · 05.10.2026. Это правило целевого разделения и задание для следующей сессии; инвентарь текущего рекрутинга/выставок и перенос кода ещё не выполнены.
 
-Связанные правила: [ARCHITECTURE](ARCHITECTURE.md), [Capability Catalog](CAPABILITY-CATALOG-AND-FAST-REPLIES.md), [Integration Gate](EXTERNAL-INTEGRATION-GATE.md), [Engineering Approach](ENGINEERING-APPROACH.md), [Observability](OBSERVABILITY-AND-ERROR-CONTRACT.md). Документ не меняет владельцев Task Store, Runner, Broker и доставки. Статусы реализации и чек-листы — в issues.
+Связанные правила: [ARCHITECTURE](../ARCHITECTURE.md), [Capability Catalog](../CAPABILITY-CATALOG-AND-FAST-REPLIES.md), [Integration Gate](../EXTERNAL-INTEGRATION-GATE.md), [Engineering Approach](../ENGINEERING-APPROACH.md), [Observability](../OBSERVABILITY-AND-ERROR-CONTRACT.md). Документ не меняет владельцев Task Store, Runner, Broker и доставки. Статусы реализации и чек-листы — в issues.
 
 ## 1. Модель и термины
 
