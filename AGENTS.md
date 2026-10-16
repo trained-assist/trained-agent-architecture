@@ -23,6 +23,14 @@ Architecture/ownership: ARCHITECTURE.md. Work order: IMPLEMENTATION-AND-INTEGRAT
 Before using a live Telegram test lane, read the “Live Telegram test lanes” section in SANDBOX.md for lane ownership, shared downstream resources, occupancy checks, and log access.
 Do not edit generated context or add it to main. Regenerate it via Repository context CI or the local commands in README.md.
 
+## Credentials
+
+Use macOS Keychain only. GitHub default PAT: `github.com` / `kobzevvv` (`Trained Agent GitHub Token`). Azure Cloud/GHA/zen-rings PAT: `github.com` / `gha-compute-cluster`. Cloudflare sandbox: `cloudflare.com` / `trained-assist` (`Trained Assist Cloudflare Sandbox API Token`; account `d740a05e9442c1d0feacae2dfc673e93`). Never print secrets or store in files.
+
+## Delivery rules
+
+Инженерные delivery-правила (worktree/branch, PR draft, merge, deploy) — [ACCEPTANCE-CHECKLIST.md](ACCEPTANCE-CHECKLIST.md), раздел "Delivery rules (agent workflow)". Не дублировать их в этом файле.
+
 ## Architecture change acceptance
 
 For any behavior-changing feature, flow, public/inter-component contract, observable behavior, or actor-role change, follow [Architecture Change Management & Acceptance](SCENARIO-CHANGE-MANAGEMENT.md) before implementation. Distinguish these changes from a bugfix that restores already accepted behavior; ordinary bugfixes use the owning repository's issue → implementation PR → CI/tests path.
