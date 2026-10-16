@@ -37,6 +37,19 @@ API Worker остаётся stateless между вызовами исполне
 
 Public receipt: requestId/userTaskId для одной клиентской задачи; runId — отдельная попытка. Retry меняет runId; idempotency повтор submit возвращает прежний receipt. Standalone adapter может назвать public поле requestId, но в platform mapping оно однозначно соответствует userTaskId. Callback destinationRef отдельно от integrationBindingId provider операции.
 
+### Live run status and output
+
+Все клиенты (Control Plane, agent/MCP и Web) наблюдают один run через `GET /v1/runs/{runId}/events`; API сохраняет существующий JSON page и дополнительно поддерживает `Accept: text/event-stream`. Не создавать отдельный websocket/SSE state machine для каждого клиента.
+
+- Без cursor SSE начинает с актуального `snapshot` с `id=sequence`, затем передает новые события. При reconnect клиент передает `Last-Event-ID` (для JSON — `cursor`) и получает более поздние события из того же журнала.
+- События имеют стабильный `eventId`, возрастающий per-run `sequence`, `timestamp`, `runId`, `ownerGeneration`, `type` и типизированный payload. Повторная доставка допускается; exactly-once transport не обещается. Порядок и cursor позволяют дедуплицировать и продолжить.
+- Минимальные наблюдаемые фазы: `run_queued`, запуск/phase OpenCode, подтвержденный process start, worker progress/heartbeat как отдельный signal, доступные OpenCode stdout/stderr или публичные assistant output, `run_finalizing`, export/artifact outcome и terminal outcome. Не выдумывать процент выполнения; не отправлять hidden reasoning, secrets или private checkpoints.
+- JSON page возвращает `cursor` последнего отданного события, правильный `hasMore`, snapshot и явно обозначенный retention gap. Если cursor уже удален, клиент получает reset/snapshot-required и новую точку продолжения, а не обещание полного replay.
+- Retention count/bytes, максимальный event/output размер, heartbeat cadence, client backpressure и лимит наблюдателей объявляются в capabilities. Медленный/отключенный читатель не останавливает и не замедляет запуск без границ; polling остается совместимым fallback.
+- Завершенный run возвращает authoritative final answer/result отдельно от потокового вывода. Wait timeout или закрытие SSE/MCP/UI connection не отменяет run. Отмена запуска остается отдельной операцией с подтверждением остановки.
+
+Поток OpenCode начинается у execution worker и проходит через Runner API, который авторизует run, ограничивает/редактирует output, записывает событие и только затем доставляет его потребителю. API не проксирует один недолговечный VM connection как sole source of truth: после disconnect/restart события читаются из durable per-run journal. Cross-repository acceptance: [RUN-STREAM-01](scenarios/interaction/SC-RUN-STREAM-01-opencode-live-run-observation.md); текущий Worker API gap и implementation map — [architecture #278](https://github.com/trained-assist/trained-agent-architecture/issues/278), [Runner #381](https://github.com/trained-assist/ai-agent-runner/issues/381), executor output [Runner #138](https://github.com/trained-assist/ai-agent-runner/issues/138).
+
 Без user folder вход материализуется из разрешённых input refs, выход экспортируется в storage/API destination. При наличии folder — scoped snapshot/version contract. Данные очищаются после подтверждённого экспорта по lifecycle policy; при неудаче export результат не теряется молча.
 
 ## Логи и события
