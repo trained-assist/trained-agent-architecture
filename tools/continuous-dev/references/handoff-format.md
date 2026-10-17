@@ -6,6 +6,7 @@
 {
   "epic": "trained-assist/trained-agent-architecture#253",
   "revision": "v3",
+  "requirements_revision": "<immutable accepted requirements revision/ref>",
   "iteration_id": "<unique>",
   "step": "<atomic ID>",
   "state": "IN_PROGRESS",
@@ -38,6 +39,7 @@ DONE завершает текущий step; epic_complete=true требует A
 {
   "next_task": {
     "step": "<atomic ID>",
+    "role": "builder",
     "goal": "<одно наблюдаемое изменение>",
     "acceptance": ["<проверка и ожидаемый результат>"],
     "references": ["<issue/PR/contract URL или абсолютный путь>"],
@@ -55,3 +57,4 @@ repo/checkout/branch/head_sha можно опустить, если target не 
 все четыре значения. После DONE next_task.step должен отличаться от завершённого.
 Для BLOCKED/waiting/epic_complete next_task необязателен; launcher не запускается.
 acceptance формируется по выбранной строке Epic, не выводится из факта merge.
+Role/frozen/result/checkpoint contract: [iteration results](iteration-results.md).

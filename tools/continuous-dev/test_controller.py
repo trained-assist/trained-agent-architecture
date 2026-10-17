@@ -1,12 +1,16 @@
 import argparse
+import contextlib
 import fcntl
 import importlib.util
 import json
+import io
 import os
+import signal
 from pathlib import Path
 import subprocess
 import sys
 import tempfile
+import time
 import unittest
 from unittest.mock import patch
 
@@ -19,6 +23,7 @@ spec.loader.exec_module(c)
 
 def handoff():
     return dict(epic=c.EPIC, revision='v3', iteration_id='bootstrap', step='I04.a',
+                requirements_revision='epic253-v3',
                 state='READY', repo='trained-assist/trained-assist-llm-ladder',
                 checkout='/tmp/synthetic', branch='fixture', head_sha='a' * 40,
                 tests=[dict(command='fixture', result='PASS', evidence='local fixture')],
@@ -38,12 +43,39 @@ class ControllerTests(unittest.TestCase):
         self.fake = self.root / 'fake-opencode'
         self.fake.write_text('''#!/usr/bin/env python3
 import json, os, re, sys
+import hashlib, time
+from pathlib import Path
 prompt = sys.stdin.read()
 packet = json.loads(prompt.split('## Карточка запуска\\n', 1)[1])
 iteration = packet['iteration_id']
 base = json.loads(os.environ['TEST_HANDOFF'])
 base['iteration_id'] = iteration
 mode = os.environ.get('TEST_MODE', 'ok')
+if mode in ('hang', 'stop'):
+    print(json.dumps({'type':'step_start','sessionID':'synthetic-session'}), flush=True)
+    if mode == 'stop':
+        Path(packet['checkpoint_ref']).with_name('stop.json').write_text('{}')
+    time.sleep(30)
+if mode == 'checkpoint':
+    artifact = Path(packet['checkpoint_ref']).with_name('synthetic-result.txt')
+    artifact.write_text('preserved result')
+    proof = dict(kind='artifact', criterion=packet['task']['acceptance'][0], ref=str(artifact),
+                 sha256=hashlib.sha256(artifact.read_bytes()).hexdigest())
+    Path(packet['checkpoint_ref']).write_text(json.dumps(dict(iteration_id=iteration,
+        requirements_revision=base['requirements_revision'], phase='WAITING_PROVIDER',
+        next_event='provider response', evidence=[proof])))
+    time.sleep(1.5)
+if mode == 'no-progress':
+    artifact = Path(packet['checkpoint_ref']).with_name('known-evidence.txt')
+    artifact.write_text('same preserved outcome')
+    proof = dict(kind='artifact', criterion=packet['task']['acceptance'][0], ref=str(artifact),
+                 sha256=hashlib.sha256(artifact.read_bytes()).hexdigest())
+    base['step'] = packet['task']['step']
+    base['result'] = dict(kind='progress', requirements_revision=base['requirements_revision'],
+                          source_shas={}, harness='valid', evidence=[proof])
+    base['next_task'] = dict(step='I04.a.diag', role='researcher', diagnostic=True,
+                            hypothesis='idle closes client subscription', goal='Diagnose the missing event',
+                            acceptance=packet['task']['acceptance'])
 if mode == 'missing':
     text = 'No handoff.'
 elif mode == 'malformed':
@@ -56,7 +88,8 @@ sys.exit(9 if mode == 'nonzero' else 0)
         self.fake.chmod(0o700)
         c.atomic_json(self.state / 'handoff.json', handoff())
         self.args = argparse.Namespace(cwd=str(self.root), executable=str(self.fake),
-                                       prompt=str(HERE / 'system-prompt.md'), offline=True)
+                                       prompt=str(HERE / 'system-prompt.md'), offline=True,
+                                       max_sessions=8, session_seconds=30, loop=False)
         self.addCleanup(patch.stopall)
         patch.object(c, 'legacy_active', return_value=False).start()
         patch.dict(os.environ, TEST_HANDOFF=json.dumps(handoff()), TEST_MODE='ok').start()
@@ -194,6 +227,81 @@ sys.exit(9 if mode == 'nonzero' else 0)
         with patch.object(sys, 'argv', ['controller', '--state-dir', str(self.root / 'new/deep/state')]):
             with self.assertRaises(SystemExit):
                 c.main()
+
+    def test_session_budget_survives_handoff_import(self):
+        self.args.max_sessions = 1
+        self.assertTrue(c.run_once(self.args, self.state))
+        source = self.root / 'import.json'
+        source.write_text(json.dumps(handoff()))
+        self.assertEqual(self.main('--import-handoff', str(source)), 0)
+        with self.assertRaisesRegex(ValueError, 'budget exhausted'):
+            c.run_once(self.args, self.state)
+
+    def test_stop_persists_until_explicit_resume_without_resetting_spent_budget(self):
+        self.assertEqual(self.main('--stop'), 0)
+        self.assertFalse(c.run_once(self.args, self.state))
+        c.atomic_json(self.state / 'loop.json', dict(sessions_started=7, no_progress=2, decision='STAGNATED'))
+        self.assertEqual(self.main('--resume'), 0)
+        self.assertFalse((self.state / 'stop.json').exists())
+        self.assertEqual(json.loads((self.state / 'loop.json').read_text())['sessions_started'], 7)
+
+    def test_deadline_is_unknown_and_no_blind_retry(self):
+        os.environ['TEST_MODE'] = 'hang'
+        self.args.session_seconds = .1
+        try:
+            with self.assertRaisesRegex(ValueError, 'deadline reached'):
+                c.run_once(self.args, self.state)
+            active = json.loads((self.state / 'active.json').read_text())
+            self.assertEqual(active['phase'], 'NEEDS_RECONCILE')
+            self.assertFalse(c.alive(active['child_pid']))
+            with self.assertRaisesRegex(ValueError, 'needs reconciliation'):
+                c.run_once(self.args, self.state)
+        finally:
+            active = json.loads((self.state / 'active.json').read_text())
+            if c.alive(active.get('child_pid')):
+                os.killpg(active['child_pid'], signal.SIGTERM)
+                os.waitpid(active['child_pid'], 0)
+
+    def test_manual_stop_cancels_only_the_owned_executor(self):
+        os.environ['TEST_MODE'] = 'stop'
+        with self.assertRaisesRegex(ValueError, 'manual stop'):
+            c.run_once(self.args, self.state)
+        active = json.loads((self.state / 'active.json').read_text())
+        self.assertFalse(c.alive(active['child_pid']))
+        self.assertTrue((self.state / 'stop.json').exists())
+        self.assertFalse(c.run_once(self.args, self.state))
+
+    def test_checkpoint_survives_exit_and_status_is_read_only(self):
+        os.environ['TEST_MODE'] = 'checkpoint'
+        c.run_once(self.args, self.state)
+        active = json.loads((self.state / 'active.json').read_text())
+        self.assertEqual(active['observed_phase'], 'WAITING_PROVIDER')
+        self.assertTrue(active['last_progress_at'])
+        checkpoint = Path(active['checkpoint_ref'])
+        self.assertTrue(checkpoint.exists())
+        before = (self.state / 'loop.json').read_bytes()
+        with contextlib.redirect_stdout(io.StringIO()) as output:
+            self.assertEqual(self.main('--status'), 0)
+        self.assertEqual(json.loads(output.getvalue())['active']['phase'], 'COMPLETE')
+        self.assertEqual((self.state / 'loop.json').read_bytes(), before)
+
+    def test_two_no_progress_replays_stop_after_one_bounded_diagnostic(self):
+        os.environ['TEST_MODE'] = 'no-progress'
+        self.args.loop = True
+        artifact = self.state / 'known-evidence.txt'
+        artifact.write_text('same preserved outcome')
+        proof = dict(kind='artifact', criterion=handoff()['next_task']['acceptance'][0],
+                     ref=str(artifact), sha256=c.hashlib.sha256(artifact.read_bytes()).hexdigest())
+        c.atomic_json(self.state / 'loop.json', dict(seen_evidence=[c.receipt(proof)]))
+        self.assertTrue(c.run_once(self.args, self.state))
+        self.assertEqual(json.loads((self.state / 'loop.json').read_text())['no_progress'], 1)
+        self.assertFalse(c.run_once(self.args, self.state))
+        ledger = json.loads((self.state / 'loop.json').read_text())
+        self.assertEqual(ledger['decision'], 'STAGNATED')
+        self.assertEqual(ledger['sessions_started'], 2)
+        with self.assertRaisesRegex(ValueError, 'two iterations'):
+            c.run_once(self.args, self.state)
+        self.assertEqual(len(list(self.state.glob('session-*.jsonl'))), 2)
 
 
 if __name__ == '__main__':

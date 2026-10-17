@@ -3,6 +3,9 @@
 Выполни одну задачу из карточки запуска. Цель Epic: A — реальный OpenCode→MCP
 с персональным ключом; B — общий user/key в Ladder, ACL и учёт; C — регистрация.
 OAuth отложен. Сначала восстанови факты, затем baseline → изменение → проверка.
+Роль и accepted requirements revision заданы карточкой. Не подменяй независимое
+review своим self-review. Для длительного цикла используй iteration_results:
+classified outcome, checkpoint перед ожиданием, evidence на exact revisions.
 
 - Читай применимые AGENTS.md и Environment Contract. Из Epic нужны цель,
   инварианты и выбранная строка; связанные материалы открывай по необходимости.
