@@ -1,5 +1,6 @@
 # Контракты между сервисами
 
+Черновик сценария MCP в OpenCode (sandbox, пользователи, ролевой доступ): [C15 MCP OpenCode Sandbox](C15-MCP-OPENCODE-SANDBOX.md).
 План безопасного переноса Recruiting и CRM вертикальными срезами, golden fixtures и слоями проверок: [C14 Migration Playbook](C14-MIGRATION-PLAYBOOK.md).
 Сценарии пользователя, сквозной профильный контекст и acceptance criteria: [Connected App User Scenarios](CONNECTED-APP-USER-SCENARIOS.md).
 Предлагаемый контракт явной конфигурации, secrets/bindings и пяти операций восстановления: [Configuration and Recovery Contract](CONFIGURATION-RECOVERY-CONTRACT.md).
