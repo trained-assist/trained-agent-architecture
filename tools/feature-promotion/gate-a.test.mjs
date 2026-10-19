@@ -14,6 +14,11 @@ test('validates the canonical registry and unchanged documentation', () => {
   assert.deepEqual(result, { changedScenarioIds: [], impactedScenarioIds: [] });
 });
 
+test('scenario catalog README is not a behavioral scenario change', () => {
+  const result = validateFeaturePromotion({ registry: realRegistry, changedFiles: ['scenarios/README.md'] });
+  assert.deepEqual(result.changedScenarioIds, []);
+});
+
 test('rejects duplicate IDs', () => {
   const registry = clone(realRegistry);
   registry.scenarios.push(clone(registry.scenarios[0]));

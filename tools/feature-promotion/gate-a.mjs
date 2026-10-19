@@ -149,7 +149,7 @@ export function validateFeaturePromotion({ registry, manifestFiles = [], changed
       if (!index.ids.has(exception.scenario_id)) fail(`${exception.scenario_id}: coverage exception is not in the Scenario Registry`);
     }
   }
-  const changedSpecs = changedFiles.filter((file) => file.startsWith('scenarios/') && !file.startsWith('scenarios/sources/') && file.endsWith('.md'));
+  const changedSpecs = changedFiles.filter((file) => file.startsWith('scenarios/') && !file.startsWith('scenarios/sources/') && file !== 'scenarios/README.md' && file.endsWith('.md'));
   const changedIds = new Set(changedSpecs.map((file) => {
     const id = index.bySpec.get(file);
     if (!id) fail(`changed scenario is missing from registry: ${file}`);
