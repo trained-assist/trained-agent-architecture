@@ -4,10 +4,6 @@
 
 **Статус и чек-листы — в [Project «Trained Assist — Migration»](https://github.com/orgs/trained-assist/projects/1) и issues; документы — долговечная архитектура.** Перед работой над карточкой сначала открыть её issue: там актуальный статус, чек-лист приёмки и evidence.
 
-**Вывод старой GCP VM:** новые работы и зависимости на `alesa-personal-assistent/us-central1-a/alesa-vm` запрещены. Для Agent Run Serverless Runner API размещается в Cloudflare Worker; Control Plane обращается только к нему. Французская VM — execution worker, не API endpoint; обычный Telegram Agent Run по умолчанию направляется на неё через Runner API. Данные старой VM сохраняются и восстанавливаются до согласованного выключения; stop и удаление дисков/backup — разные решения. Другие сервисы Google разрешены. Актуальный статус вывода GCP VM — [issue #145](https://github.com/trained-assist/trained-agent-architecture/issues/145).
-
-Порядок приёмки, cutoff и контроля расходов — [runbook вывода GCP VM](GCP-VM-EXIT-RUNBOOK.md).
-
 ## Быстрый обзор для агента
 
 Перед изучением откройте [короткую карту репозитория](https://github.com/trained-assist/trained-agent-architecture/blob/repo-context/REPO-MAP.md). Рядом лежат [Tree-sitter pack](https://github.com/trained-assist/trained-agent-architecture/blob/repo-context/repo-compressed.xml) и [manifest с sourceSha](https://github.com/trained-assist/trained-agent-architecture/blob/repo-context/manifest.json). Это постоянные ссылки на последний опубликованный main; sourceSha показывает свежесть.
@@ -31,7 +27,7 @@ Fast-path research: [алгоритм до запуска агента и про
 
 Интерактивность: [формы, кнопки, Awaiting user input и research B](INTERACTIVE-EXECUTION-AND-USER-INPUT.md). End-to-end не запрещает вопросы; формы открываются host handler без нового Agent Run.
 
-Приёмка ввода и стартовые окна: [SC-START-01](scenarios/interaction/SC-START-01-input-start-window.md), реализация [issue #170](https://github.com/trained-assist/trained-agent-architecture/issues/170). Общие правила Architecture Change Management & Acceptance (включая сценарии для пользователя, агента, API, оператора и QA) — [SCENARIO-CHANGE-MANAGEMENT.md](SCENARIO-CHANGE-MANAGEMENT.md).
+Приёмка ввода и стартовые окна: [SC-START-01](scenarios/interaction/SC-START-01-input-start-window.md). Общие правила Architecture Change Management & Acceptance (включая сценарии для пользователя, агента, API, оператора и QA) — [SCENARIO-CHANGE-MANAGEMENT.md](SCENARIO-CHANGE-MANAGEMENT.md).
 
 ## Начать разработку
 
@@ -45,6 +41,19 @@ Fast-path research: [алгоритм до запуска агента и про
 5. Создать PR (и при необходимости issue) в implementation repo со ссылкой на issue карточки; evidence приёмки — воспроизводимый запуск, controlled failure, scoped logs — прикладывать в issue карточки и отмечать там пункты чек-листа.
 
 Первый интеграционный сценарий нового control plane — диалог из пяти реплик с рестартом. Standalone Runner/API можно готовить параллельно; они не заменяют проверку диалога. Живой сервис продолжает работать.
+
+## Проверка и продвижение изменений
+
+Порядок для изменения: обычный bugfix идёт через issue → implementation PR → CI/tests owning repository. Если меняется ожидаемое поведение, flow, публичный/inter-component контракт или роли акторов, сначала открывается scenario-change PR в architecture repo, затем реализация. Проверка проходит по [Architecture Acceptance Protocol](ACCEPTANCE-CHECKLIST.md) и [Architecture Change Management & Acceptance](SCENARIO-CHANGE-MANAGEMENT.md):
+
+1. **Draft PR / обычный PR.** Implementation PR связывается с issue карточки и pinned revision. Для behavior change scenario-change PR остаётся открытым до готовности реализации.
+2. **Согласование сценариев (Gate 1).** Semantic review: соответствует ли реализуемый код изменению сценария. Только `PASS` проходит; `FAIL` и `UNCLEAR` блокируют.
+3. **Проверка компонентов (Gate 2).** Небольшой verification plan по изменённым наблюдаемым шагам через endpoint/API/fixture/UI adapter; команды, base URLs, test identities и reset берутся из Environment Contracts.
+4. **Sandbox tests.** Прогоны на доступных линиях: [Live Telegram test lanes](SANDBOX.md#live-telegram-test-lanes) (`tg-probability`/`tg-shturman`, `tg-sandbox3`), [SC-OPS-QA-01](scenarios/operations/SC-OPS-QA-01-sandbox-functional-verification.md), [SC-OPS-SANDBOX-BOOTSTRAP](scenarios/operations/SC-OPS-SANDBOX-BOOTSTRAP.md). Health/deploy success/manual tail не заменяют E2E; gate [Gate 3](SCENARIO-CHANGE-MANAGEMENT.md) генерирует E2E plan под выбранный target (`local`/`dev`/`test`/`staging`).
+5. **Promotion.** Повышение pinned revision на production идёт только по штатному promotion path owning repository: [Deployment coverage and sandbox promotion](scenarios/operations/deployment-coverage-and-sandbox.md), [SC-OPS-DEPLOY-01](scenarios/operations/SC-OPS-DEPLOY-01-protected-main-production.md). Sandbox acceptance сам по себе production не авторизует.
+6. **Production smoke.** После promotion допускается ограниченный post-deploy smoke по штатному пути на production с non-test account; smoke ограничен безопасными действиями и данными. Локальный PASS не называется staging E2E.
+
+Детали сред: [Sandbox](SANDBOX.md), [Engineering Approach](ENGINEERING-APPROACH.md), [Environment Contract template](contracts/ENVIRONMENT-CONTRACT-TEMPLATE.md). Карточные чек-листы и статус — в issues/Project и implementation repos, не в этом README.
 
 ## Основные документы и источники правил
 
@@ -106,7 +115,7 @@ Fast-path research: [алгоритм до запуска агента и про
 
 Для CRM Telegram выделены отдельный `trained-assist-tg-bot-sales-sandbox` и тестовый бот `@flexi_leads_bot`; production webhook не менялся. На 08.10.2026 публичный sandbox Worker отвечает на `/health` (200), Telegram показывает 19 общих Agent-команд, webhook не настроен, а неподписанный `/webhook` отклоняется (401). Draft [tg-bot PR #481](https://github.com/trained-assist/trained-assist-tg-bot/pull/481) добавляет строгий разбор `crm1_<buildId>_<companyId>` на `/start` и развёрнут в этом Worker, но его sandbox-конфигурация пока не содержит Agent endpoint/секрет и выбранный профиль/MCP binding.
 
-В изолированном CRM Web sandbox браузерный вход и каталог работают; каталог выдаёт ссылку тестового бота с ID связанной сборки и участника, без profile ID. Публичные CRM MCP-пробы чтения каталога и подготовки/подтверждения/сверки сделки проходят. Полный путь Telegram → Agent → CRM MCP пока не проверен: привязку профиля и discovery CRM-возможностей должен предоставить Agent; Telegram gateway не должен вызывать CRM Web `/mcp` напрямую. Детали и свежие evidence ведутся в [архитектурном issue #214](https://github.com/trained-assist/trained-agent-architecture/issues/214), [tg-bot #465](https://github.com/trained-assist/trained-assist-tg-bot/issues/465) и [CRM Web PR #65](https://github.com/flexi-consulting/crm-web/pull/65). Активный `@cmr_management_bot`, его webhook и production CRM/provider data остаются вне sandbox-проверок.
+В изолированном CRM Web sandbox браузерный вход и каталог работают; каталог выдаёт ссылку тестового бота с ID связанной сборки и участника, без profile ID. Публичные CRM MCP-пробы чтения каталога и подготовки/подтверждения/сверки сделки проходят. Полный путь Telegram → Agent → CRM MCP пока не проверен: привязку профиля и discovery CRM-возможностей должен предоставить Agent; Telegram gateway не должен вызывать CRM Web `/mcp` напрямую. Детали и свежие evidence ведутся в архитектурном issue 214, tg-bot 465 и CRM Web PR 65. Активный `@cmr_management_bot`, его webhook и production CRM/provider data остаются вне sandbox-проверок.
 
 ## Как привязывать работу
 

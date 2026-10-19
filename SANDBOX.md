@@ -1,6 +1,6 @@
 # Sandbox — как строится и проверяется песочница каждого этапа
 
-`alesa-personal-assistent/us-central1-a/alesa-vm` выводится из эксплуатации и не используется для новых sandbox, процессов или agent runs. Для Agent Run API слой размещается в Cloudflare Worker; французская VM может исполнять задачи как worker. CP sandbox подключает только Cloudflare Runner API, а Runner API маршрутизирует исполнение на французский worker по умолчанию. Предыдущие VM-прогоны не являются текущей схемой API. [Статус вывода GCP VM #145](https://github.com/trained-assist/trained-agent-architecture/issues/145).
+Для Agent Run API слой размещается в Cloudflare Worker; французская VM может исполнять задачи как worker. CP sandbox подключает только Cloudflare Runner API, а Runner API маршрутизирует исполнение на французский worker по умолчанию. Предыдущие VM-прогоны не являются текущей схемой API.
 
 v1.0 · 01.10.2026. Единый документ вместо прежних SANDBOX-PLAN, SANDBOX-BINDINGS-AND-CREDENTIALS и SANDBOX-CREDENTIALS-AND-ACCESS. Здесь только долговечная логика: как устроена песочница этапа, какие классы bindings/credentials ей нужны, как вызываются сбои и что проверяется в логах. Статус, пробелы, блокеры и чек-листы ведутся в issues и [Project «Trained Assist — Migration»](https://github.com/orgs/trained-assist/projects/1). Порядок работ — [план реализации](IMPLEMENTATION-AND-INTEGRATION-PLAN.md), общие правила — [Engineering Approach](ENGINEERING-APPROACH.md), схема логов — [Observability](OBSERVABILITY-AND-ERROR-CONTRACT.md).
 
@@ -46,7 +46,7 @@ Contract/fixture checks дешёвые и воспроизводимые. Real e
 
 ### Live Telegram test lanes
 
-Three Telegram ingress lanes exist. A bot that responds to `/health` is only an ingress check: full E2E readiness requires a working CP route, Cloudflare Runner API admission, France-first execution or a justified GHA fallback, persistence, and Telegram delivery. CP binds only the Cloudflare Runner API; never put a VM, GHA gateway, or launcher URL/credential in CP config. Current sandbox lane setup is tracked in [sandbox3 #193](https://github.com/trained-assist/trained-agent-architecture/issues/193). Use the acceptance criteria in [OPS-RUNNER-DEFAULT-01](scenarios/operations/SC-OPS-RUNNER-DEFAULT-01-serverless-to-france-worker.md) for the execution path. For a normal Telegram test, use the allowlisted account and bot without supplying a principal/profile in chat.
+Three Telegram ingress lanes exist. A bot that responds to `/health` is only an ingress check: full E2E readiness requires a working CP route, Cloudflare Runner API admission, France-first execution or a justified GHA fallback, persistence, and Telegram delivery. CP binds only the Cloudflare Runner API; never put a VM, GHA gateway, or launcher URL/credential in CP config. Current sandbox lane setup is tracked in sandbox3 #193. Use the acceptance criteria in [OPS-RUNNER-DEFAULT-01](scenarios/operations/SC-OPS-RUNNER-DEFAULT-01-serverless-to-france-worker.md) for the execution path. For a normal Telegram test, use the allowlisted account and bot without supplying a principal/profile in chat.
 
 | Lane | Test bot / gateway Worker | Config | Control Plane | Downstream isolation |
 |---|---|---|---|---|
@@ -54,13 +54,13 @@ Three Telegram ingress lanes exist. A bot that responds to `/health` is only an 
 | `tg-shturman` | `@Shturman_bot` / `trained-assist-tg-shturman-sandbox` | `trained-assist-tg-bot/wrangler.sandbox-tg-shturman.toml` | `trained-assist-cp-telegram-ux-v1-sandbox` | Shares CP Task Store/Workflow and Runner route with `tg-probability` |
 | `tg-sandbox3` | `@ptichka_status_bot` / `trained-assist-tg-sandbox3` | See [TG sandbox3 PR #485](https://github.com/trained-assist/trained-assist-tg-bot/pull/485) | `trained-assist-cp-sandbox3` | Separate gateway storage and CP D1/Workflow/principal; live route targets Cloudflare `trained-assist-runner-api-sandbox3`, while mock probes use separate `trained-assist-runner-api-cp-sandbox3`; bounded Runner execution and Telegram outbound delivery now pass in Worker-driven E2E |
 
-`tg-probability` and `tg-shturman` have separate per-chat collector/session state but **are not independent full-stack lanes**. Treat a claim or nonterminal work in their shared CP/Runner as contention for both. For `tg-sandbox3`, the CP → Cloudflare Runner API boundary, bounded Runner executions, persistence, and Telegram outbound delivery have passed Worker-driven E2E scenarios; see [sandbox3 E2E acceptance (2026-10-12)](docs/reviews/SANDBOX3-E2E-ACCEPTANCE-2026-10-12.md). The test harness enters through the gateway's authenticated operator test-update endpoint, not the real Telegram webhook, and the file fixture mocks Telegram `getFile` bytes. Those external ingress operations remain unverified. Per-run physical France worker identity and France/GHA failover also remain separate gates; do not infer them from `/health` or the CP's `cloudflare-workflows` orchestration label. Follow [CP #159](https://github.com/trained-assist/trained-assist-control-plane/issues/159), [Runner #173](https://github.com/trained-assist/ai-agent-runner/issues/173), and [sandbox checkpoint #185](https://github.com/trained-assist/trained-agent-architecture/issues/185). A mock probe or health check alone does not establish full E2E readiness.
+`tg-probability` and `tg-shturman` have separate per-chat collector/session state but **are not independent full-stack lanes**. Treat a claim or nonterminal work in their shared CP/Runner as contention for both. For `tg-sandbox3`, the CP → Cloudflare Runner API boundary, bounded Runner executions, persistence, and Telegram outbound delivery have passed Worker-driven E2E scenarios; see [sandbox3 E2E acceptance (2026-10-12)](docs/reviews/SANDBOX3-E2E-ACCEPTANCE-2026-10-12.md). The test harness enters through the gateway's authenticated operator test-update endpoint, not the real Telegram webhook, and the file fixture mocks Telegram `getFile` bytes. Those external ingress operations remain unverified. Per-run physical France worker identity and France/GHA failover also remain separate gates; do not infer them from `/health` or the CP's `cloudflare-workflows` orchestration label. Follow CP #159, Runner #173, and sandbox checkpoint #185. A mock probe or health check alone does not establish full E2E readiness.
 
-**Choosing and claiming a lane:** check the claims in [architecture sandbox issue #185](https://github.com/trained-assist/trained-agent-architecture/issues/185), the deployed versions, and current nonterminal tasks before starting. Prefer `tg-probability` when free and ready. If it is occupied or blocked, use another ready lane only after checking its shared downstream; otherwise fix the concrete blocker. Claim the chosen lane in #185, send one uniquely marked request from the allowlisted Telegram account, and keep one active E2E run at a time until Runner capacity/isolation are demonstrated. Do not create a new sandbox or clear shared storage to make a lane appear free. Record gateway/CP/Runner deployed SHAs, marker, task/run IDs, outcome and next action; release the claim with `RELEASE <lane>` after collecting evidence.
+**Choosing and claiming a lane:** check the claims in architecture sandbox issue #185, the deployed versions, and current nonterminal tasks before starting. Prefer `tg-probability` when free and ready. If it is occupied or blocked, use another ready lane only after checking its shared downstream; otherwise fix the concrete blocker. Claim the chosen lane in #185, send one uniquely marked request from the allowlisted Telegram account, and keep one active E2E run at a time until Runner capacity/isolation are demonstrated. Do not create a new sandbox or clear shared storage to make a lane appear free. Record gateway/CP/Runner deployed SHAs, marker, task/run IDs, outcome and next action; release the claim with `RELEASE <lane>` after collecting evidence.
 
 **Checking occupancy:** unauthenticated `/health` is not an occupancy check. The gateway's protected `GET /collector-state?chatId=<allowlisted-chat-id>` reports `busy`, `launching`, `buf`, `retryBatch`, and `controlPlaneBarrier` (`unresolvedLaunchCount`, `busyRequestCount`, `stopPending`). Read it only through the existing authorized integration script or with the sandbox webhook-secret header kept in the local secret store. Treat a lane as unavailable if a lease is active, `busy`/`launching` is set, held/retry input is non-empty, `stopPending` is true, or an unresolved launch exists. Do not clear this state to make a lane appear free. Reconcile nonterminal CP tasks and Runner admissions in the selected downstream before retrying; do not repeat an unknown old run.
 
-**Adding another sandbox:** a complete lane needs its own Telegram bot/token and gateway Worker/storage, CP Worker/D1/Workflow/principal, Runner API namespace and worker capacity, route/auth bindings, and a verified delivery path. The [Runner API sandbox operations guide](https://github.com/trained-assist/ai-agent-runner/blob/main/docs/API-SANDBOX-OPERATIONS.md) describes repeatable *component* namespaces; an API namespace named `sandbox4` or `sandbox5` does not create a Telegram/CP lane. Use the tracked bootstrap work in [architecture #193](https://github.com/trained-assist/trained-agent-architecture/issues/193) and [CP #159](https://github.com/trained-assist/trained-assist-control-plane/issues/159), then verify each binding and a real E2E scenario before marking a new lane ready. Never copy production credentials or another lane's mutable data.
+**Adding another sandbox:** a complete lane needs its own Telegram bot/token and gateway Worker/storage, CP Worker/D1/Workflow/principal, Runner API namespace and worker capacity, route/auth bindings, and a verified delivery path. The [Runner API sandbox operations guide](https://github.com/trained-assist/ai-agent-runner/blob/main/docs/API-SANDBOX-OPERATIONS.md) describes repeatable *component* namespaces; an API namespace named `sandbox4` or `sandbox5` does not create a Telegram/CP lane. Use the tracked bootstrap work in architecture #193 and CP #159, then verify each binding and a real E2E scenario before marking a new lane ready. Never copy production credentials or another lane's mutable data.
 
 **Submitting and observing:** a human may send a normal message to the assigned test bot; the configured Telegram account/chat allowlist still applies. No API key is entered into Telegram. I can tail the exact Worker from the already authenticated workstation and correlate a unique marker with Task IDs; the user does not need to operate Wrangler. Commands for an operator/session with Cloudflare access:
 
@@ -72,7 +72,7 @@ npx wrangler tail trained-assist-tg-ux-sandbox --config wrangler.sandbox-tg-exis
 
 Cloudflare's Tail API is an administrative API and requires a Cloudflare API token/authorized account, unlike the test bot's normal Telegram UX ([Cloudflare Tail API](https://developers.cloudflare.com/api/resources/workers/subresources/scripts/subresources/tail/methods/create/)).
 
-**No-login HTTP seed/feed:** there is currently no public endpoint that accepts arbitrary sandbox tasks and provides an SSE result subscription. `/health` is public liveness only; `/webhook`, `/collector-state`, `/deliveries`, and CP task routes retain their existing provider/principal authentication. Do not describe a raw unauthenticated submit or Cloudflare log-tail endpoint as available. The requested test convenience should be implemented as a distinct sandbox-only seed/feed adapter: no account/API-key login for test callers, fixed sandbox principal/profile and hard budget/rate/body limits, no production tools or credentials, per-run opaque receipt capability for a private SSE stream, bounded TTL, and no endpoint for listing other sessions' inputs/results. The opaque receipt is a scoped read capability, not a user account. Keep Cloudflare Tail credentials and protected collector diagnostics private. Implementation is tracked in [trained-assist-tg-bot#402](https://github.com/trained-assist/trained-assist-tg-bot/issues/402).
+**No-login HTTP seed/feed:** there is currently no public endpoint that accepts arbitrary sandbox tasks and provides an SSE result subscription. `/health` is public liveness only; `/webhook`, `/collector-state`, `/deliveries`, and CP task routes retain their existing provider/principal authentication. Do not describe a raw unauthenticated submit or Cloudflare log-tail endpoint as available. The requested test convenience should be implemented as a distinct sandbox-only seed/feed adapter: no account/API-key login for test callers, fixed sandbox principal/profile and hard budget/rate/body limits, no production tools or credentials, per-run opaque receipt capability for a private SSE stream, bounded TTL, and no endpoint for listing other sessions' inputs/results. The opaque receipt is a scoped read capability, not a user account. Keep Cloudflare Tail credentials and protected collector diagnostics private. Implementation is tracked in trained-assist-tg-bot#402.
 
 | Средство | Метод | Construction/проверка |
 |---|---|---|
@@ -137,7 +137,7 @@ Free-уровень OpenCode Zen/Go работает только изнутри
 
 | Механизм | Что там | Как читать |
 |---|---|---|
-| GCP Secret Manager (проект прод-агента) | Прод-секреты и sandbox-секреты GCP-стороны: тестовый бот `SANDBOX_TEST_BOT_TOKEN`, контакт sandbox-VM `SANDBOX_VM2_SSH`, `LLM_LADDER_TOKEN` | `gcloud secrets versions access latest --secret=<name>`; агенты на GCP VM — через default service account с `secretAccessor` |
+| GCP Secret Manager (проект прод-агента) | Прод-секреты и sandbox-секреты GCP-стороны: тестовый бот `SANDBOX_TEST_BOT_TOKEN`, контакт sandbox-VM `SANDBOX_VM2_SSH`, `LLM_LADDER_TOKEN` | `gcloud secrets versions access latest --secret=<name>`; агенты на legacy VM — через default service account с `secretAccessor` |
 | Env-файл сервиса прода (`secrets.env`, 0600) | EnvironmentFile агента на прод-VM | Только прод; в sandbox не переносится |
 | Env-файл sandbox-VM (0600, `SECRETS_SOURCE=env`) | Секреты не-GCP хоста без ADC: собственный `AGENT_SECRET`, `TELEGRAM_BOT_TOKEN` тестового бота, токен llm-ladder | Файл на хосте; осознанный fallback, не забытый механизм |
 | GitHub Actions secrets / org secrets | CI/deploy (`VM_SSH_KEY`, `CF_API_TOKEN`, `LLM_LADDER_TOKEN` и др.) | `gh secret list --repo <repo>`; синхронность со списком — env-manifest + проверка в CI |
@@ -158,7 +158,7 @@ Free-уровень OpenCode Zen/Go работает только изнутри
 | Формы доступа | `ZEROCREDS_ADMIN_TOKEN` | sandbox-экземпляр или не используется |
 | Трекинг | `GITHUB_ISSUES_TOKEN`, `CHECKLIST_API_KEY` | по решению для issue sink (I09) |
 
-Централизованный credential-контур для Runner на разных VM — [Credential Broker, #30](https://github.com/trained-assist/trained-agent-architecture/issues/30).
+Централизованный credential-контур для Runner на разных VM — Credential Broker, #30.
 
 ## Уроки пробного запуска VM2
 
@@ -186,7 +186,7 @@ Host-manifest хранит различающиеся параметры маш�
 - **Результат:** transcript, measured overhead и решение; непроверенное остаётся pending.
 - **Bindings:** SSH к sandbox-VM, новый experiment namespace, sandbox-подмножество ключей; для пилотов с Run — llm-ladder `free-ladder`. Private данные VM недоступны пилоту.
 - **Logs:** pilotId/tool/version/source refs, baseline/candidate measurements, controlled errors и decision/evidence refs. При Run сохраняются profile/task/run refs. Redaction, bounded logs и cleanup; непроверенное не обозначено VM PASS.
-- **Статус:** [эпик R00 #31](https://github.com/trained-assist/trained-agent-architecture/issues/31).
+- **Статус:** эпик R00 #31.
 
 ### I00 — baseline репозиториев
 
@@ -195,7 +195,7 @@ Host-manifest хранит различающиеся параметры маш�
 - **Результат:** bounded AutoFix/verify и source-pinned map с source refs; нет production merge. AutoFix имеет attempt cap и verify, не автоматические merge/deploy/GTD.
 - **Bindings:** GitHub-доступ к fixture repo/test branch с минимальными правами; free-only LLM profile для bounded LLM fix; без production merge/deploy прав.
 - **Logs:** AutoFix — check/fix before-after, rule ID, tool/version, attempt count, patch/PR refs и residual failure. Context compression — source commit/catalog version, included/omitted paths, byte/token budget и build errors; secrets excluded. Проверить no-change повтор и synthetic failed check.
-- **Статус:** [эпик E0 #16](https://github.com/trained-assist/trained-agent-architecture/issues/16).
+- **Статус:** эпик E0 #16.
 
 ### I01 — Agent Runner execution worker
 
@@ -204,7 +204,7 @@ Host-manifest хранит различающиеся параметры маш�
 - **Результат:** observed Run lifecycle, correct scoped logs, no cross-profile access, cleanup; readiness отделена от liveness; timestamps UTC.
 - **Bindings:** CP получает только service binding к Cloudflare Runner API; API и France worker используют отдельные dispatch credentials через их secret stores. Административный SSH к VM — только для управления worker host, не для установки/запуска Runner API. LLM Ladder credential выдаётся только worker runtime для разрешённого live smoke; локальные тесты используют stub. Bot token не требуется: standalone Runner API работает без Telegram.
 - **Logs:** Run start/exit/cancel/process-tree/heartbeat/recovery, profile/task/run/engine/provider refs, structured errors и cleanup. Intentional failed startup/timeout обязаны оставлять диагностируемую запись.
-- **Статус:** [эпик E1 #17](https://github.com/trained-assist/trained-agent-architecture/issues/17).
+- **Статус:** эпик E1 #17.
 
 ### I02A — Serverless Agent API и worker dispatch
 
@@ -213,7 +213,7 @@ Host-manifest хранит различающиеся параметры маш�
 - **Результат:** durable receipt/result и replay по sequence, один dispatch owner; всё проходит без Telegram/Web.
 - **Bindings:** sandbox API keys/scopes для test principals (C13), hash-only registry/policy и worker-dispatch credentials на стороне API/worker; отдельные Cloudflare Worker/Durable Object bindings и deploy-доступ Cloudflare класса `CF_API_TOKEN`/wrangler. GHA backup управляется только Runner API placement policy при доказанном отказе France до admission; private GHA config repository/read credential доступны только GHA worker.
 - **Logs:** request receipt/idempotency/auth scope, dispatch/run state, event sequence/replay, reconnect/cancel и client-visible outcome. Profile/principal сохраняется и без folder; secret/API key не логируется.
-- **Статус:** [эпик E2 #18](https://github.com/trained-assist/trained-agent-architecture/issues/18), [P-DB #32](https://github.com/trained-assist/trained-agent-architecture/issues/32).
+- **Статус:** эпик E2 #18, P-DB #32.
 
 ### I02B — артефакты и workspace
 
@@ -222,7 +222,7 @@ Host-manifest хранит различающиеся параметры маш�
 - **Результат:** manifest и точные bytes клиента; cleanup только после export ACK.
 - **Bindings:** локальный S3-совместимый backend для fixture; отдельный R2 bucket песочницы для cloud smoke; GCS — прод-вариант, требует доступа VM service account. Signed URLs короткоживущие и не логируются.
 - **Logs:** artifactId/hash/size/version, upload multipart state/abort, export commit/fail, snapshot conflict и cleanup. Signed URL не пишется целиком; TTL не стирает единственную копию до export ACK.
-- **Статус:** [эпик E3 #19](https://github.com/trained-assist/trained-agent-architecture/issues/19).
+- **Статус:** эпик E3 #19.
 
 ### I03 — Web, затем Telegram
 
@@ -231,7 +231,7 @@ Host-manifest хранит различающиеся параметры маш�
 - **Результат:** контекст сохранён, latency/cost измерены; полный возврат результата и known profile/channel; old production untouched.
 - **Bindings:** отдельные Workers/KV/D1 для Web adapter и test storage; тестовый TG бот (`SANDBOX_TEST_BOT_TOKEN`), никогда прод-бот/webhook; synthetic users/profiles.
 - **Logs:** ingress request/native message ref, profile/channel/destination, Task correlation, dedup/media preparation, delivery attempts/ACK и Web reconnect. Ошибка в TG/Web fixture прослеживается до scoped result/report.
-- **Статус:** [эпик E4 #20](https://github.com/trained-assist/trained-agent-architecture/issues/20).
+- **Статус:** эпик E4 #20.
 
 ### I04 — MCP и доменные capabilities
 
@@ -240,7 +240,7 @@ Host-manifest хранит различающиеся параметры маш�
 - **Результат:** действительный tool invoke и receipt, не только method listed; чужой binding недоступен.
 - **Bindings:** scoped test credentials per binding для fixtures; значения не видны модели; при наличии — через Credential Broker (#30).
 - **Logs:** MCP readiness/handshake/invocation/timeout/cleanup, capability/version/scoped binding и effect receipt. Credential values не логируются; stdio/native details доступны приватным diagnostic ref.
-- **Статус:** [эпик E5 #21](https://github.com/trained-assist/trained-agent-architecture/issues/21).
+- **Статус:** эпик E5 #21.
 
 ### I05 — первый fast path
 
@@ -249,7 +249,7 @@ Host-manifest хранит различающиеся параметры маш�
 - **Результат:** template/LLM/OpenCode путь правильный; one continuation owner.
 - **Bindings:** llm-ladder free-only профиль; sanitized corpus без profile data.
 - **Logs:** routing reason/policy/context refs, template/recipe/agent mode, schema outcome/needs_executor, escalation attempt и first useful reply timing. Incorrect fast answer/error проходит scoped error contract.
-- **Статус:** [эпик E5 #21](https://github.com/trained-assist/trained-agent-architecture/issues/21).
+- **Статус:** эпик E5 #21.
 
 ### I06 — capability catalog
 
@@ -258,7 +258,7 @@ Host-manifest хранит различающиеся параметры маш�
 - **Результат:** readiness/inputs не выдуманы; measured one-/two-stage comparison.
 - **Bindings:** как I05.
 - **Logs:** catalog/brief version, selected capability/readiness, included schema refs/input insufficiency, eval case ID, one-/two-stage calls, latency и usage. Не сохранять user raw prompt в общий corpus.
-- **Статус:** [эпик E5 #21](https://github.com/trained-assist/trained-agent-architecture/issues/21).
+- **Статус:** эпик E5 #21.
 
 ### I07 — расписание, планы, выборочный GTD
 
@@ -267,7 +267,7 @@ Host-manifest хранит различающиеся параметры маш�
 - **Результат:** GTD только opt-in, stable plan/step IDs, no endless control. Hour/day waits не требуют реального сна.
 - **Bindings:** synthetic CI provider; реальные внешние bindings не нужны.
 - **Logs:** schedule/occurrence dedup, gtdId только opt-in, plan/step/version/control registration reason, wait/deadline/next-step/outcome ACK. Проверить, что simple scheduled success не создаёт GTD events.
-- **Статус:** [эпик E5 #21](https://github.com/trained-assist/trained-agent-architecture/issues/21).
+- **Статус:** эпик E5 #21.
 
 ### I08 — External Integration Gate
 
@@ -276,7 +276,7 @@ Host-manifest хранит различающиеся параметры маш�
 - **Результат:** profile binding/correlation и outcome reconciliation; no blind effects retry.
 - **Bindings:** signing secrets эмулятора; режим HH/CRM test account (read-only) фиксируется решением; principal из binding через Credential Broker, не от модели.
 - **Logs:** provider operationId/external refs, auth/readiness, callback signature/dedup, normalization/cursor и unknown→reconciled. Profile/task/channel correlation из binding; raw provider payload приватный.
-- **Статус:** [эпик E6 #22](https://github.com/trained-assist/trained-agent-architecture/issues/22).
+- **Статус:** эпик E6 #22.
 
 ### I09 — Error Watcher
 
@@ -285,7 +285,7 @@ Host-manifest хранит различающиеся параметры маш�
 - **Результат:** bounded LLM/OpenCode calls; original user error retained; no self-loop.
 - **Bindings:** fake issue sink; реальный sink (класс `GITHUB_ISSUES_TOKEN`, sandbox-репозиторий) только по решению.
 - **Logs:** errorEvent/incident/sourceTask/diagnosticTask, fingerprint/count, mute/reopen/expiry, diagnosis attempts/report/issue receipts и self-loop guard. Suppressed events агрегируются с TTL, не исчезают без trace.
-- **Статус:** [эпик E6 #22](https://github.com/trained-assist/trained-agent-architecture/issues/22).
+- **Статус:** эпик E6 #22.
 
 ### I10 — promotion, совместимость, RU/EU
 
@@ -294,7 +294,7 @@ Host-manifest хранит различающиеся параметры маш�
 - **Результат:** no double dispatch; original live tasks stay with old owner; pinned config.
 - **Bindings:** release/config registry; второй worker; shell-доступ к RU VM для региональной приёмки; paid profiles off.
 - **Logs:** release/config/worker/region/ownerGeneration, promotion/cohort/rollback, fencing/drain/failover и retention health. Smoke evidence коррелирует API/Web/TG task/run IDs; prod/sandbox различимы.
-- **Статус:** [эпик E7 #23](https://github.com/trained-assist/trained-agent-architecture/issues/23).
+- **Статус:** эпик E7 #23.
 
 ## Логи обязательны для каждой итерации
 
