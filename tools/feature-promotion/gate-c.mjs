@@ -94,6 +94,8 @@ function docker(work, args, { model = false, timeout = 600000 } = {}) {
   const name = `gate-c-${crypto.randomUUID()}`;
   try {
     return spawnSync('docker', ['run', '--rm', '--name', name, '--cap-drop=ALL', '--security-opt=no-new-privileges',
+      '--user', `${process.getuid()}:${process.getgid()}`, '-e', 'HOME=/tmp/opencode-home',
+      '-e', 'XDG_DATA_HOME=/tmp/opencode-data', '-e', 'XDG_CONFIG_HOME=/tmp/opencode-config', '-e', 'XDG_CACHE_HOME=/tmp/opencode-cache',
       '--pids-limit=256', '--memory=4g', '--cpus=2', '-v', `${work}:/work${model ? ':ro' : ''}`, '-w', '/work',
       ...(model ? ['-e', 'LLM_LADDER_TOKEN', '-e', 'OPENCODE_CONFIG=/work/opencode.json'] : []), IMAGE, ...args],
     { encoding: 'utf8', timeout, maxBuffer: 16 * 1024 * 1024, env: process.env });
