@@ -84,6 +84,11 @@ Runnable пример: [Epic #253 controller](tools/continuous-dev/README.md).
 Стартовый контекст содержит короткие постоянные правила, одну задачу с criteria и ссылки
 на подробные материалы. История и полный backlog не копируются в каждый запуск;
 status snapshot имеет timestamp/SHA и не заменяет acceptance evidence.
+Для длительного цикла общие правила сохраняются, role overlay выбирается по задаче:
+builder, verifier, независимый reviewer; research/integration — по конкретной гипотезе.
+Heartbeat не равен содержательному прогрессу, internal PASS не равен client delivery,
+а merge не равен installed revision. Сценарий [SC-ENG-EPIC-ITERATION](scenarios/engineering/SC-ENG-EPIC-ITERATION.md)
+фиксирует no-progress, stop/restart и exact-version acceptance по опыту playbooks #153.
 
 - [Sandbox](SANDBOX.md) — методы, bindings/credentials, controlled failures, stage-specific logs checks и уроки VM2.
 - [Implementation and Integration Plan](IMPLEMENTATION-AND-INTEGRATION-PLAN.md) — зависимости и порядок работ; этот документ не содержит второй календарь реализации.

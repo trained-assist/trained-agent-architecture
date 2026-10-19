@@ -5,9 +5,11 @@ import datetime as dt
 import fcntl
 import hashlib
 import json
+import math
 import os
 from pathlib import Path
 import re
+import signal
 import subprocess
 import sys
 import tempfile
@@ -15,6 +17,7 @@ import time
 import uuid
 
 from prompt_packet import EPIC_URL, build_packet, github_snapshot, launch_task
+from loop_policy import assess, preflight, receipt
 
 EPIC = 'trained-assist/trained-agent-architecture#253'
 STATES = {'READY', 'IN_PROGRESS', 'IN_REVIEW', 'WAITING_CI', 'WAITING_REVIEW',
@@ -124,6 +127,15 @@ def alive(pid):
         return False
 
 
+def cancel_owned(child):
+    if child.poll() is None:
+        os.killpg(child.pid, signal.SIGTERM)
+        try:
+            child.wait(timeout=2)
+        except subprocess.TimeoutExpired:
+            pass  # Outcome remains unknown; never start another executor.
+
+
 def legacy_active():
     output = subprocess.run(['ps', '-axo', 'pid=,args='], capture_output=True,
                             text=True, check=True).stdout
@@ -146,6 +158,9 @@ def legacy_active():
 def run_once(args, root):
     state_file = root / 'active.json'
     old = json.loads(state_file.read_text()) if state_file.exists() else {}
+    if (root / 'stop.json').exists():
+        print('Operator stop persists; use explicit --resume after reconciliation.')
+        return False
     if old.get('phase') in {'STARTING', 'RUNNING', 'NEEDS_RECONCILE'}:
         raise ValueError('previous iteration needs reconciliation: ' + str(old.get('iteration_id')))
     if legacy_active():
@@ -163,31 +178,92 @@ def run_once(args, root):
         raise ValueError('--cwd must name the verified execution checkout')
     iteration = uuid.uuid4().hex
     task = launch_task(handoff)
+    ledger_path = root / 'loop.json'
+    ledger = json.loads(ledger_path.read_text()) if ledger_path.exists() else {}
+    preflight(ledger, task, args.max_sessions)
+    if task['role'] in {'reviewer', 'verifier'}:
+        target = subprocess.run(['git', '-C', task['checkout'], 'rev-parse', 'HEAD'], capture_output=True, text=True)
+        if target.returncode or target.stdout.strip() != task['head_sha']:
+            raise ValueError('review/verifier checkout is not at the frozen SHA')
+    if task['role'] == 'reviewer':
+        review_tree = subprocess.run(['git', '-C', task['checkout'], 'status', '--porcelain'],
+                                     capture_output=True, text=True, check=True).stdout
+        if review_tree.strip():
+            raise ValueError('reviewer requires a clean independent checkout')
     refs = [EPIC_URL] + task['references'] + task['prerequisites']
     refs.extend(handoff[key] for key in ('pr', 'work_issue') if handoff.get(key))
     snapshot = github_snapshot(refs, now(), enabled=not args.offline)
     prompt, packet = build_packet(handoff, task, iteration, root, args.prompt, snapshot,
-                                 execution_cwd=str(Path(args.cwd).resolve()))
+                                 execution_cwd=str(Path(args.cwd).resolve()),
+                                 limits=dict(session_seconds=args.session_seconds, max_sessions=args.max_sessions,
+                                             sessions_spent=ledger.get('sessions_started', 0), require_result=args.loop))
     atomic_json(root / ('launch-' + iteration + '.json'), packet)
+    if (root / 'stop.json').exists():
+        print('Operator stopped during preflight; no executor launched.')
+        return False
     log_path = root / ('session-' + iteration + '.jsonl')
     state = dict(iteration_id=iteration, phase='STARTING', started_at=now(),
                  cwd=str(Path(args.cwd).resolve()), log=str(log_path), child_pid=None,
                  session_id=None, heartbeat_at=now(),
                  task_step=task['step'], prompt_characters=len(prompt),
+                 role=task['role'], requirements_revision=task['requirements_revision'],
+                 last_progress_at=ledger.get('last_progress_at'),
+                 expected_event='CLI event or durable checkpoint',
+                 deadline_at=(dt.datetime.now(dt.timezone.utc) + dt.timedelta(seconds=args.session_seconds)).isoformat(),
+                 model_metadata='UNKNOWN; requested profile is not actual model-family evidence',
+                 requested_profile=task.get('execution'),
                  prompt_sha256=hashlib.sha256(prompt.encode()).hexdigest())
     atomic_json(state_file, state)  # Intent persists before spawning.
+    ledger.update(sessions_started=ledger.get('sessions_started', 0) + 1,
+                  max_sessions=args.max_sessions, reserved_iteration=iteration)
+    atomic_json(ledger_path, ledger)
     try:
         with open(log_path, 'x', encoding='utf-8') as log:
-            child = subprocess.Popen([args.executable, 'run', '--format', 'json', '--auto',
-                                      '--variant', 'minimal'], cwd=args.cwd,
+            if (root / 'stop.json').exists():
+                raise ValueError('operator stopped before spawn; no continuation')
+            command = [args.executable, 'run', '--format', 'json', '--auto', '--variant', 'minimal']
+            if task.get('execution'):
+                command.extend(['--model', task['execution']['model']])
+            child = subprocess.Popen(command, cwd=args.cwd, start_new_session=True,
                                      stdin=subprocess.PIPE, stdout=log, stderr=log, text=True)
             state.update(phase='RUNNING', child_pid=child.pid)
             atomic_json(state_file, state)
             child.stdin.write(prompt)
             child.stdin.close()
             cursor = 0
+            deadline = time.monotonic() + args.session_seconds
+            checkpoint_digests = set(ledger.get('seen_evidence', []))
             # Logs stay private: raw tool output may include credentials.
             while child.poll() is None:
+                if (root / 'stop.json').exists():
+                    state['stop_reason'] = 'operator stop; reconcile in-flight effects'
+                    atomic_json(state_file, state)
+                    cancel_owned(child)
+                    raise ValueError('manual stop: no automatic continuation')
+                if time.monotonic() >= deadline:
+                    state['stop_reason'] = 'session deadline; executor outcome unknown'
+                    cancel_owned(child)
+                    raise ValueError('deadline reached; reconcile executor/effects before retry')
+                checkpoint_path = root / ('checkpoint-' + iteration + '.json')
+                if checkpoint_path.exists():
+                    try:
+                        checkpoint = json.loads(checkpoint_path.read_text())
+                        if (checkpoint.get('iteration_id') != iteration or
+                            checkpoint.get('requirements_revision') != task['requirements_revision']):
+                            raise ValueError('checkpoint identity mismatch')
+                        if checkpoint.get('phase') not in {'WORKING', 'WAITING_PROVIDER', 'WAITING_TOOL', 'WAITING_CI', 'RETRY_AT'}:
+                            raise ValueError('invalid checkpoint phase')
+                        digests = {receipt(item) for item in checkpoint.get('evidence', [])}
+                        if any(item['criterion'] not in task['acceptance'] for item in checkpoint.get('evidence', [])):
+                            raise ValueError('checkpoint receipt does not match task criterion')
+                        if digests - checkpoint_digests:
+                            state['last_progress_at'] = now()
+                            checkpoint_digests |= digests
+                        state.update(observed_phase=checkpoint['phase'], checkpoint_ref=str(checkpoint_path),
+                                     checkpoint_state='RECORDED', expected_event=checkpoint.get('next_event'),
+                                     retry_at=checkpoint.get('retry_at'))
+                    except (OSError, ValueError):
+                        state['checkpoint_state'] = 'INVALID; verify artifact before acceptance'
                 with open(log_path) as stream:
                     stream.seek(cursor)
                     for line in stream:
@@ -211,12 +287,31 @@ def run_once(args, root):
             raise ValueError('handoff belongs to a different iteration')
         if next_handoff['step'] != task['step'] or next_handoff['repo'] != task['repo']:
             raise ValueError('handoff does not report the selected task/repository')
+        if next_handoff.get('requirements_revision') != task['requirements_revision']:
+            raise ValueError('handoff changed accepted requirements revision')
+        if task['role'] == 'reviewer':
+            after = subprocess.run(['git', '-C', task['checkout'], 'status', '--porcelain'],
+                                   capture_output=True, text=True, check=True).stdout
+            head = subprocess.run(['git', '-C', task['checkout'], 'rev-parse', 'HEAD'],
+                                  capture_output=True, text=True, check=True).stdout.strip()
+            if after.strip() or head != task['head_sha']:
+                raise ValueError('reviewer changed the frozen checkout; verdict withheld')
         atomic_json(root / ('handoff-' + iteration + '.json'), next_handoff)
+        updated_ledger, continue_loop = assess(ledger, next_handoff, task, require_result=args.loop)
+        if args.loop and updated_ledger.get('decision') == 'REPLAN_REQUIRED' and next_handoff.get('next_task', {}).get('diagnostic'):
+            preflight(updated_ledger, launch_task(next_handoff), args.max_sessions)
+            continue_loop = True  # Exactly one explicit diagnostic after first no-progress.
+        if updated_ledger.get('last_progress') == iteration:
+            updated_ledger['last_progress_at'] = now()
+        elif state.get('last_progress_at'):
+            updated_ledger['last_progress_at'] = state['last_progress_at']
+        atomic_json(ledger_path, updated_ledger)
         atomic_json(root / 'handoff.json', next_handoff)
-        state['phase'] = 'COMPLETE'
+        state.update(phase='COMPLETE', decision=updated_ledger.get('decision'),
+                     last_progress_at=updated_ledger.get('last_progress_at'))
         atomic_json(state_file, state)
         print('Completed iteration ' + iteration + ': ' + next_handoff['step'] + ' ' + next_handoff['state'])
-        return next_handoff['state'] not in WAITING and not next_handoff.get('epic_complete')
+        return continue_loop and next_handoff['state'] not in WAITING and not next_handoff.get('epic_complete')
     except BaseException:
         state.update(phase='NEEDS_RECONCILE', finished_at=now())
         atomic_json(state_file, state)
@@ -234,6 +329,11 @@ def main():
     parser.add_argument('--import-handoff', type=Path)
     parser.add_argument('--reconcile-iteration')
     parser.add_argument('--offline', action='store_true', help='skip GitHub prefetch; agent must verify status')
+    parser.add_argument('--max-sessions', type=int, default=8, help='durable total session cap; raising it extends the window')
+    parser.add_argument('--session-seconds', type=float, default=1500)
+    parser.add_argument('--status', action='store_true')
+    parser.add_argument('--stop', action='store_true', help='persist stop and cancel the owned executor')
+    parser.add_argument('--resume', action='store_true', help='clear operator stop/stagnation after explicit replan; keeps spent budget')
     args = parser.parse_args()
     os.umask(0o077)
     root = Path(args.state_dir).resolve()
@@ -246,8 +346,31 @@ def main():
         parser.error('state-dir must be outside Git')
     root.mkdir(parents=True, exist_ok=True, mode=0o700)
     os.chmod(root, 0o700)
+    if args.max_sessions < 1 or args.session_seconds <= 0 or not math.isfinite(args.session_seconds):
+        parser.error('session count and duration must be positive')
+    if args.stop:
+        atomic_json(root / 'stop.json', dict(requested_at=now(), reason='operator stop'))
+        print('Stop persisted. No new sessions will start.')
+        return 0
+    if args.status:
+        active = json.loads((root / 'active.json').read_text()) if (root / 'active.json').exists() else {}
+        ledger = json.loads((root / 'loop.json').read_text()) if (root / 'loop.json').exists() else {}
+        if active.get('phase') == 'RUNNING' and not alive(active.get('child_pid')):
+            active = dict(active, phase='UNKNOWN_RECONCILE')
+        print(json.dumps(dict(active=active, loop=ledger, stopped=(root / 'stop.json').exists()), ensure_ascii=False, indent=2))
+        return 0
     with open(root / 'controller.lock', 'a') as lock:
         try:
+            if args.resume:
+                active = json.loads((root / 'active.json').read_text()) if (root / 'active.json').exists() else {}
+                if alive(active.get('child_pid')) or active.get('phase') in {'STARTING', 'RUNNING', 'NEEDS_RECONCILE'}:
+                    raise ValueError('reconcile previous executor before resume')
+                (root / 'stop.json').unlink(missing_ok=True)
+                ledger = json.loads((root / 'loop.json').read_text()) if (root / 'loop.json').exists() else {}
+                ledger.update(no_progress=0, decision='CONTINUE', resumed_at=now())
+                atomic_json(root / 'loop.json', ledger)
+                print('Replan resumed. Spent session budget preserved; no executor launched.')
+                return 0
             fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
         except BlockingIOError:
             print('Another controller owns this state directory.', file=sys.stderr)

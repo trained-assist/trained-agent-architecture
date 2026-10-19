@@ -82,6 +82,64 @@ transcripts и API payloads в prompt не передаются. Snapshot сод
 ограничения символов, а не tokenizer estimate. Перемещение текста в файл не экономит контекст,
 если агент всё равно читает его целиком; инструкции предписывают выборочное чтение.
 
+## Роли и следующий длительный цикл
+
+Общие правила одинаковы, но в каждый запуск добавляется только короткий overlay выбранной
+роли. Default builder; verifier проверяет пользовательский CLI/UI отдельно от внутреннего
+теста; reviewer проверяет frozen requirements/diff/evidence в свежей сессии и чистом
+отдельном checkout. Researcher проверяет одну гипотезу, integrator — participating repo
+versions/контракты. Фиксированная очередь всех пяти ролей в каждой итерации не нужна.
+Этот launcher сериализует сессии; параллельная оркестрация остаётся у existing runtime.
+
+requirements_revision импортируется с согласованной целью и не меняется через next_task.
+Reviewer/verifier требуют frozen source_shas/evidence и checkout на точном SHA. Reviewer
+не может изменить checkout во время проверки. Actual model metadata остаётся UNKNOWN,
+пока нет наблюдений runtime/provider; execution.model в task packet задаёт requested CLI
+profile и не доказывает независимость семей. Независимый delivery review требует отдельную
+сессию и actual model evidence; недоступность этих данных даёт inconclusive.
+
+Уроки [playbooks #153](https://github.com/trained-assist/software-engineering-playbooks/issues/153)
+реализованы в [iteration result contract](references/iteration-results.md) и
+[target scenario](../../scenarios/engineering/SC-ENG-EPIC-ITERATION.md):
+классификация harness/product failure, user-client acceptance и source/tested/installed
+SHA gate. Digest подтверждает сохранность артефакта; содержательность и истинность evidence
+проверяет независимый acceptance operator. Local receipts не доказывают rollout epic-delivery
+или исправление OpenCode MEM; consumer boundary playbooks #149 сохраняется.
+
+`--loop` требует result и evidence receipts после work iteration. Новое artifact content,
+привязанное к выбранному criterion, или проверенный новый local source diff считаются
+progress. Перенос того же artifact в новый путь, iteration ID и heartbeat не считаются.
+Первый no-progress запрещает повтор slice: допускается одна явно выбранная diagnostic
+задача с hypothesis; второй останавливает цикл. Смена роли и текста отчёта не сбрасывает
+общий no-progress counter. Ожидание CI/review/внешнего события его не увеличивает.
+
+Непрерывность планировщика не означает неограниченные model calls. Default window —
+8 сессий, deadline каждой — 1500 секунд; `--max-sessions` и `--session-seconds` меняют
+лимиты явно. loop.json в том же private state-dir сохраняет spent sessions и progress
+receipts; restart/import не обнуляет счётчик. Это расширение existing controller state,
+не новый task store. Dollar/token hard cap здесь не реализован; provider budget проверяется
+при выборе profile и отдельно наблюдается через owning runtime. Deadline посылает TERM
+только собственной process group и сохраняет unknown effects для reconcile, без retry.
+
+```sh
+python3 tools/continuous-dev/controller.py --state-dir /absolute/private/epic253 --status
+python3 tools/continuous-dev/controller.py --state-dir /absolute/private/epic253 --stop
+python3 tools/continuous-dev/controller.py --state-dir /absolute/private/epic253 --resume
+```
+
+Status не запускает модель и показывает role/phase/session/deadline/last_progress/budget.
+Исчезнувший executor даёт UNKNOWN_RECONCILE. Agent checkpoint сообщает working/waiting
+phase и next event; heartbeat отделён от нового evidence. Stop persists при restart и
+отменяет собственный active executor; принятые внешние эффекты требуют reconcile. Resume
+возможен после reconcile/replan, сохраняет spent budget и сам не запускает сессию.
+
+Следующий запуск готовится по short task packet: выбрать critical-path slice, accepted
+requirements revision, проверенные source/tested/installed versions, environment contract
+и explicit profile/budget; восстановить active/probe state; запустить одну baseline
+итерацию и проверить status/checkpoint/client evidence. Только затем включать --loop.
+Live failure/retry, UI/CLI reconnect, kill/restart и manual cancel принимаются на реальных
+consumer builds. Этот PR содержит local replay, а не completed live acceptance.
+
 ## Авария и перенос со старого контроллера
 
 active.json сохраняет intent до spawn, PID сразу после spawn, heartbeat, CLI session ID,

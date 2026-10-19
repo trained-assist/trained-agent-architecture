@@ -7,6 +7,8 @@ import subprocess
 import urllib.error
 import urllib.request
 
+from loop_policy import ROLES, role_task
+
 EPIC_URL = 'https://github.com/trained-assist/trained-agent-architecture/issues/253'
 GITHUB_REF = re.compile(r'https://github\.com/([\w.-]+)/([\w.-]+)/(pull|issues)/(\d+)(?:#.*)?$')
 
@@ -36,6 +38,7 @@ def launch_task(handoff):
     if not re.fullmatch(r'[0-9a-f]{40}', result['head_sha']):
         raise ValueError('next_task requires a full head_sha')
     result.update(step=task['step'], goal=task['goal'], acceptance=acceptance)
+    result.update(role_task(task, handoff))
     if 'sandbox' in task:
         if not isinstance(task['sandbox'], dict):
             raise ValueError('next_task.sandbox must be an environment record')
@@ -127,22 +130,26 @@ def github_snapshot(refs, checked_at, enabled=True, token=None):
                 checked_at=checked_at, entries=entries)
 
 
-def build_packet(handoff, task, iteration, root, prompt_path, snapshot, execution_cwd=None):
+def build_packet(handoff, task, iteration, root, prompt_path, snapshot, execution_cwd=None, limits=None):
     resources = Path(__file__).resolve().parent / 'references'
     packet = dict(iteration_id=iteration, epic=EPIC_URL, task=task,
                   execution_cwd=execution_cwd,
+                  limits=limits,
                   previous={key: handoff.get(key) for key in
                             ('iteration_id', 'step', 'state', 'next_action', 'work_issue', 'pr')},
                   sandbox=task.get('sandbox', handoff['sandbox']), opencode=handoff['opencode'],
                   handoff_ref=str(root / 'handoff.json'),
+                  checkpoint_ref=str(root / ('checkpoint-' + iteration + '.json')),
                   github=snapshot,
                   resources={name: str(resources / filename) for name, filename in {
                       'handoff_format': 'handoff-format.md',
                       'sandbox_and_integration': 'engineering.md',
                       'opencode_acceptance': 'opencode-probe.md',
                       'github_workflow': 'github-workflow.md',
+                      'iteration_results': 'iteration-results.md',
                   }.items()})
-    prompt = Path(prompt_path).read_text() + '\n## Карточка запуска\n' + json.dumps(
+    prompt = Path(prompt_path).read_text() + '\n## Роль этой сессии: ' + task['role'] + '\n' + ROLES[task['role']]
+    prompt += '\n## Карточка запуска\n' + json.dumps(
         packet, ensure_ascii=False, separators=(',', ':'))
     # Keep task semantics intact: refuse oversized input instead of truncating it.
     if len(prompt) > 12000:
