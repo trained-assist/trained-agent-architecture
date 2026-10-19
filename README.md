@@ -1,5 +1,8 @@
 # Trained Agent Architecture
 
+Engineering queue pilot: [workflow and agent prompts](AGENT-ENGINEERING-WORKFLOW.md),
+[process epic #286](https://github.com/trained-assist/trained-agent-architecture/issues/286).
+
 Архитектура Trained Assist и подготовка реализации. Принятые решения, предложения и подтверждённые прогоны различаются; наличие документа не означает готовность компонента.
 
 **Статус и чек-листы — в [Project «Trained Assist — Migration»](https://github.com/orgs/trained-assist/projects/1) и issues; документы — долговечная архитектура.** Перед работой над карточкой сначала открыть её issue: там актуальный статус, чек-лист приёмки и evidence.
