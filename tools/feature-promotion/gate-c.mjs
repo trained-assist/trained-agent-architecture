@@ -228,11 +228,16 @@ async function main() {
   } catch (error) { result.state = error.state === 'FAIL' ? 'FAIL' : 'BLOCKED'; result.reason = redact(error.message); }
   finally { fs.rmSync(work, { recursive: true, force: true }); }
   result.architectureSha = context?.architectureSha;
+  result.featureIssue = context?.manifest.feature_issue;
+  result.pullRequests = context?.gateB.pullRequests;
+  result.scenarioIds = context?.scenarios.map((s) => s.id);
   result.target = context?.target;
   result.revisions = context?.revisions;
   result.runUrl = process.env.GITHUB_RUN_ID ? `https://github.com/${process.env.GITHUB_REPOSITORY}/actions/runs/${process.env.GITHUB_RUN_ID}` : null;
   write(path.join(outputDir, 'report.json'), result);
-  const summary = `## Gate C: ${result.state}\n\nModel: ${MODEL} (build / default)\n\nTarget: ${result.target?.environment ?? 'not admitted'}\n\nArchitecture SHA: ${result.architectureSha ?? 'not verified'}\n\n${result.reason ?? result.report?.reason ?? ''}\n\nRun: ${result.runUrl ?? 'local'}\n`;
+  const rows = result.report?.scenarios?.map((s) => `| ${s.id} | ${s.result} | ${(s.probe_ids ?? []).join(', ')} |`).join('\n') ?? '';
+  const revisions = (result.revisions ?? []).map((r) => `- ${r.repo}@${r.sha}`).join('\n');
+  const summary = `## Gate C: ${result.state}\n\nModel: ${MODEL} (build / default)\n\nTarget: ${result.target?.environment ?? 'not admitted'}\n\nArchitecture SHA: ${result.architectureSha ?? 'not verified'}\n\n${result.reason ?? result.report?.reason ?? ''}\n\nSemantic review: ${result.report?.semantic ?? 'not run'}; cleanup: ${result.report?.cleanup ?? 'not run'}.\n\n| Scenario | Result | Probe evidence |\n|---|---|---|\n${rows}\n\nPinned revisions:\n\n${revisions || 'Not admitted.'}\n\nRun and artifacts (plan, receipts, sanitized transcripts/logs): ${result.runUrl ?? 'local'}\n\nLimitations: ${(result.report?.limitations ?? []).join('; ') || 'See report.json and target contract.'}\n`;
   fs.writeFileSync(path.join(outputDir, 'report.md'), summary);
   if (process.env.GITHUB_STEP_SUMMARY) fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY, summary);
   console.log(summary);
