@@ -20,16 +20,20 @@ const manifest = (overrides = {}) => ({
 });
 const architecturePr = {
   state: 'open', draft: false, body: 'Closes #290',
+  head: { sha: 'e'.repeat(40) },
   base: { ref: 'main', repo: { full_name: 'trained-assist/trained-agent-architecture' } }
 };
-const api = (prOverrides = {}, checkOverrides = {}) => ({
+const api = (prOverrides = {}, checkOverrides = {}, gateAOverrides = {}) => ({
+  getIssue: async () => ({ state: 'open' }),
   getPullRequest: async (repo, number) => ({
     state: 'closed', merged_at: '2026-10-19T12:00:00Z', head: { sha: repo.endsWith('tg-bot') ? 'c'.repeat(40) : 'd'.repeat(40) },
     base: { ref: 'main' }, body: 'Closes #290',
     merge_commit_sha: repo.endsWith('tg-bot') ? 'a'.repeat(40) : 'b'.repeat(40),
     ...prOverrides[`${repo}#${number}`]
   }),
-  getCheckRuns: async () => ({ total_count: 1, check_runs: [{ name: 'CI', status: 'completed', conclusion: 'success' }], ...checkOverrides }),
+  getCheckRuns: async (_repo, sha) => sha === 'e'.repeat(40)
+    ? ({ total_count: 1, check_runs: [{ name: 'feature-promotion / specification-consistency', status: 'completed', conclusion: 'success' }], ...gateAOverrides })
+    : ({ total_count: 1, check_runs: [{ name: 'CI', status: 'completed', conclusion: 'success' }], ...checkOverrides }),
   getCommitStatus: async () => ({ statuses: [] }),
   getRequiredChecks: async () => ({ strict: true, checks: [{ context: 'CI', app_id: null }] })
 });
@@ -47,6 +51,15 @@ test('fails closed PRs that were not merged', async () => {
 
 test('fails when required PR membership is absent', async () => {
   await assert.rejects(runGateB({ manifest: manifest({ pull_requests: [] }), architecturePr, github: api() }), /no implementation\/E2E PRs registered/);
+});
+
+test('blocks Gate B unless Gate A passed on the current architecture PR SHA', async () => {
+  const failed = api({}, {}, { check_runs: [{ name: 'feature-promotion / specification-consistency', status: 'completed', conclusion: 'failure' }] });
+  await assert.rejects(runGateB({ manifest: manifest(), architecturePr, github: failed }), /required check failed/);
+  const missing = api({}, {}, { check_runs: [{ name: 'other check', status: 'completed', conclusion: 'success' }] });
+  await assert.rejects(runGateB({ manifest: manifest(), architecturePr, github: missing }), /required check is missing/);
+  const closedIssue = { ...api(), getIssue: async () => ({ state: 'closed' }) };
+  await assert.rejects(runGateB({ manifest: manifest(), architecturePr, github: closedIssue }), /Feature issue #290 is missing or closed/);
 });
 
 test('detects closed without merge and missing linked feature issue', async () => {
@@ -85,9 +98,8 @@ test('rejects PR dependency cycles and missing dependencies', async () => {
 });
 
 test('does not accept PASS when an API check fails after another repository passed', async () => {
-  const partialFailure = { ...api(), getCheckRuns: async (_repo, sha) => ({
-    total_count: 1,
-    check_runs: [{ name: 'CI', status: 'completed', conclusion: sha.startsWith('c') ? 'success' : 'cancelled' }]
-  }) };
+  const partialFailure = { ...api(), getCheckRuns: async (_repo, sha) => sha === 'e'.repeat(40)
+    ? { total_count: 1, check_runs: [{ name: 'feature-promotion / specification-consistency', status: 'completed', conclusion: 'success' }] }
+    : { total_count: 1, check_runs: [{ name: 'CI', status: 'completed', conclusion: sha.startsWith('c') ? 'success' : 'cancelled' }] } };
   await assert.rejects(runGateB({ manifest: manifest(), architecturePr, github: partialFailure }), /required check failed/);
 });

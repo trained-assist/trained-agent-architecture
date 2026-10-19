@@ -72,10 +72,24 @@ export async function runGateB({ manifest, architecturePr, github }) {
   if (!manifest || manifest.schema_version !== 1 || !Number.isInteger(manifest.feature_issue)) throw new GateBError('FAIL', 'Feature manifest is invalid');
   if (!architecturePr || architecturePr.state !== 'open') throw new GateBError('FAIL', 'Architecture PR must remain open until Gate C acceptance');
   if (architecturePr.draft === true) throw new GateBError('FAIL', 'Architecture PR must be Ready for Review before Gate B');
+  if (!architecturePr.head?.sha || !architecturePr.base?.repo?.full_name) throw new GateBError('BLOCKED', 'Architecture PR has no readable current head SHA or repository');
   if (!matchesFeature(architecturePr.body, manifest.feature_issue)) throw new GateBError('FAIL', `Architecture PR does not reference feature issue #${manifest.feature_issue}`);
   if (!Array.isArray(manifest.pull_requests) || manifest.pull_requests.length === 0) throw new GateBError('FAIL', 'Manifest has no implementation/E2E PRs registered');
 
-  if (!architecturePr.base?.ref || !architecturePr.base?.repo?.full_name) throw new GateBError('BLOCKED', 'Architecture PR has no readable base repository/branch');
+  let featureIssue;
+  let architectureChecks;
+  try {
+    [featureIssue, architectureChecks] = await Promise.all([
+      github.getIssue(architecturePr.base.repo.full_name, manifest.feature_issue),
+      github.getCheckRuns(architecturePr.base.repo.full_name, architecturePr.head.sha)
+    ]);
+  } catch (error) {
+    throw new GateBError('BLOCKED', `Cannot read feature issue or architecture Gate A result (${error.message})`);
+  }
+  if (!featureIssue || featureIssue.state !== 'open') throw new GateBError('FAIL', `Feature issue #${manifest.feature_issue} is missing or closed before acceptance`);
+  assertCheckRuns(architectureChecks, { statuses: [] }, [{ context: 'feature-promotion / specification-consistency' }], architecturePr.base.repo.full_name, architecturePr.head.sha);
+
+  if (!architecturePr.base?.ref) throw new GateBError('BLOCKED', 'Architecture PR has no readable base branch');
   let architectureProtection;
   try { architectureProtection = await github.getRequiredChecks(architecturePr.base.repo.full_name, architecturePr.base.ref); }
   catch (error) { throw new GateBError('BLOCKED', `Cannot verify architecture branch protection (${error.message})`); }
@@ -211,6 +225,7 @@ async function main() {
   try { manifest = JSON.parse(Buffer.from(manifestResponse.content, 'base64').toString('utf8')); }
   catch { throw new GateBError('FAIL', 'Feature manifest in the architecture PR is invalid JSON'); }
   const github = {
+    getIssue: async (repo, number) => ghApi(`repos/${repo}/issues/${number}`),
     getPullRequest: async (repo, number) => ghApi(`repos/${repo}/pulls/${number}`),
     getCheckRuns: async (repo, sha) => ghApi(`repos/${repo}/commits/${sha}/check-runs?per_page=100`),
     getCommitStatus: async (repo, sha) => ghApi(`repos/${repo}/commits/${sha}/status`),
