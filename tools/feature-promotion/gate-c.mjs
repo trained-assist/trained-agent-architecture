@@ -90,13 +90,14 @@ function redact(text) {
   return text.replace(/Bearer\s+[A-Za-z0-9._~+/-]+/gi, 'Bearer [REDACTED]');
 }
 
-function docker(work, args, { model = false, timeout = 600000 } = {}) {
+function docker(work, args, { model = false, timeout = 600000, repositories = [] } = {}) {
   const name = `gate-c-${crypto.randomUUID()}`;
   try {
     return spawnSync('docker', ['run', '--rm', '--name', name, '--cap-drop=ALL', '--security-opt=no-new-privileges',
       '--user', `${process.getuid()}:${process.getgid()}`, '-e', 'HOME=/tmp/opencode-home',
       '-e', 'XDG_DATA_HOME=/tmp/opencode-data', '-e', 'XDG_CONFIG_HOME=/tmp/opencode-config', '-e', 'XDG_CACHE_HOME=/tmp/opencode-cache',
-      '--pids-limit=256', '--memory=4g', '--cpus=2', '-v', `${work}:/work${model ? ':ro' : ''}`, '-w', '/work',
+      '--pids-limit=256', '--memory=4g', '--cpus=2',
+      ...(model ? ['-v', `${work}:/work:ro`] : repositories.flatMap((repo) => ['-v', `${path.join(work, repo)}:/work/${repo}`])), '-w', '/work',
       ...(model ? ['-e', 'LLM_LADDER_TOKEN', '-e', 'OPENCODE_CONFIG=/work/opencode.json'] : []), IMAGE, ...args],
     { encoding: 'utf8', timeout, maxBuffer: 16 * 1024 * 1024, env: process.env });
   } finally { spawnSync('docker', ['rm', '-f', name], { stdio: 'ignore', timeout: 10000 }); }
@@ -190,7 +191,7 @@ export async function execute(context, work, outputDir, runAgent = agent, runPro
     const cwd = path.join(work, p.repo, p.cwd);
     if (!fs.existsSync(cwd) || !fs.realpathSync(cwd).startsWith(fs.realpathSync(path.join(work, p.repo)) + path.sep) && fs.realpathSync(cwd) !== fs.realpathSync(path.join(work, p.repo))) fail('Probe cwd escapes pinned repository');
     const started = new Date().toISOString();
-    const r = runProbe(work, ['sh', '-c', 'cd "$1" && shift && exec "$@"', 'probe', `/work/${p.repo}/${p.cwd}`, ...p.argv]);
+    const r = runProbe(work, ['sh', '-c', 'cd "$1" && shift && exec "$@"', 'probe', `/work/${p.repo}/${p.cwd}`, ...p.argv], { repositories: context.revisions.map((r) => r.repo) });
     const log = redact((r.stdout ?? '') + '\n' + (r.stderr ?? ''));
     fs.writeFileSync(path.join(outputDir, `${p.id}.log`), log);
     receipts.push({ ...p, started, finished: new Date().toISOString(), exitCode: r.error ? null : r.status, logSha256: hash(log), log });
