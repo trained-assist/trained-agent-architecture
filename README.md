@@ -102,7 +102,7 @@ Fast-path research: [алгоритм до запуска агента и про
 - [Legacy learnings 30.09](audits/LEGACY-LEARNINGS-TRAINED-ASSIST-AGENT-2026-09-30.md) — что из действующей legacy-системы уже построено и проверено в проде, что переносится (датированный снапшот).
 - [User stories audit](audits/USER-STORIES-CONSISTENCY-AUDIT-2026-09-30.md).
 - [Real playbooks review](REVIEW-WITH-REAL-PLAYBOOKS.md) — виртуальная проверка модели.
-- Ревью прежней архитектуры: [Claude](ARCHITECTURE_claude_2026-09-30_1926.md), [MiMo](ARCHITECTURE_mimo_review_2026-09-30.md). Это история обоснования, не альтернативные текущие архитектуры.
+- Ревью прежней архитектуры: [Claude](archive/ARCHITECTURE_claude_2026-09-30_1926.md), [MiMo](archive/ARCHITECTURE_mimo_review_2026-09-30.md). Это история обоснования, не альтернативные текущие архитектуры.
 - [VM2 wave 0](https://instant-publish.trainedassist.store/p/vm2-wave0-done) — отчёт о запуске существующего агента 29.09.2026; применённые уроки и ограничения доказательства — [Sandbox](SANDBOX.md#уроки-пробного-запуска-vm2).
 
 ## Отдельный поток: действующий сервис

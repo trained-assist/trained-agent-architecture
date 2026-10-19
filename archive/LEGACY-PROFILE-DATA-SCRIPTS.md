@@ -109,7 +109,7 @@ prove a live GCS write, a production profile import, or a remote Git publication
 This inventory documents legacy behavior for reuse and migration planning. The
 new system's persistent workspace and canonical publication belong to the
 Runner's WorkspaceService contract and its prepare/publish/conflict flow (see
-[ARCHITECTURE §4.6](ARCHITECTURE.md) and [Runner #95](https://github.com/trained-assist/ai-agent-runner/issues/95)).
+[ARCHITECTURE §4.6](../ARCHITECTURE.md) and [Runner #95](https://github.com/trained-assist/ai-agent-runner/issues/95)).
 See also the storage/lifecycle evidence in [Runner #136](https://github.com/trained-assist/ai-agent-runner/issues/136).
 The migration CLI's local lock, ledger and archive logic do not replace that
 contract, do not merge run branches, and are not evidence that new Runner

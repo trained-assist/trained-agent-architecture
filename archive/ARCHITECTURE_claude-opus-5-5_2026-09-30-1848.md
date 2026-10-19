@@ -1,6 +1,6 @@
 # Ревью ARCHITECTURE v0.6 и плана реализации — Claude Opus 5.5
 
-30.09.2026 · ревью, не принятая модель. Проверены `main@f9a817b` этого репозитория: [ARCHITECTURE.md](ARCHITECTURE.md), [contracts](contracts/README.md), [runtime](runtime/EXECUTION-RUNTIME.md), [Task Router](TASK-ROUTER-AND-MCP.md), [User Task IDs](USER-TASK-IDS-AND-REPORTING.md), [Observability](OBSERVABILITY-AND-ERROR-CONTRACT.md), [Watcher](SYSTEM-ERROR-WATCHER.md), [Serverless API](SERVERLESS-AGENT-API.md), [Model Gateway](MODEL-GATEWAY-AND-COSTS.md), [Code baseline](audits/CODE-BASELINE.md), [план реализации](IMPLEMENTATION-AND-INTEGRATION-PLAN.md) и [Sandbox](SANDBOX.md). Утверждения о текущем коде сверены с `trained-assist-agent@1d9668a` (main на 30.09.2026).
+30.09.2026 · ревью, не принятая модель. Проверены `main@f9a817b` этого репозитория: [ARCHITECTURE.md](../ARCHITECTURE.md), [contracts](../contracts/README.md), [runtime](../runtime/EXECUTION-RUNTIME.md), [Task Router](../TASK-ROUTER-AND-MCP.md), [User Task IDs](../USER-TASK-IDS-AND-REPORTING.md), [Observability](../OBSERVABILITY-AND-ERROR-CONTRACT.md), [Watcher](../SYSTEM-ERROR-WATCHER.md), [Serverless API](../SERVERLESS-AGENT-API.md), [Model Gateway](../MODEL-GATEWAY-AND-COSTS.md), [Code baseline](../audits/CODE-BASELINE.md), [план реализации](../IMPLEMENTATION-AND-INTEGRATION-PLAN.md) и [Sandbox](../SANDBOX.md). Утверждения о текущем коде сверены с `trained-assist-agent@1d9668a` (main на 30.09.2026).
 
 **Связь с параллельным ревью.** Открыт [PR #1](https://github.com/trained-assist/trained-agent-architecture/pull/1) с ревью R1–R11 и альтернативой «от пользовательских историй». Его пункты здесь не повторяются. Согласен с R1 (сначала решить, где живёт durable task state), R3 (первый срез должен быть виден пользователю), R4 (меньше новых repo), R7 (RU — tool edge, а не executor) и R9 (нужны целевые latency). Ниже только то, чего в R1–R11 нет. В основном это касается **плана реализации** и **связи с уже существующим кодом**.
 
@@ -44,7 +44,7 @@
 
 - P04 (I02A) делает «минимальный durable request/result store» в `ai-agent-runner`.
 - P12 (I03) позже «извлекает минимум queue/handoff/result/delivery contract» для Input/Output/Task Journal.
-- При этом [runtime](runtime/EXECUTION-RUNTIME.md) прямо запрещает «копирование существующего runner с собственной второй БД задач», а [Serverless API](SERVERLESS-AGENT-API.md) требует, чтобы «две независимые очереди не отправляли одну и ту же работу».
+- При этом [runtime](../runtime/EXECUTION-RUNTIME.md) прямо запрещает «копирование существующего runner с собственной второй БД задач», а [Serverless API](../SERVERLESS-AGENT-API.md) требует, чтобы «две независимые очереди не отправляли одну и ту же работу».
 
 Итог: семантику receipt/userTaskId/replay спроектируют дважды, а потом придётся мигрировать API-клиентов с первой базы на вторую.
 
@@ -52,7 +52,7 @@
 
 ### M3. Нет трассировки план ↔ инварианты, часть инвариантов без владельца
 
-[README](README.md) требует указывать в эпиках Axx/Cxx/INV-xx. В плане и в Sandbox Plan нет ни одной такой ссылки: `grep -o "INV-\|A0\|C0"` возвращает 0. Если разложить карточки по инвариантам, без приёмки остаются:
+[README](../README.md) требует указывать в эпиках Axx/Cxx/INV-xx. В плане и в Sandbox Plan нет ни одной такой ссылки: `grep -o "INV-\|A0\|C0"` возвращает 0. Если разложить карточки по инвариантам, без приёмки остаются:
 
 | Инвариант / контракт | Что есть в плане | Чего не хватает |
 |---|---|---|
@@ -102,7 +102,7 @@
 
 ### M7. Смена движка — продуктовое решение без проверки качества
 
-P12 делает «default route OpenCode», а автоэскалация заканчивается на OpenCode. Eval в плане (P18, P21) измеряет только fast path: false-fast, unnecessary-agent, latency. **Проверки качества результата агента** на реальных сценариях (recruiter, engineering из [scenarios](scenarios/README.md)) в плане нет. При cohort cutover пользователи пилота могут получить более слабый результат, и это не будет видно ни в одной метрике плана.
+P12 делает «default route OpenCode», а автоэскалация заканчивается на OpenCode. Eval в плане (P18, P21) измеряет только fast path: false-fast, unnecessary-agent, latency. **Проверки качества результата агента** на реальных сценариях (recruiter, engineering из [scenarios](../scenarios/README.md)) в плане нет. При cohort cutover пользователи пилота могут получить более слабый результат, и это не будет видно ни в одной метрике плана.
 
 **Предложение.** В gate I10/P29 добавить agent-outcome eval: одинаковый набор сценариев на текущем пути и на новом, оценка результата (acceptance-чекеры сценария плюс ручной review выборки). Cutover пилота только без регрессии.
 

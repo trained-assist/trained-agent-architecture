@@ -6,7 +6,7 @@
 
 Ключевая ценность этого документа: **протокол «материаловать → выполнить → сохранить → прибраться» уже построен, проверен в проде и замерен на живой legacy-системе** (trained-assist-agent, M2-контур эпика #1784). Здесь он переносится в целевую модель — с указанием, что брать как есть, что адаптировать и что не копировать. Фактическая выжимка опыта — в [audits/LEGACY-LEARNINGS](audits/LEGACY-LEARNINGS-TRAINED-ASSIST-AGENT-2026-09-30.md).
 
-Полный пофайловый список legacy profile-data CLI, фаз, lifecycle-модулей и тестов с границами текущего snapshot — в [инвентаре legacy profile-data scripts](LEGACY-PROFILE-DATA-SCRIPTS.md).
+Полный пофайловый список legacy profile-data CLI, фаз, lifecycle-модулей и тестов с границами текущего snapshot — в [инвентаре legacy profile-data scripts](archive/LEGACY-PROFILE-DATA-SCRIPTS.md).
 
 ## 1. Область
 

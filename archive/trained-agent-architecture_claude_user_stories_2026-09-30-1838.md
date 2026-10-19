@@ -1,10 +1,10 @@
 # Trained Assist — архитектура от пользовательских историй (версия Claude)
 
-> Историческая редакция. Её истории вошли в [stories/](stories/README.md), соответствие — [TRACEABILITY](stories/TRACEABILITY.md). Новые ссылки ставить на stories/.
+> Историческая редакция. Её истории вошли в [stories/](../stories/README.md), соответствие — [TRACEABILITY](../stories/TRACEABILITY.md). Новые ссылки ставить на stories/.
 
-30.09.2026 · **альтернативный взгляд на [ARCHITECTURE v0.6](ARCHITECTURE.md), не принятая модель.** Здесь нет новых механизмов: всё, что ниже, есть и в v0.6. Отличие в направлении. v0.6 идёт от механизмов (25 видов ID, 13 контрактов, 17 инвариантов, ~6 новых repo). Эта версия идёт от историй пользователя: история → минимальное требование → минимальный механизм. То, для чего истории нет, уходит в раздел «отложить до появления истории».
+30.09.2026 · **альтернативный взгляд на [ARCHITECTURE v0.6](../ARCHITECTURE.md), не принятая модель.** Здесь нет новых механизмов: всё, что ниже, есть и в v0.6. Отличие в направлении. v0.6 идёт от механизмов (25 видов ID, 13 контрактов, 17 инвариантов, ~6 новых repo). Эта версия идёт от историй пользователя: история → минимальное требование → минимальный механизм. То, для чего истории нет, уходит в раздел «отложить до появления истории».
 
-Источники историй: [scenarios](scenarios/README.md) (Core 02 stop/supplement, TG CURRENT-STATE, recruiter, engineering), инциденты 28.09, текущие правила `trained-assist-agent` (instant restart, checklist-GTD, #1288).
+Источники историй: [scenarios](../scenarios/README.md) (Core 02 stop/supplement, TG CURRENT-STATE, recruiter, engineering), инциденты 28.09, текущие правила `trained-assist-agent` (instant restart, checklist-GTD, #1288).
 
 ---
 
@@ -169,7 +169,7 @@ flowchart TD
 ## Часть 6. Первый вертикальный срез
 
 US-01 + US-03 + US-04 + US-07 в sandbox: sandbox TG-бот и Web → Task Service → Runner (OpenCode) → результат в Web и чате. В срез входят Стоп и `kill -9` обоих процессов посреди Run.
-Приёмка: тест-план Core 02 (все пути «перерождения») + restart без дублей + логи/TTL по [Observability](OBSERVABILITY-AND-ERROR-CONTRACT.md).
+Приёмка: тест-план Core 02 (все пути «перерождения») + restart без дублей + логи/TTL по [Observability](../OBSERVABILITY-AND-ERROR-CONTRACT.md).
 Следующие срезы: US-11 (ожидание) → US-12 (расписание) → US-08 (HH mutation) → US-13 (GTD) → US-16 (API).
 
 ## Часть 7. Вопросы владельцу
