@@ -1,0 +1,59 @@
+name: Agent queue — feature / behavior change
+description: Propose a feature or intentional change to system behavior
+title: "feature: "
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        A feature that changes user-visible behavior, flow, roles, or contracts needs an architecture scenario update before runtime implementation. The scenario-change PR remains open through acceptance.
+  - type: input
+    id: target-repo
+    attributes:
+      label: Owning repository
+      description: Repository that should implement the feature (owner/name).
+      placeholder: trained-assist/example
+    validations:
+      required: true
+  - type: textarea
+    id: problem
+    attributes:
+      label: User need and value
+      description: Who needs this, and what outcome should they get?
+    validations:
+      required: true
+  - type: textarea
+    id: behavior
+    attributes:
+      label: Proposed observable behavior
+      description: Describe trigger, actor, visible steps, outcomes, and relevant failures/recovery.
+    validations:
+      required: true
+  - type: textarea
+    id: scenarios
+    attributes:
+      label: Scenario changes
+      description: Scenarios/contracts to update, or explain why the feature does not conflict with existing behavior. Link the scenario PR when opened.
+    validations:
+      required: true
+  - type: textarea
+    id: dod
+    attributes:
+      label: Definition of Done
+      description: Observable acceptance criteria, including component checks and E2E on the owning repository sandbox.
+      value: |
+        - [ ] Requirements are represented in an architecture scenario, or documented as compliant with existing scenarios.
+        - [ ] Implementation PR is linked and reviewed against the scenario (Gate 1 PASS).
+        - [ ] Component verification and E2E pass on the declared sandbox/staging target.
+        - [ ] Evidence includes revisions, target environment, sanitized inputs/outputs, and run links.
+        - [ ] Production promotion follows the owning repository Environment Contract.
+        - [ ] Safe production smoke passes after promotion.
+    validations:
+      required: true
+  - type: checkboxes
+    id: safety
+    attributes:
+      label: Data safety
+      options:
+        - label: I removed credentials, personal data, and production payloads from this report.
+          required: true

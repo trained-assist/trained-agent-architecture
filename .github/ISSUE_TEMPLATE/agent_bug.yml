@@ -1,0 +1,59 @@
+name: Agent queue — bug
+description: Report a reproducible regression against accepted behavior
+title: "bug: "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use for behavior that regresses an already accepted scenario. For a new or intentionally changed behavior, use the Feature template.
+  - type: input
+    id: target-repo
+    attributes:
+      label: Owning repository
+      description: Repository that should implement the fix (owner/name).
+      placeholder: trained-assist/example
+    validations:
+      required: true
+  - type: input
+    id: scenario
+    attributes:
+      label: Scenario or contract reference
+      description: Link to the accepted behavior that is broken.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+      description: What should happen according to the accepted scenario?
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior
+      description: What happened instead? Include sanitized output and relevant IDs.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Reproduction steps
+      description: Exact steps/input, frequency, environment, and whether it reproduces on sandbox.
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Evidence and verification plan
+      description: Relevant sanitized logs/run links and how to verify the fix on sandbox and after production promotion.
+    validations:
+      required: true
+  - type: checkboxes
+    id: safety
+    attributes:
+      label: Data safety
+      options:
+        - label: I removed credentials, personal data, and production payloads from this report.
+          required: true
