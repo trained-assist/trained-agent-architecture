@@ -60,6 +60,8 @@ test('blocks Gate B unless Gate A passed on the current architecture PR SHA', as
   await assert.rejects(runGateB({ manifest: manifest(), architecturePr, github: missing }), /required check is missing/);
   const closedIssue = { ...api(), getIssue: async () => ({ state: 'closed' }) };
   await assert.rejects(runGateB({ manifest: manifest(), architecturePr, github: closedIssue }), /Feature issue #290 is missing or closed/);
+  const skipped = api({}, {}, { check_runs: [{ name: 'feature-promotion / specification-consistency', status: 'completed', conclusion: 'skipped' }] });
+  await assert.rejects(runGateB({ manifest: manifest(), architecturePr, github: skipped }), /must actually succeed/);
 });
 
 test('detects closed without merge and missing linked feature issue', async () => {

@@ -60,6 +60,7 @@ export function validatePlan(plan, context) {
 
 export function evaluate(report, receipts, context) {
   if (!receipts.length || receipts.some((r) => r.exitCode !== 0 || !r.logSha256)) return 'FAIL';
+  if (report?.semantic === 'FAIL' || report?.cleanup === 'FAIL') return 'FAIL';
   if (!report || report.semantic !== 'PASS' || report.cleanup !== 'PASS' || !report.reason?.trim()) return 'UNCLEAR';
   for (const s of context.scenarios) {
     const item = report.scenarios?.find((r) => r.id === s.id);

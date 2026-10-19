@@ -62,6 +62,7 @@ function assertCheckRuns(data, status, required, repo, sha) {
     if (!run) throw new GateBError('FAIL', `${repo}@${sha}: required check is missing: ${name}`);
     if (run.status !== 'completed') throw new GateBError('BLOCKED', `${repo}@${sha}: required check is still running: ${name}`);
     if (!ACCEPTED_CHECKS.has(run.conclusion)) throw new GateBError('FAIL', `${repo}@${sha}: required check failed: ${name}=${run.conclusion}`);
+    if (requirement.success_only && run.conclusion !== 'success') throw new GateBError('FAIL', `${repo}@${sha}: prerequisite must actually succeed: ${name}=${run.conclusion}`);
     if (typeof requirement === 'object' && requirement.app_id != null && run.app?.id != null && requirement.app_id !== run.app.id) {
       throw new GateBError('FAIL', `${repo}@${sha}: required check ${name} came from unexpected GitHub App ${run.app.id}`);
     }
@@ -87,7 +88,7 @@ export async function runGateB({ manifest, architecturePr, github }) {
     throw new GateBError('BLOCKED', `Cannot read feature issue or architecture Gate A result (${error.message})`);
   }
   if (!featureIssue || featureIssue.state !== 'open') throw new GateBError('FAIL', `Feature issue #${manifest.feature_issue} is missing or closed before acceptance`);
-  assertCheckRuns(architectureChecks, { statuses: [] }, [{ context: 'feature-promotion / specification-consistency' }], architecturePr.base.repo.full_name, architecturePr.head.sha);
+  assertCheckRuns(architectureChecks, { statuses: [] }, [{ context: 'feature-promotion / specification-consistency', success_only: true }], architecturePr.base.repo.full_name, architecturePr.head.sha);
 
   if (!architecturePr.base?.ref) throw new GateBError('BLOCKED', 'Architecture PR has no readable base branch');
   let architectureProtection;

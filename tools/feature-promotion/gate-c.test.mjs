@@ -33,6 +33,7 @@ test('an LLM PASS cannot override failed execution or missing evidence/cleanup',
   assert.equal(evaluate(review, [{ ...receipt, exitCode: 1 }], context), 'FAIL');
   assert.equal(evaluate(review, [{ ...receipt, exitCode: null }], context), 'FAIL');
   assert.equal(evaluate({ ...review, cleanup: 'UNCLEAR' }, [receipt], context), 'UNCLEAR');
+  assert.equal(evaluate({ ...review, semantic: 'FAIL' }, [receipt], context), 'FAIL');
   assert.equal(evaluate({ ...review, scenarios: [] }, [receipt], context), 'UNCLEAR');
   assert.equal(evaluate(review, [], context), 'FAIL');
 });
