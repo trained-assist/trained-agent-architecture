@@ -15,6 +15,10 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
+      - name: Record pull request action for trigger verification
+        env:
+          PULL_REQUEST_ACTION: ${{ github.event.action }}
+        run: echo "pull_request_action=$PULL_REQUEST_ACTION"
       - uses: actions/checkout@v4
         with:
           ref: ${{ github.event.pull_request.head.sha }}
