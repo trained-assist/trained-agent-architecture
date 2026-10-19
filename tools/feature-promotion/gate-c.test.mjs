@@ -22,6 +22,7 @@ test('selects changed scenario and transitive dependent regression scenarios', (
 });
 test('rejects unmapped tests, escaping cwd, missing regression E2E and duplicate probes', () => {
   assert.deepEqual(validatePlan({ probes: [probe] }, context).probes, [probe]);
+  assert.equal(validatePlan({ probes: [{ ...probe, test_ref: 'org/code/e2e.mjs' }] }, context).probes[0].test_ref, 'e2e.mjs');
   for (const bad of [{ ...probe, cwd: '../escape' }, { ...probe, test_ref: 'invented.mjs' }, { ...probe, scenarios: ['unknown'] }]) {
     assert.throws(() => validatePlan({ probes: [bad] }, context));
   }
