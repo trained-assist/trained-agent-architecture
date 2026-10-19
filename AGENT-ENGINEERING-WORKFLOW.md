@@ -54,6 +54,8 @@ Until verified, START names the actual desktop identity. The engineering user
 and the account reproducing a bug are different roles. Record profile/user IDs,
 credential references and scopes, repo/Project access, sandbox and promotion
 path; never record tokens. Managed execution uses CP -> Runner API.
+Follow the [identity onboarding checklist](prompts/engineering/onboard.md);
+a connected token alone does not prove that the Run received the right identity.
 
 ## Existing production diagnosis entrypoints
 
@@ -73,7 +75,30 @@ Then inspect the resulting task ID. Do not select cancellation for diagnosis.
 Record Actions URL and sanitized evidence. Existing environment secrets let this
 workflow run without exporting credentials onto the desktop.
 
-Observed gap on 19 October: CP AGENTS.md describes production routing as disabled,
-while its configuration enables routing and service bindings. Verify deployed
-SHA and accepted cutover evidence before changing runtime; update the owning
-Environment Contract. Tracked in #286.
+The stale CP Environment Contract was corrected in
+[CP PR #358](https://github.com/trained-assist/trained-assist-control-plane/pull/358).
+Revision `cde47e717d29a0c156a90b2994be974dff4cc813` passed staging and production
+checks in [run 39291052041](https://github.com/trained-assist/trained-assist-control-plane/actions/runs/39291052041).
+Recheck current main/deployed revisions on each new attempt.
+
+## Desktop and dispatch recovery evidence
+
+On 19 October, desktop socket tests failed with `listen EPERM 127.0.0.1`.
+The same suites passed in repository CI. Record local failures as environment
+limitations and link the exact successful CI SHA; never relabel a failed local
+run as PASS. Existing Actions also provided diagnostics when local Cloudflare
+credentials were unavailable.
+
+GitHub returned HTTP 500 for production-check workflow dispatches during the
+pilot. A dispatch response error does not prove that no workflow was admitted.
+Read the recent workflow runs and reconcile repository, workflow, ref/SHA,
+creation window and inputs/attempt marker when available before retrying.
+Allow for delayed visibility and keep uncertainty explicit. GitHub concurrency
+serializes execution but does not deduplicate requests or guarantee FIFO ordering.
+The current canary workflow lacks a caller-supplied attempt ID; managed dispatch
+needs durable intent and receipt correlation before automatic retry (#286 E07).
+
+The pilot implementation PR, signed release and smoke evidence belong in #285.
+A simple context canary is useful regression evidence but does not establish
+that table publication works. Record missing reproduction context separately.
+
