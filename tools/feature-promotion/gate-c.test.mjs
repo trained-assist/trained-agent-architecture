@@ -40,6 +40,8 @@ test('an LLM PASS cannot override failed execution or missing evidence/cleanup',
 test('agent output must contain structured text; a diagnostic PASS is not accepted', () => {
   assert.deepEqual(parseAgentOutput(JSON.stringify({ type: 'text', part: { text: '{"probes":[]}' } })), { probes: [] });
   assert.throws(() => parseAgentOutput('PASS\n{"type":"error"}'));
+  assert.deepEqual(parseAgentOutput('{"type":"text","part":{"text":"Reading inputs"}}\n{"type":"text","part":{"text":"{\\"probes\\":[]}"}}'), { probes: [] });
+  assert.throws(() => parseAgentOutput('{"type":"text","part":{"text":"{\\"probes\\":[]}"}}\n{"type":"error"}'), /partial model output/);
 });
 test('executor records real command status and rejects source modification', async () => {
   const work = fs.mkdtempSync(path.join(os.tmpdir(), 'gate-c-test-'));

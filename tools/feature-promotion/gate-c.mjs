@@ -72,10 +72,18 @@ export function evaluate(report, receipts, context) {
 }
 
 export function parseAgentOutput(output) {
-  let text = '';
+  const texts = [];
+  let agentError = false;
   for (const line of output.split('\n')) {
-    try { const e = JSON.parse(line); if (e.type === 'text') text += e.part?.text ?? e.text ?? ''; } catch { /* diagnostics */ }
+    try {
+      const e = JSON.parse(line);
+      if (e.type === 'error') agentError = true;
+      if (e.type === 'text') texts.push(e.part?.text ?? e.text ?? '');
+    } catch { /* diagnostics */ }
   }
+  if (agentError) fail('OpenCode reported an error; partial model output is not acceptance evidence');
+  // OpenCode can emit progress prose before its final structured answer.
+  const text = texts.at(-1) ?? '';
   return JSON.parse(text.trim().replace(/^```(?:json)?\s*/, '').replace(/\s*```$/, ''));
 }
 
@@ -104,9 +112,11 @@ function docker(work, args, { model = false, timeout = 600000, repositories = []
 }
 
 function agent(work, prompt, label, outputDir) {
+  console.log(`OpenCode ${label}: starting ${MODEL}`);
   const r = docker(work, ['opencode', 'run', '--auto', '--format', 'json', '-m', MODEL, prompt], { model: true });
   fs.writeFileSync(path.join(outputDir, `${label}.jsonl`), redact((r.stdout ?? '') + '\n' + (r.stderr ?? '')));
   if (r.error || r.status !== 0) fail(`OpenCode ${label} failed or timed out; see sanitized transcript`);
+  console.log(`OpenCode ${label}: process completed; validating structured result`);
   return parseAgentOutput(r.stdout);
 }
 
@@ -191,10 +201,12 @@ export async function execute(context, work, outputDir, runAgent = agent, runPro
     const cwd = path.join(work, p.repo, p.cwd);
     if (!fs.existsSync(cwd) || !fs.realpathSync(cwd).startsWith(fs.realpathSync(path.join(work, p.repo)) + path.sep) && fs.realpathSync(cwd) !== fs.realpathSync(path.join(work, p.repo))) fail('Probe cwd escapes pinned repository');
     const started = new Date().toISOString();
+    console.log(`Probe ${p.id}: ${p.kind}, scenarios=${p.scenarios.join(',')}`);
     const r = runProbe(work, ['sh', '-c', 'cd "$1" && shift && exec "$@"', 'probe', `/work/${p.repo}/${p.cwd}`, ...p.argv], { repositories: context.revisions.map((r) => r.repo) });
     const log = redact((r.stdout ?? '') + '\n' + (r.stderr ?? ''));
     fs.writeFileSync(path.join(outputDir, `${p.id}.log`), log);
     receipts.push({ ...p, started, finished: new Date().toISOString(), exitCode: r.error ? null : r.status, logSha256: hash(log), log });
+    console.log(`Probe ${p.id}: exit=${r.error ? r.error.code : r.status}`);
   }
   write(path.join(outputDir, 'receipts.json'), receipts);
   for (const [file, expected] of originals) {
