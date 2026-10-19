@@ -18,6 +18,8 @@
 | Scenario-change issue/PR | Change scope, implementation map, cross-repository acceptance и итоговое evidence | Change owner |
 | Implementation issue/PR | Код, локальные проверки, runnable probes, Environment Contract и rollout своей реализации | Owning implementation repo |
 | Environment Contract | Проверенные endpoints, test inputs, logs/state, reset, permissions и promotion path | Runtime component owner |
+| Scenario Registry | Стабильные IDs, владельцы, спецификации, зависимости и ссылки на E2E в owning repositories | Architecture repo; тесты остаются в owning repositories |
+| Feature manifest | Явные связи feature issue с обязательными implementation/E2E PR, их ролями и зависимостями; sandbox report | Architecture change owner |
 
 Architecture описывает сценарий и protocol приёмки. Проверки связывают implementation с SLA и ловят регрессии. Implementation repositories сообщают свои endpoint/test entrypoints, команды, topology и Environment Contracts; ограничения операций и порядок работы со средой принадлежат этим contracts/runbooks, а не сценарию.
 
@@ -57,6 +59,22 @@ Architecture описывает сценарий и protocol приёмки. П�
 Каждый gate имеет `PASS`, `FAIL` или `UNCLEAR` и краткое обоснование. Для приёмки все применимые gates должны быть `PASS`; неприменимый gate помечается с причиной и ссылкой на доказательство другого подходящего уровня. `FAIL` ведёт к исправлению и повторному запуску. `UNCLEAR` ведёт к улучшению traceability или тестируемости; он не трактуется как pass.
 
 Evidence хранится в scenario-change PR или связанных implementation PR/issues: scenario ID и changed steps, implementation repo/PR/commit SHA, target environment и его контракт, команды/probes, E2E run URL, результаты и ограничения fidelity. Не помещать секреты, персональные данные или production payloads в evidence.
+
+## Машинная трассировка и статические gates
+
+Этот раздел — единственное архитектурное описание Feature Promotion gates. Общие delivery правила остаются в [ACCEPTANCE-CHECKLIST.md](ACCEPTANCE-CHECKLIST.md), реализация — в engineering playbooks, sandbox topology и команды — в Environment Contracts. Не копировать их сюда.
+
+- [Scenario Registry](scenarios/REGISTRY.json) индексирует существующие канонические сценарии по неизменным ID. Он ссылается на спецификации и на E2E в репозиториях-владельцах; он не переносит тесты и не превращает `stories/TRACEABILITY.md` в тестовый каталог. Story ↔ scenario и старые ID остаются в TRACEABILITY.
+- Для изменения сценария PR содержит `features/<issue>/manifest.json` по [schema](contracts/feature-manifest.schema.json). Manifest хранит feature issue, явные required/optional implementation/E2E PR membership, зависимости и обоснованные coverage exceptions; scenario IDs и architecture PR выводятся из diff и GitHub event. PR state, merge SHA и CI conclusions берутся из GitHub API; эти значения не копируются в manifest. После merge implementation/E2E PR Gate B сверяет manifest candidate SHA set с GitHub; Gate C report отдельно содержит tested SHA, target, run и evidence URL, чтобы Gate B не зависел от своего будущего результата.
+- Gate A — быстрый локальный валидатор при открытии/обновлении Draft PR: registry/ID/path/dependency validity, изменённые scenario-to-E2E mappings, manifest shape и совпадение feature issue с PR description. Для coverage, которую невозможно доказать статически, отсутствие mapping даёт FAIL; только явный reason/owner/evidence exception может пройти.
+- Gate B — после интеграции implementation/E2E PR: сверяет явный PR graph с GitHub API, merged state (закрытый без merge — FAIL), strict branch protection для базовых веток, обязательные checks на текущем PR head SHA, зависимости и совпадение candidate SHA set с merge SHA. API errors, недостаток разрешений, rate limits или неполный ответ дают BLOCKED, не PASS. Gate B не требует результата финального E2E Gate C.
+- Статические проверки не устанавливают семантическое отсутствие противоречий между произвольным кодом и текстом. Это остаётся Gate 1 review. Документные ссылки проверяет существующий docs CI; OpenAPI/JSON Schema дополнительно валидируются имеющимися владельцами контрактов. Не объявлять линтер доказательством semantic conformity.
+
+Registry — индекс связей, а не второй источник требований. Если сценарий перемещён или переименован, его ID не меняется; меняется только spec path. Тесты принадлежат репозиторию, который может их запускать и обслуживать.
+
+`component_tests` — отбор локальных probes, не E2E-покрытие. Реальная E2E-связь находится в `e2e_tests` и указывает workflow или runnable test в owning repository. На момент первичного аудита автоматическая sandbox E2E-связь найдена для SC-OPS-QA-01; остальные сценарии пока не объявляются покрытыми. Их scenario-change PR заблокирован до добавления E2E ref или reviewable coverage exception с tracking issue.
+
+Gate A и детерминированные тесты находятся в `tools/feature-promotion/`; workflow запускает их на `opened`, `synchronize`, `reopened` и `ready_for_review`, включая Draft PR. Изменение поведения сначала проходит Gate A, затем реализационные шаги по playbook. `features/<issue>/manifest.json` может иметь незаполненный PR graph до реализации, но Gate B не проходит, пока обязательные PR не merged и их CI не успешен. Gate B принимает `repository_dispatch` после merge реализационного PR и оставляет `workflow_dispatch` для ручного запуска; автоматический publisher cross-repo событий остаётся частью wiring acceptance и не должен создавать обратную зависимость на Gate B/Gate C.
 
 ## Sandbox gaps и trust boundary
 
