@@ -3,7 +3,12 @@
 Process epic: [#286](https://github.com/trained-assist/trained-agent-architecture/issues/286).
 Pilot task: [#285](https://github.com/trained-assist/trained-agent-architecture/issues/285).
 Project #1 existed before this pilot. Queue fields were added; watcher, dispatcher,
-leases and automatic execution are still pending. Desktop execution is manual.
+distributed leases and end-to-end automatic execution for this queue are still
+pending. Desktop execution is manual. Reuse the existing
+[continuous-dev controller](tools/continuous-dev/README.md) from epic #253:
+it already has a local single-writer lock, durable intent, prompt packets and
+handoff validation. It does not implement the Project intake/dispatcher or
+distributed claims; do not build a competing local controller.
 
 ## Source of requirements
 
