@@ -1,0 +1,85 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/trained-assist/trained-agent-architecture/blob/main/contracts/feature-manifest.schema.json",
+  "title": "Feature Promotion manifest",
+  "description": "Explicit cross-repository work relationships and sandbox evidence. PR state, CI conclusions, and tested merge SHAs are obtained from GitHub/evidence rather than copied here.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "feature_issue", "pull_requests", "coverage_exceptions", "sandbox_acceptance"],
+  "properties": {
+    "schema_version": { "const": 1 },
+    "feature_issue": { "type": "integer", "minimum": 1 },
+    "pull_requests": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/pull_request" },
+      "description": "Explicit required/optional PR membership and dependency edges. State, merge SHA and CI conclusions are obtained from GitHub API."
+    },
+    "coverage_exceptions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["scenario_id", "reason", "tracking_issue"],
+        "properties": {
+          "scenario_id": { "type": "string", "pattern": "^[A-Z][A-Z0-9-]+$" },
+          "reason": { "type": "string", "minLength": 20 },
+          "tracking_issue": { "type": "string", "pattern": "^https://github\\.com/[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+/issues/[1-9][0-9]*$" }
+        }
+      },
+      "uniqueItems": true
+    },
+    "sandbox_acceptance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["candidate_revisions", "evidence_url"],
+      "properties": {
+        "target": {
+          "description": "Explicit acceptance environment and its existing owning contract; required by Gate C at admission.",
+          "type": "object", "additionalProperties": false,
+          "required": ["environment", "contract"],
+          "properties": {
+            "environment": { "enum": ["local", "dev", "test", "staging"] },
+            "contract": {
+              "type": "object", "additionalProperties": false, "required": ["repo", "path"],
+              "properties": {
+                "repo": { "type": "string", "pattern": "^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$" },
+                "path": { "type": "string", "minLength": 1 }
+              }
+            }
+          }
+        },
+        "candidate_revisions": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["repo", "sha"],
+            "properties": {
+              "repo": { "type": "string", "pattern": "^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$" },
+              "sha": { "type": "string", "pattern": "^[a-f0-9]{40}$" }
+            }
+          }
+        },
+        "evidence_url": { "type": ["string", "null"], "format": "uri" }
+      }
+    }
+  },
+  "$defs": {
+    "pull_request": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["repo", "number", "role", "required", "depends_on"],
+      "properties": {
+        "repo": { "type": "string", "pattern": "^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$" },
+        "number": { "type": "integer", "minimum": 1 },
+        "role": { "enum": ["implementation", "e2e"] },
+        "required": { "type": "boolean" },
+        "depends_on": {
+          "type": "array", "items": { "$ref": "#/$defs/pr_ref" },
+          "uniqueItems": true
+        }
+      }
+    },
+    "pr_ref": { "type": "string", "pattern": "^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+#[1-9][0-9]*$" }
+  }
+}

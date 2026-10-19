@@ -79,15 +79,9 @@
 
 - [OPS-DEPLOY-01 — Deployment coverage and sandbox promotion](operations/deployment-coverage-and-sandbox.md) — аудит покрытия production deploy, изолированных sandbox и изменений состояния вне обычного deploy; issue [#220](https://github.com/trained-assist/trained-agent-architecture/issues/220).
 
-## Минимальный формат нового общего сценария
+## Формат и проверка
 
-- Scenario ID, цель пользователя, контекст и prerequisites.
-- Каналы: TG/Web/API/другие; ожидаемое поведение отдельно там, где оно различается.
-- Services/repositories и contract IDs; владельцы конкретных данных и этапов.
-- Trigger → наблюдаемые шаги → ожидаемый результат/evidence.
-- Failure paths: lost ACK, restart, budget/auth/quota, partial export, stop, duplicates — применимые к сценарию.
-- Validation: provider/consumer contract tests и сквозной replay; ссылки на реализацию и проверенную ревизию.
-- Статус: target/current; доказательство реализации датировано. Исполнение эпика ведётся в tracker, не через конкурентное изменение статуса одного файла.
+Требования к новому или изменяемому поведению и приёмке принадлежат [Architecture Change Management & Acceptance](../SCENARIO-CHANGE-MANAGEMENT.md). Этот каталог отвечает только за размещение сценариев и происхождение исторических снимков. Стабильные IDs, спецификации, владельцы, зависимости, component probes и E2E refs индексируются в [Scenario Registry](REGISTRY.json); тесты остаются в owning repositories. Component test refs помогают выбрать пробы, но не считаются cross-service E2E. Связи пользовательских историй с планом и историческими ID остаются в [stories/TRACEABILITY.md](../stories/TRACEABILITY.md).
 
 ## Дальнейший переход
 

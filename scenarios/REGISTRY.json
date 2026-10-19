@@ -1,0 +1,152 @@
+{
+  "version": 1,
+  "scenarios": [
+    {
+      "id": "SC-CRM-TG-01",
+      "spec": "scenarios/crm/SC-CRM-TG-01-agent-mcp-command-workflow.md",
+      "owner": "trained-assist/trained-agent-architecture",
+      "depends_on": [],
+      "component_tests": [],
+      "e2e_tests": []
+    },
+    {
+      "id": "SC-INTERACTION-PARALLEL-OPENCODE-SESSIONS",
+      "spec": "scenarios/interaction/SC-INTERACTION-PARALLEL-OPENCODE-SESSIONS.md",
+      "owner": "trained-assist/ai-agent-runner",
+      "depends_on": [],
+      "component_tests": [
+        { "repo": "trained-assist/ai-agent-runner", "path": "test/e2e-loop.test.ts" }
+      ],
+      "e2e_tests": []
+    },
+    {
+      "id": "RUN-STREAM-01",
+      "spec": "scenarios/interaction/SC-RUN-STREAM-01-opencode-live-run-observation.md",
+      "owner": "trained-assist/trained-agent-architecture",
+      "depends_on": [],
+      "component_tests": [
+        { "repo": "trained-assist/ai-agent-runner", "path": "test/trace-id-propagation.test.ts" },
+        { "repo": "trained-assist/trained-assist-control-plane", "path": "tests/trace-endpoint.test.ts" },
+        { "repo": "trained-assist/trained-assist-web", "path": "test/ui-reconnect-integrity.md" }
+      ],
+      "e2e_tests": []
+    },
+    {
+      "id": "SC-SBX-01",
+      "spec": "scenarios/interaction/SC-SBX-01-anonymous-test-ingress.md",
+      "owner": "trained-assist/trained-assist-tg-bot",
+      "depends_on": [],
+      "component_tests": [
+        { "repo": "trained-assist/trained-assist-tg-bot", "path": "tests/anonymous-accept-only-api.test.js" }
+      ],
+      "e2e_tests": []
+    },
+    {
+      "id": "SC-START-01",
+      "spec": "scenarios/interaction/SC-START-01-input-start-window.md",
+      "owner": "trained-assist/trained-agent-architecture",
+      "depends_on": [],
+      "component_tests": [
+        { "repo": "trained-assist/trained-assist-tg-bot", "path": "tests/intake-preflight.test.js" },
+        { "repo": "trained-assist/trained-assist-control-plane", "path": "tests/intake-pending-registration.test.ts" },
+        { "repo": "trained-assist/ai-agent-runner", "path": "test/input-materialize.test.ts" }
+      ],
+      "e2e_tests": []
+    },
+    {
+      "id": "SC-RUN-CONFLICT-01",
+      "spec": "scenarios/interaction/run-conflict-explicit-choice.md",
+      "owner": "trained-assist/trained-agent-architecture",
+      "depends_on": [],
+      "component_tests": [
+        { "repo": "trained-assist/trained-assist-tg-bot", "path": "tests/stop-supplement-e2e.test.js" },
+        { "repo": "trained-assist/trained-assist-tg-bot", "path": "tests/parallel-launch.test.js" },
+        { "repo": "trained-assist/trained-assist-control-plane", "path": "tests/cp-stop-targets.test.ts" },
+        { "repo": "trained-assist/trained-assist-control-plane", "path": "tests/native-cancel-confirmation.test.ts" },
+        { "repo": "trained-assist/trained-assist-web", "path": "test/worker-stop-delegation.mjs" }
+      ],
+      "e2e_tests": []
+    },
+    {
+      "id": "SC-TG-FIRST-RELEASE-01",
+      "spec": "scenarios/interaction/telegram-first-release-acceptance.md",
+      "owner": "trained-assist/trained-assist-tg-bot",
+      "depends_on": [],
+      "component_tests": [
+        { "repo": "trained-assist/trained-assist-tg-bot", "path": "tests/telegram-existing-ux-acceptance.test.js" },
+        { "repo": "trained-assist/trained-assist-web", "path": "test/web-input.mjs" }
+      ],
+      "e2e_tests": []
+    },
+    {
+      "id": "SC-OPS-DEPLOY-01",
+      "spec": "scenarios/operations/SC-OPS-DEPLOY-01-protected-main-production.md",
+      "owner": "trained-assist/trained-agent-architecture",
+      "depends_on": [],
+      "component_tests": [
+        { "repo": "trained-assist/trained-assist-tg-bot", "path": "tests/release-gates.test.js" },
+        { "repo": "trained-assist/ai-agent-runner", "path": "test/promotion-release.test.ts" }
+      ],
+      "e2e_tests": []
+    },
+    {
+      "id": "SC-OPS-QA-01",
+      "spec": "scenarios/operations/SC-OPS-QA-01-sandbox-functional-verification.md",
+      "owner": "trained-assist/trained-agent-architecture",
+      "depends_on": [],
+      "component_tests": [
+        { "repo": "trained-assist/trained-assist-tg-bot", "path": "tests/sandbox3-ping-pong-oracle.test.mjs" },
+        { "repo": "trained-assist/ai-agent-runner", "path": "test/test_sandbox3_prepare.py" }
+      ],
+      "e2e_tests": [
+        {
+          "repo": "trained-assist/trained-assist-tg-bot",
+          "path": ".github/workflows/sandbox3-worker-e2e.yml",
+          "kind": "sandbox-workflow"
+        }
+      ]
+    },
+    {
+      "id": "OPS-RUNNER-DEFAULT-01",
+      "spec": "scenarios/operations/SC-OPS-RUNNER-DEFAULT-01-serverless-to-france-worker.md",
+      "owner": "trained-assist/trained-agent-architecture",
+      "depends_on": [],
+      "component_tests": [
+        { "repo": "trained-assist/trained-assist-control-plane", "path": "tests/runner-engine-default.test.ts" },
+        { "repo": "trained-assist/ai-agent-runner", "path": "test/placement-policy.test.ts" },
+        { "repo": "trained-assist/ai-agent-runner", "path": "test/cloudflare-runner-api.test.ts" }
+      ],
+      "e2e_tests": []
+    },
+    {
+      "id": "OPS-RUNNER-TEST-01",
+      "spec": "scenarios/operations/SC-OPS-RUNNER-MOCK-TEST.md",
+      "owner": "trained-assist/trained-agent-architecture",
+      "depends_on": [],
+      "component_tests": [
+        { "repo": "trained-assist/trained-assist-control-plane", "path": "tests/runner-mock-probe.test.ts" },
+        { "repo": "trained-assist/ai-agent-runner", "path": "test/test_sandbox3_native.py" }
+      ],
+      "e2e_tests": []
+    },
+    {
+      "id": "SC-OPS-SANDBOX-BOOTSTRAP",
+      "spec": "scenarios/operations/SC-OPS-SANDBOX-BOOTSTRAP.md",
+      "owner": "trained-assist/trained-agent-architecture",
+      "depends_on": [],
+      "component_tests": [
+        { "repo": "trained-assist/ai-agent-runner", "path": "test/test_sandbox3_prepare.py" },
+        { "repo": "trained-assist/trained-assist-tg-bot", "path": "tests/sandbox-entry-smoke-lib.test.mjs" }
+      ],
+      "e2e_tests": []
+    },
+    {
+      "id": "OPS-DEPLOY-01",
+      "spec": "scenarios/operations/deployment-coverage-and-sandbox.md",
+      "owner": "trained-assist/trained-agent-architecture",
+      "depends_on": [],
+      "component_tests": [],
+      "e2e_tests": []
+    }
+  ]
+}

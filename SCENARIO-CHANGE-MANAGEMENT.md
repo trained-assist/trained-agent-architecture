@@ -18,6 +18,8 @@
 | Scenario-change issue/PR | Change scope, implementation map, cross-repository acceptance и итоговое evidence | Change owner |
 | Implementation issue/PR | Код, локальные проверки, runnable probes, Environment Contract и rollout своей реализации | Owning implementation repo |
 | Environment Contract | Проверенные endpoints, test inputs, logs/state, reset, permissions и promotion path | Runtime component owner |
+| Scenario Registry | Стабильные IDs, владельцы, спецификации, зависимости и ссылки на E2E в owning repositories | Architecture repo; тесты остаются в owning repositories |
+| Feature manifest | Явные связи feature issue с обязательными implementation/E2E PR, их ролями и зависимостями; sandbox report | Architecture change owner |
 
 Architecture описывает сценарий и protocol приёмки. Проверки связывают implementation с SLA и ловят регрессии. Implementation repositories сообщают свои endpoint/test entrypoints, команды, topology и Environment Contracts; ограничения операций и порядок работы со средой принадлежат этим contracts/runbooks, а не сценарию.
 
@@ -58,7 +60,35 @@ Architecture описывает сценарий и protocol приёмки. П�
 
 Evidence хранится в scenario-change PR или связанных implementation PR/issues: scenario ID и changed steps, implementation repo/PR/commit SHA, target environment и его контракт, команды/probes, E2E run URL, результаты и ограничения fidelity. Не помещать секреты, персональные данные или production payloads в evidence.
 
+## Машинная трассировка и статические gates
+
+Этот раздел — единственное архитектурное описание Feature Promotion gates. Общие delivery правила остаются в [ACCEPTANCE-CHECKLIST.md](ACCEPTANCE-CHECKLIST.md), реализация — в engineering playbooks, sandbox topology и команды — в Environment Contracts. Не копировать их сюда.
+
+- [Scenario Registry](scenarios/REGISTRY.json) индексирует существующие канонические сценарии по неизменным ID. Он ссылается на спецификации и на E2E в репозиториях-владельцах; он не переносит тесты и не превращает `stories/TRACEABILITY.md` в тестовый каталог. Story ↔ scenario и старые ID остаются в TRACEABILITY.
+- Для изменения сценария PR содержит `features/<issue>/manifest.json` по [schema](contracts/feature-manifest.schema.json). Manifest хранит feature issue, явные required/optional implementation/E2E PR membership, зависимости и обоснованные coverage exceptions; scenario IDs и architecture PR выводятся из diff и GitHub event. PR state, merge SHA и CI conclusions берутся из GitHub API; эти значения не копируются в manifest. После merge implementation/E2E PR Gate B сверяет manifest candidate SHA set с GitHub; Gate C report отдельно содержит tested SHA, target, run и evidence URL, чтобы Gate B не зависел от своего будущего результата.
+- Gate A — быстрый локальный валидатор при открытии/обновлении Draft PR: registry/ID/path/dependency validity, изменённые scenario-to-E2E mappings, manifest shape и совпадение feature issue с PR description. Для coverage, которую невозможно доказать статически, отсутствие mapping даёт FAIL; только явный reason/owner/evidence exception может пройти.
+- Gate B — после интеграции implementation/E2E PR: сверяет явный PR graph с GitHub API, merged state (закрытый без merge — FAIL), strict branch protection для базовых веток, обязательные checks на текущем PR head SHA, зависимости и совпадение candidate SHA set с merge SHA. API errors, недостаток разрешений, rate limits или неполный ответ дают BLOCKED, не PASS. Gate B не требует результата финального E2E Gate C.
+- Статические проверки не устанавливают семантическое отсутствие противоречий между произвольным кодом и текстом. Это остаётся Gate 1 review. Документные ссылки проверяет существующий docs CI; OpenAPI/JSON Schema дополнительно валидируются имеющимися владельцами контрактов. Не объявлять линтер доказательством semantic conformity.
+
+Registry — индекс связей, а не второй источник требований. Если сценарий перемещён или переименован, его ID не меняется; меняется только spec path. Тесты принадлежат репозиторию, который может их запускать и обслуживать.
+
+`component_tests` — отбор локальных probes, не E2E-покрытие. Реальная E2E-связь находится в `e2e_tests` и указывает workflow или runnable test в owning repository. На момент первичного аудита автоматическая sandbox E2E-связь найдена для SC-OPS-QA-01; остальные сценарии пока не объявляются покрытыми. Их scenario-change PR заблокирован до добавления E2E ref или reviewable coverage exception с tracking issue.
+
+Gate A и детерминированные тесты находятся в `tools/feature-promotion/`; workflow запускает их на `opened`, `synchronize`, `reopened` и `ready_for_review`, включая Draft PR. Изменение поведения сначала проходит Gate A, затем реализационные шаги по playbook. `features/<issue>/manifest.json` может иметь незаполненный PR graph до реализации, но Gate B не проходит, пока обязательные PR не merged и их CI не успешен. Gate B принимает `repository_dispatch` после merge реализационного PR и оставляет `workflow_dispatch` для ручного запуска; автоматический publisher cross-repo событий остаётся частью wiring acceptance и не должен создавать обратную зависимость на Gate B/Gate C.
+
 ## Sandbox gaps и trust boundary
+
+### Gate C execution adapter
+
+`tools/feature-promotion/gate-c.mjs` выполняет существующий acceptance protocol в workflow `Feature promotion Gate C`. Успешный Gate B отправляет `feature-acceptance-requested`; ручной запуск использует `workflow_dispatch` с `architecture_pr`, `manifest_path`, `mode=acceptance`. Gate C повторно выполняет Gate B до model call и после тестов: проверка Gate A на текущем architecture SHA, PR graph, CI и candidate revisions остаётся общей реализацией. При изменении SHA результат не публикуется как PASS. Проверки не вызывают друг друга в обратном направлении.
+
+Runtime переиспользует проверенную в PR autofix схему OpenCode 1.18.32 → OpenAI-compatible Ladder provider → `LLM_LADDER_TOKEN`. Профиль **build / default** (`ladder/build`) выбран для Gate C явно; выбор моделей и fallback принадлежат Ladder. `ladder/free` здесь не используется. Токен подставляется из окружения, не записывается в конфигурацию или artifact.
+
+Изменённые сценарии выводятся из PR diff, регрессии — из обратного транзитивного замыкания `depends_on`. Registry указывает существующие component/E2E locations; агент читает спецификации, implementation snapshots и Environment Contract, составляет executable plan, затем оценивает реальные результаты. Контроллер запускает команды, сохраняет exit codes, timestamps и хэши sanitized logs. Ответ LLM не может перекрыть неуспешный процесс, отсутствие E2E для сценария или изменение исходных source/test files. Семантика, observable assertions и cleanup должны быть PASS; отсутствие evidence даёт UNCLEAR/BLOCKED.
+
+Manifest добавляет только явный выбор `sandbox_acceptance.target`: `environment` и `contract: {repo, path}`. Контракт читается из pinned revision. Первая исполняемая версия поддерживает **isolated local** sandbox в одноразовых Docker containers; это не staging. Remote shared lanes требуют owning adapter с occupancy/claim/reset и пока дают BLOCKED. GitHub write token остаётся у контроллера, OpenCode получает только Ladder token, test containers не получают ни одного из них. Model containers читают inputs read-only. Лимиты: 50 минут job, 10 минут на model/probe process, 25 минут на последовательность probes, 4 GiB/2 CPU на container; artifacts хранятся 7 дней. Это runtime limits, не гарантия денежного потолка Ladder.
+
+`report.json`, `report.md`, plan, command receipts и transcripts прикладываются к Actions run; краткий отчёт и commit status `feature-promotion / sandbox-acceptance` публикуются в architecture PR. PASS разрешает дальнейшую штатную приёмку, но адаптер сам не выполняет merge/deploy. Этот status нужно включить в required checks при rollout branch protection; до этого он не является принудительным merge gate. `mode=infrastructure-probe` запускает настоящий OpenCode/Ladder и localhost HTTP E2E, проверяя сам адаптер без product feature. Он не выставляет feature acceptance status и не заменяет Gate A/B или staging evidence.
 
 Если изменяемую часть нельзя проверить на нужном уровне, это **Sandbox Gap**. Небольшой безопасный gap закрывается в той же работе; существенный документируется в Environment Contract и issue owning repository. Межпроектный gap связывается с architecture issue. Не подменять отсутствующую среду локальным тестом и не утверждать staging/production coverage без фактического прогона.
 

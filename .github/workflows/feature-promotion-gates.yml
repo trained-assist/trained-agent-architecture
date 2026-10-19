@@ -1,0 +1,38 @@
+name: Feature promotion Gate A
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+    branches: [main]
+
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  gate-a:
+    name: feature-promotion / specification-consistency
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Record pull request action for trigger verification
+        env:
+          PULL_REQUEST_ACTION: ${{ github.event.action }}
+        run: echo "pull_request_action=$PULL_REQUEST_ACTION"
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Validate scenario registry and feature manifests
+        env:
+          GH_TOKEN: ${{ secrets.AUTOFIX_PAT }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          GITHUB_EVENT_PATH: ${{ github.event_path }}
+        run: node tools/feature-promotion/gate-a.mjs --base "$BASE_SHA" --head "$HEAD_SHA"
+      - name: Gate A validator tests
+        run: node --test tools/feature-promotion/gate-a.test.mjs
