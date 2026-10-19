@@ -140,7 +140,7 @@ export async function runGateB({ manifest, architecturePr, github }) {
   return { state: 'PASS', featureIssue: manifest.feature_issue, architectureProtection: architectureProtection.checks, pullRequests: observed, candidateRevisions: candidate };
 }
 
-function ghApi(endpoint) {
+export function ghApi(endpoint) {
   const result = spawnSync('gh', ['api', endpoint], { encoding: 'utf8', env: process.env });
   if (result.error || result.status !== 0) {
     const reason = (result.stderr || result.error?.message || `gh exited ${result.status}`).trim().replace(/\s+/g, ' ').slice(0, 240);
@@ -150,7 +150,7 @@ function ghApi(endpoint) {
   catch { throw new Error('GitHub API returned invalid JSON'); }
 }
 
-function ghApiPaged(endpoint) {
+export function ghApiPaged(endpoint) {
   const result = spawnSync('gh', ['api', '--paginate', '--slurp', endpoint], { encoding: 'utf8', env: process.env });
   if (result.error || result.status !== 0) {
     const reason = (result.stderr || result.error?.message || `gh exited ${result.status}`).trim().replace(/\s+/g, ' ').slice(0, 240);
@@ -177,7 +177,7 @@ function rulesetTargetsBranch(ruleset, branch, defaultBranch) {
   return !(names.exclude ?? []).some((pattern) => branchPatternMatches(pattern, branch, defaultBranch));
 }
 
-function requiredChecksForBranch(repo, branch) {
+export function requiredChecksForBranch(repo, branch) {
   try {
     const protection = ghApi(`repos/${repo}/branches/${encodeURIComponent(branch)}/protection/required_status_checks`);
     const checks = protection.checks?.length ? protection.checks : (protection.contexts ?? []).map((context) => ({ context }));

@@ -68,6 +68,11 @@ function validateManifest(file, body) {
   if (manifest.schema_version !== 1 || !Number.isInteger(manifest.feature_issue) || manifest.feature_issue < 1) fail(`${file}: invalid schema_version or feature_issue`);
   if (!Array.isArray(manifest.pull_requests) || !Array.isArray(manifest.coverage_exceptions)) fail(`${file}: pull_requests and coverage_exceptions arrays are required`);
   if (!manifest.sandbox_acceptance || !Object.hasOwn(manifest.sandbox_acceptance, 'evidence_url') || !Array.isArray(manifest.sandbox_acceptance.candidate_revisions)) fail(`${file}: sandbox_acceptance is incomplete`);
+  const target = manifest.sandbox_acceptance.target;
+  if (target !== undefined) {
+    if (!target || !['local', 'dev', 'test', 'staging'].includes(target.environment) || !/^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/.test(target.contract?.repo)) fail(`${file}: invalid sandbox target/contract`);
+    safeRepoPath(target.contract?.path, `${file}: sandbox contract`);
+  }
   if (manifest.sandbox_acceptance.evidence_url !== null && !/^https:\/\//.test(manifest.sandbox_acceptance.evidence_url)) fail(`${file}: evidence_url must be https or null`);
   const revisionKeys = new Set();
   for (const revision of manifest.sandbox_acceptance.candidate_revisions) {

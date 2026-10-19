@@ -1,0 +1,78 @@
+name: Feature promotion Gate C
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+    paths:
+      - 'tools/feature-promotion/**'
+      - '.github/workflows/feature-promotion-gate-c.yml'
+  workflow_dispatch:
+    inputs:
+      mode:
+        type: choice
+        options: [acceptance, infrastructure-probe]
+        default: acceptance
+        required: true
+      architecture_pr:
+        type: number
+        description: Open architecture PR (Gate A/B must pass)
+      manifest_path:
+        type: string
+        description: features/<issue>/manifest.json in the architecture PR
+  repository_dispatch:
+    types: [feature-acceptance-requested]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: gate-c-${{ inputs.architecture_pr || github.event.client_payload.architecture_pr || github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: false
+
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node --test tools/feature-promotion/*.test.mjs
+
+  acceptance:
+    if: github.event_name != 'pull_request'
+    needs: tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 50
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Build isolated OpenCode runtime (same pin as PR autofix)
+        run: docker build -t feature-acceptance-opencode:1.18.32 tools/feature-promotion
+      - name: Run Gate C through Ladder build / default
+        env:
+          GH_TOKEN: ${{ secrets.AUTOFIX_PAT }}
+          LLM_LADDER_TOKEN: ${{ secrets.LLM_LADDER_TOKEN }}
+          ARCHITECTURE_PR: ${{ inputs.architecture_pr || github.event.client_payload.architecture_pr }}
+          MANIFEST_PATH: ${{ inputs.manifest_path || github.event.client_payload.manifest_path }}
+          ACCEPTANCE_MODE: ${{ inputs.mode || 'acceptance' }}
+        run: |
+          if [ "$ACCEPTANCE_MODE" = infrastructure-probe ]; then
+            node tools/feature-promotion/gate-c-probe.mjs
+          else
+            node tools/feature-promotion/gate-c.mjs
+          fi
+      - name: Retain sanitized acceptance evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: gate-c-${{ github.run_id }}-${{ github.run_attempt }}
+          path: gate-c-artifacts/
+          if-no-files-found: warn
+          retention-days: 7

@@ -30,7 +30,7 @@ Sandbox имеет свои users/keys, endpoints, data roots, storage bindings 
 - Normal и relevant controlled-failure paths; deterministic clock для timers.
 - Evidence: task/run/event IDs, manifest/hash, sanitized log transcript и cleanup/recovery result.
 - Fidelity declaration: какой provider эмулирован и какие реальные свойства ещё требует live smoke.
-- Limits: bounded retries/runtime/concurrency/storage; free-only provider profile и запрет paid fallback.
+- Limits: bounded retries/runtime/concurrency/storage; provider profile указывается явно. Для Gate C принят основной Ladder **build / default** с его штатным fallback; см. [канонический execution contract](SCENARIO-CHANGE-MANAGEMENT.md#gate-c-execution-adapter). Остальные fixtures сохраняют свой объявленный provider profile; из успешного free-only теста не следует проверка paid fallback.
 - Review: тест проверяет внешний контракт, а не просто вызывает внутреннюю функцию и сравнивает её с собой.
 - Воспроизводимость у другого человека: сценарий не зависит от временных ssh-alias или ручных правок на хосте.
 

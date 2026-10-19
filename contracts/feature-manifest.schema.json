@@ -33,6 +33,21 @@
       "additionalProperties": false,
       "required": ["candidate_revisions", "evidence_url"],
       "properties": {
+        "target": {
+          "description": "Explicit acceptance environment and its existing owning contract; required by Gate C at admission.",
+          "type": "object", "additionalProperties": false,
+          "required": ["environment", "contract"],
+          "properties": {
+            "environment": { "enum": ["local", "dev", "test", "staging"] },
+            "contract": {
+              "type": "object", "additionalProperties": false, "required": ["repo", "path"],
+              "properties": {
+                "repo": { "type": "string", "pattern": "^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$" },
+                "path": { "type": "string", "minLength": 1 }
+              }
+            }
+          }
+        },
         "candidate_revisions": {
           "type": "array",
           "items": {

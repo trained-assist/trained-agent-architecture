@@ -37,3 +37,11 @@ jobs:
           ARCHITECTURE_PR: ${{ inputs.architecture_pr || github.event.client_payload.architecture_pr }}
           MANIFEST_PATH: ${{ inputs.manifest_path || github.event.client_payload.manifest_path }}
         run: node tools/feature-promotion/gate-b.mjs --manifest "$MANIFEST_PATH" --architecture-pr "$ARCHITECTURE_PR"
+      - name: Request OpenCode acceptance after Gate B passed
+        env:
+          GH_TOKEN: ${{ secrets.AUTOFIX_PAT }}
+          ARCHITECTURE_PR: ${{ inputs.architecture_pr || github.event.client_payload.architecture_pr }}
+          MANIFEST_PATH: ${{ inputs.manifest_path || github.event.client_payload.manifest_path }}
+        run: |
+          node -e 'process.stdout.write(JSON.stringify({event_type:"feature-acceptance-requested",client_payload:{architecture_pr:Number(process.env.ARCHITECTURE_PR),manifest_path:process.env.MANIFEST_PATH}}))' > "$RUNNER_TEMP/gate-c-dispatch.json"
+          gh api --method POST "repos/$GITHUB_REPOSITORY/dispatches" --input "$RUNNER_TEMP/gate-c-dispatch.json"
