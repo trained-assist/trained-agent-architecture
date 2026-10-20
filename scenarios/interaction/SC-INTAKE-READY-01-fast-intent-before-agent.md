@@ -9,9 +9,9 @@
 ## Владельцы и границы
 
 - Telegram gateway: сбор и показ snapshot, кнопка «Готово», доставка выбранного действия.
-- Control Plane / быстрый intent path: классификация всего snapshot и исполнение готового быстрого ответа.
+- Control Plane / быстрый intent path: классификация принятого полного snapshot; первичная маршрутизация не запускает Agent Run, а готовый быстрый ответ сохраняется как результат задачи.
 - Agent Runner: только явно выбранный fallback с одной из трёх стратегий агента.
-- Existing integration work: [architecture #144](https://github.com/trained-assist/trained-agent-architecture/issues/144) (durable batch + explicit launch); fast-path: [#155](https://github.com/trained-assist/trained-agent-architecture/issues/155); current behavior audit: [#225](https://github.com/trained-assist/trained-agent-architecture/issues/225).
+- Existing integration work: [architecture #144](https://github.com/trained-assist/trained-agent-architecture/issues/144) (durable batch + explicit launch); fast-path: [#155](https://github.com/trained-assist/trained-agent-architecture/issues/155); current behavior audit: [#225](https://github.com/trained-assist/trained-agent-architecture/issues/225); gateway implementation [#783](https://github.com/trained-assist/trained-assist-tg-bot/issues/783), [draft PR #784](https://github.com/trained-assist/trained-assist-tg-bot/pull/784); CP continuation strategy [#365](https://github.com/trained-assist/trained-assist-control-plane/issues/365), [draft PR #366](https://github.com/trained-assist/trained-assist-control-plane/pull/366).
 - Production promotion: owning repository и только его проверенный защищённый путь. Этот сценарий не разрешает прямое изменение production.
 
 Изменение затрагивает наблюдаемое поведение запуска; одной правки legacy runtime без этого scenario и связанных implementation PR недостаточно для принятия.
@@ -20,14 +20,14 @@
 
 1. Пользователь отправляет несколько сообщений; бот обновляет одну квитанцию и показывает общее число принятых элементов и «Готово».
 2. До нажатия «Готово» бот только сохраняет ввод: быстрый intent не исполняется, агент не запускается.
-3. Пользователь нажимает «Готово». Gateway фиксирует неизменяемый упорядоченный snapshot всей накопленной пачки и передаёт его на быстрый intent path.
+3. Пользователь нажимает «Готово». Gateway фиксирует неизменяемый упорядоченный snapshot всей накопленной пачки, durably принимает его и запрашивает CP route без разрешения continuation.
 4. Если intent path возвращает валидный готовый быстрый ответ, бот показывает его в том же чате. Варианты запуска агента не показываются; Agent Run не создаётся.
 5. Если классификация говорит, что нужен агент, бот показывает:
    - «Изучи и задай вопросы»;
    - «Дай полный ответ»;
    - «На твоё усмотрение»;
    - «Очистить весь ввод».
-6. Пользователь выбирает одну из трёх стратегий агента. Весь snapshot передаётся одной задачей ровно один раз с выбранной стратегией. «Очистить весь ввод» очищает snapshot без запуска Agent Run.
+6. Пользователь выбирает одну из трёх стратегий агента. Gateway передаёт выбор для того же принятого task; CP запрашивает continuation только явно, ровно один раз и применяет выбранную стратегию. «Очистить весь ввод» очищает ещё не исполнявшийся snapshot без запуска Agent Run.
 
 ## Альтернативные исходы и сохранение состояния
 
@@ -59,7 +59,8 @@
 ## Реализация и evidence
 
 - Architecture issue/PR: [#293](https://github.com/trained-assist/trained-agent-architecture/issues/293) / draft [#294](https://github.com/trained-assist/trained-agent-architecture/pull/294).
-- Telegram gateway implementation: [trained-assist-tg-bot#783](https://github.com/trained-assist/trained-assist-tg-bot/issues/783); PR/revision ожидаются.
-- Control Plane routing contract/implementation: [trained-assist-control-plane#77](https://github.com/trained-assist/trained-assist-control-plane/issues/77); требуется явно связать с этим scenario и проверить coverage всего snapshot/outcome enum.
+- Telegram gateway implementation: [trained-assist-tg-bot#783](https://github.com/trained-assist/trained-assist-tg-bot/issues/783); draft [PR #784](https://github.com/trained-assist/trained-assist-tg-bot/pull/784), revision `c9f16b9`.
+- Control Plane continuation strategy: [trained-assist-control-plane#365](https://github.com/trained-assist/trained-assist-control-plane/issues/365); draft [PR #366](https://github.com/trained-assist/trained-assist-control-plane/pull/366). Классификатор использует уже существующий CP `/route`; PR передаёт выбранный fallback-стиль в continuation.
+- Local component evidence: TG `tests/control-plane-execution.test.js` and `tests/intake-buffer.test.js` (83 tests), `npm run check`, `git diff --check` passed on 20.10.2026. This is not staging E2E evidence.
 - Environment Contracts: проверить актуальные sandbox/staging endpoints, fixtures, logs/state и promotion paths у обоих owners.
-- Gate 1 / component probes / E2E: ожидают реализации.
+- Gate 1 / staging component probes / E2E: ожидают review и sandbox/staging run; production release не выполнен.
