@@ -12,6 +12,7 @@
         { "repo": "trained-assist/trained-assist-control-plane", "path": "tests/communication-v1.test.ts" }
       ],
       "e2e_tests": [
+        { "repo": "trained-assist/trained-assist-tg-bot", "path": "tests/existing-ux-extra-input-workerd.test.js", "kind": "test" },
         { "repo": "trained-assist/trained-assist-tg-bot", "path": "tools/sandbox3-agent-e2e.mjs", "kind": "test" },
         { "repo": "trained-assist/trained-assist-tg-bot", "path": ".github/workflows/sandbox3-worker-e2e.yml", "kind": "sandbox-workflow" }
       ]

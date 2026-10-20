@@ -1,6 +1,7 @@
 # SC-INTAKE-READY-01 — Проверить готовый быстрый ответ перед запуском агента
 
-**Статус:** target · scenario change · 20.10.2026  
+**Статус:** scenario change · sandbox acceptance · 20.10.2026
+
 **История:** [U-07](../../stories/USER.md#u-07-несколько-сообщений--одна-задача)  
 **Architecture issue:** [trained-agent-architecture#293](https://github.com/trained-assist/trained-agent-architecture/issues/293) · **Scenario PR:** #294 (draft)  
 **Пользователь:** человек в Telegram  
@@ -27,7 +28,7 @@
    - «Дай полный ответ»;
    - «На твоё усмотрение»;
    - «Очистить весь ввод».
-6. Пользователь выбирает одну из трёх стратегий агента. Gateway передаёт выбор для того же принятого task; CP запрашивает continuation только явно, ровно один раз и применяет выбранную стратегию. «Очистить весь ввод» очищает ещё не исполнявшийся snapshot без запуска Agent Run.
+6. Пользователь выбирает одну из трёх стратегий агента. Gateway передаёт выбор для того же принятого task вместе с `decisionId`, `generation` и стабильным `idempotencyKey`; CP фиксирует первый выбор до dispatch, запрашивает continuation только явно, ровно один раз и применяет выбранную стратегию. «Очистить весь ввод» очищает ещё не исполнявшийся snapshot без запуска Agent Run.
 
 ## Альтернативные исходы и сохранение состояния
 
@@ -36,7 +37,7 @@
 - Timeout, provider failure, malformed result или техническая деградация не считаются `quick` и не запускают Agent Run. Бот сообщает, что проверка не завершилась, и оставляет ввод доступным для повторного действия/ручного выбора.
 - Повторный тап, повтор webhook или устаревшая кнопка не создают второй быстрый ответ/Run и не очищают более новый ввод.
 - Новое сообщение, пришедшее во время классификации, не может быть поглощено старым snapshot: старый результат не запускает и не очищает новую генерацию буфера.
-- Если выбран fallback, но Agent Run отклонён или не принят, пользователь видит отказ и получает возможность повторить запуск; успешный быстрый ответ не показывается.
+- Если выбран fallback, но Agent Run отклонён или не принят, пользователь видит отказ и получает возможность повторить тот же запуск; успешный быстрый ответ не показывается. При потерянном подтверждении сохранённый выбор сверяется с тем же task, даже после нового ввода или перезапуска. Новый snapshot не заменяет попытку с неизвестным исходом.
 
 ## Component probes
 
@@ -60,11 +61,13 @@
 
 ## Реализация и evidence
 
-- Architecture issue/PR: [#293](https://github.com/trained-assist/trained-agent-architecture/issues/293) / draft [#294](https://github.com/trained-assist/trained-agent-architecture/pull/294).
-- Telegram gateway and sandbox E2E: [trained-assist-tg-bot#783](https://github.com/trained-assist/trained-assist-tg-bot/issues/783); draft [PR #784](https://github.com/trained-assist/trained-assist-tg-bot/pull/784), latest tested revision `fc783f0`. The PR-triggered [ready-agent run](https://github.com/trained-assist/trained-assist-tg-bot/actions/runs/39450799326) passed on 20.10.2026: «Готово» showed the fallback explanation, explicit style selection continued the same task through Runner, state cleanup and normal delivery-policy restoration passed. A [ready-quick run](https://github.com/trained-assist/trained-assist-tg-bot/actions/runs/39450798692) was dispatched on the same PR branch and SHA: the quick answer completed without style selection or Runner execution, Telegram delivery evidence passed, and cleanup/restoration passed. An earlier quick run exposed an evidence-key mismatch (`quick:` vs `terminal:`); fixed in `cb65bc9` and rechecked successfully on `fc783f0`.
-- Control Plane continuation strategy: [trained-assist-control-plane#365](https://github.com/trained-assist/trained-assist-control-plane/issues/365); draft [PR #366](https://github.com/trained-assist/trained-assist-control-plane/pull/366). Классификатор использует уже существующий CP `/route`; PR передаёт выбранный fallback-стиль в continuation.
-- Local component evidence: TG `tests/control-plane-execution.test.js`, `tests/intake-buffer.test.js`, and `tests/intake-buffer-control-plane.test.js` (251 tests), `npm run check`, `git diff --check` passed on 20.10.2026. This is not staging E2E evidence.
-- Environment Contracts: проверить актуальные sandbox/staging endpoints, fixtures, logs/state и promotion paths у обоих owners.
-- Feature Promotion Gate A: PASS locally on 20.10.2026 (`GITHUB_REPOSITORY=trained-assist/trained-agent-architecture node tools/feature-promotion/gate-a.mjs --base origin/main --head HEAD`).
-- Sandbox E2E is wired in TG PR #784: `ready-quick` verifies immediate quick-answer routing with no style selection; `ready-agent` verifies that «Готово» shows the fallback explanation and requires an explicit style before continuing the same task. The sandbox3 workflow runs against the PR head before merge; same-repository PRs receive the sandbox secrets, while fork PRs are skipped. Both paths passed on `fc783f0`; cleanup, empty final state and normal delivery-policy restoration passed in both runs.
-- Gate 1 / target component probes / semantic review: ожидают review; sandbox E2E: PASS on `fc783f0` (ready-agent and ready-quick, see runs above); production release не выполнен.
+Реализация: [TG #784](https://github.com/trained-assist/trained-assist-tg-bot/pull/784)
+и [CP #366](https://github.com/trained-assist/trained-assist-control-plane/pull/366).
+План приёмки, semantic review, точные версии, команды, результаты и границы
+проверки находятся в [acceptance record](../../docs/reviews/INTAKE-READY-293-ACCEPTANCE.md).
+
+Sandbox workflow разворачивает обе версии PR, включая точный CP SHA из
+`tools/sandbox3-cp-candidate.txt`; проверка только против CP `main` не доказывает
+передачу новой стратегии. Runtime PR остаются отдельными единицами promotion:
+их merge запускает защищённые staging/production pipelines. Sandbox acceptance
+не является разрешением на production и не заменяет Feature Promotion Gate B.
