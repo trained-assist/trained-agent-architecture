@@ -63,4 +63,6 @@
 - Control Plane continuation strategy: [trained-assist-control-plane#365](https://github.com/trained-assist/trained-assist-control-plane/issues/365); draft [PR #366](https://github.com/trained-assist/trained-assist-control-plane/pull/366). Классификатор использует уже существующий CP `/route`; PR передаёт выбранный fallback-стиль в continuation.
 - Local component evidence: TG `tests/control-plane-execution.test.js`, `tests/intake-buffer.test.js`, and `tests/intake-buffer-control-plane.test.js` (249 tests), `npm run check`, `git diff --check` passed on 20.10.2026. This is not staging E2E evidence.
 - Environment Contracts: проверить актуальные sandbox/staging endpoints, fixtures, logs/state и promotion paths у обоих owners.
-- Gate 1 / staging component probes / E2E: ожидают review и sandbox/staging run; production release не выполнен.
+- Feature Promotion Gate A: PASS locally on 20.10.2026 (`GITHUB_REPOSITORY=trained-assist/trained-agent-architecture node tools/feature-promotion/gate-a.mjs --base origin/main --head HEAD`).
+- Cross-runtime sandbox E2E: coverage exception recorded in `features/293/manifest.json`, tracked by architecture issue #293; no E2E PASS is claimed.
+- Gate 1 / target component probes / sandbox E2E: ожидают semantic review и sandbox run; production release не выполнен.
