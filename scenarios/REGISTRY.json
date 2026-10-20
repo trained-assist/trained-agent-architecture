@@ -2,6 +2,22 @@
   "version": 1,
   "scenarios": [
     {
+      "id": "SC-INTAKE-READY-01",
+      "spec": "scenarios/interaction/SC-INTAKE-READY-01-fast-intent-before-agent.md",
+      "owner": "trained-assist/trained-assist-tg-bot",
+      "depends_on": [],
+      "component_tests": [
+        { "repo": "trained-assist/trained-assist-tg-bot", "path": "tests/intake-buffer-control-plane.test.js" },
+        { "repo": "trained-assist/trained-assist-tg-bot", "path": "tests/control-plane-execution.test.js" },
+        { "repo": "trained-assist/trained-assist-control-plane", "path": "tests/communication-v1.test.ts" }
+      ],
+      "e2e_tests": [
+        { "repo": "trained-assist/trained-assist-tg-bot", "path": "tests/existing-ux-extra-input-workerd.test.js", "kind": "test" },
+        { "repo": "trained-assist/trained-assist-tg-bot", "path": "tools/sandbox3-agent-e2e.mjs", "kind": "test" },
+        { "repo": "trained-assist/trained-assist-tg-bot", "path": ".github/workflows/sandbox3-worker-e2e.yml", "kind": "sandbox-workflow" }
+      ]
+    },
+    {
       "id": "SC-CRM-TG-01",
       "spec": "scenarios/crm/SC-CRM-TG-01-agent-mcp-command-workflow.md",
       "owner": "trained-assist/trained-agent-architecture",

@@ -1,0 +1,32 @@
+{
+  "schema_version": 1,
+  "feature_issue": 293,
+  "pull_requests": [
+    {
+      "repo": "trained-assist/trained-assist-control-plane",
+      "number": 366,
+      "role": "implementation",
+      "required": true,
+      "depends_on": []
+    },
+    {
+      "repo": "trained-assist/trained-assist-tg-bot",
+      "number": 784,
+      "role": "implementation",
+      "required": true,
+      "depends_on": ["trained-assist/trained-assist-control-plane#366"]
+    }
+  ],
+  "coverage_exceptions": [],
+  "sandbox_acceptance": {
+    "evidence_url": null,
+    "candidate_revisions": [],
+    "target": {
+      "environment": "test",
+      "contract": {
+        "repo": "trained-assist/trained-assist-tg-bot",
+        "path": ".github/workflows/sandbox3-worker-e2e.yml"
+      }
+    }
+  }
+}
