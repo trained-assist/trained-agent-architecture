@@ -59,7 +59,7 @@
 ## Реализация и evidence
 
 - Architecture issue/PR: [#293](https://github.com/trained-assist/trained-agent-architecture/issues/293) / draft [#294](https://github.com/trained-assist/trained-agent-architecture/pull/294).
-- Telegram gateway implementation: [trained-assist-tg-bot#783](https://github.com/trained-assist/trained-assist-tg-bot/issues/783); draft [PR #784](https://github.com/trained-assist/trained-assist-tg-bot/pull/784), revision `1266121`.
+- Telegram gateway implementation: [trained-assist-tg-bot#783](https://github.com/trained-assist/trained-assist-tg-bot/issues/783); draft [PR #784](https://github.com/trained-assist/trained-assist-tg-bot/pull/784), revision `d7ef08e`.
 - Control Plane continuation strategy: [trained-assist-control-plane#365](https://github.com/trained-assist/trained-assist-control-plane/issues/365); draft [PR #366](https://github.com/trained-assist/trained-assist-control-plane/pull/366). Классификатор использует уже существующий CP `/route`; PR передаёт выбранный fallback-стиль в continuation.
 - Local component evidence: TG `tests/control-plane-execution.test.js`, `tests/intake-buffer.test.js`, and `tests/intake-buffer-control-plane.test.js` (251 tests), `npm run check`, `git diff --check` passed on 20.10.2026. This is not staging E2E evidence.
 - Environment Contracts: проверить актуальные sandbox/staging endpoints, fixtures, logs/state и promotion paths у обоих owners.
