@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "feature_issue": 293,
+  "pull_requests": [
+    {
+      "repo": "trained-assist/trained-assist-control-plane",
+      "number": 366,
+      "role": "implementation",
+      "required": true,
+      "depends_on": []
+    },
+    {
+      "repo": "trained-assist/trained-assist-tg-bot",
+      "number": 784,
+      "role": "implementation",
+      "required": true,
+      "depends_on": ["trained-assist/trained-assist-control-plane#366"]
+    }
+  ],
+  "coverage_exceptions": [
+    {
+      "scenario_id": "SC-INTAKE-READY-01",
+      "reason": "A sandbox E2E that proves quick-answer delivery and same-task agent fallback across both runtimes is not wired yet; implementation PRs add component coverage while the feature issue tracks E2E wiring and evidence.",
+      "tracking_issue": "https://github.com/trained-assist/trained-agent-architecture/issues/293"
+    }
+  ],
+  "sandbox_acceptance": {
+    "evidence_url": null,
+    "candidate_revisions": []
+  }
+}
