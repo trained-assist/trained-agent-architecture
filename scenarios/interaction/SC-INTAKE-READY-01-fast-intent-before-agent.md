@@ -48,6 +48,8 @@
 
 ## Сквозная приёмка
 
+Порядок для реализации: **implementation PR → sandbox E2E по SHA PR head → разбор run evidence и подтверждение cleanup → merge/promotion gates**. Sandbox — штатная проверка PR до merge; ожидать merge в `main` для первого E2E не нужно. Красные CI/scenario checks при незавершённой разработке не запрещают sandbox-прогон, но должны быть исправлены до promotion. Для internal TG PR workflow `Sandbox3 Telegram worker E2E` запускает `ready-agent` автоматически; `ready-quick` доступен ручным запуском по тому же PR ref.
+
 Провести через заявленный sandbox/staging Environment Contract обоих runtime owners с одинаковым sanitized transcript и pinned revisions:
 
 - быстрый ответ: transcript, callback, classification receipt, gateway output; доказать отсутствие Agent Run;
@@ -64,5 +66,5 @@
 - Local component evidence: TG `tests/control-plane-execution.test.js`, `tests/intake-buffer.test.js`, and `tests/intake-buffer-control-plane.test.js` (251 tests), `npm run check`, `git diff --check` passed on 20.10.2026. This is not staging E2E evidence.
 - Environment Contracts: проверить актуальные sandbox/staging endpoints, fixtures, logs/state и promotion paths у обоих owners.
 - Feature Promotion Gate A: PASS locally on 20.10.2026 (`GITHUB_REPOSITORY=trained-assist/trained-agent-architecture node tools/feature-promotion/gate-a.mjs --base origin/main --head HEAD`).
-- Sandbox E2E is wired in TG PR #784: `ready-quick` verifies immediate quick-answer routing with no style selection; `ready-agent` verifies that «Готово» shows the fallback explanation and requires an explicit style before continuing the same task. The protected-main sandbox3 workflow is the declared Environment Contract. No sandbox PASS is claimed until that workflow runs against merged candidate revisions.
-- Gate 1 / target component probes / sandbox E2E: ожидают semantic review и protected-main sandbox run; production release не выполнен.
+- Sandbox E2E is wired in TG PR #784: `ready-quick` verifies immediate quick-answer routing with no style selection; `ready-agent` verifies that «Готово» shows the fallback explanation and requires an explicit style before continuing the same task. The sandbox3 workflow runs against the PR head before merge; same-repository PRs receive the sandbox secrets, while fork PRs are skipped. No sandbox PASS is claimed until the PR workflow run succeeds and its cleanup/final-state artifacts are reviewed.
+- Gate 1 / target component probes / sandbox E2E: ожидают semantic review и PR sandbox run; production release не выполнен.
